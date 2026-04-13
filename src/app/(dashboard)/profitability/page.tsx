@@ -21,12 +21,10 @@ import { ClientsTab } from "@/components/profitability/clients-tab"
 import { EmployeesTab } from "@/components/profitability/employees-tab"
 import { ParametersTab } from "@/components/profitability/parameters-tab"
 import { AIObservations } from "@/components/profitability/ai-observations"
+import { fmtAmount } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 
 const PIE_COLORS = ["#8b5cf6", "#3b82f6", "#f59e0b", "#ef4444", "#10b981"]
-
-function fmt(n: number): string {
-  return Math.round(n).toLocaleString() + " ₼"
-}
 
 function CostBreakdown({ data }: { data: any }) {
   const t = useTranslations("profitability")
@@ -120,7 +118,7 @@ function CostBreakdown({ data }: { data: any }) {
             )}
             <span className="font-semibold flex-1 text-left">{sec.label}</span>
             <span className="font-mono text-muted-foreground tabular-nums">
-              {Math.round(sec.value).toLocaleString()} <span className="text-xs">₼</span>
+              {Math.round(sec.value).toLocaleString()} <span className="text-xs">{getCurrencySymbol()}</span>
             </span>
           </button>
           {expanded[sec.key] && sec.items.length > 0 && (
@@ -134,7 +132,7 @@ function CostBreakdown({ data }: { data: any }) {
                   } ${i > 0 && sec.items[i-1]?.label !== "_separator" ? "border-t border-muted/30" : ""}`}>
                     <span className="pr-4">{item.label}</span>
                     <span className="font-mono tabular-nums flex-shrink-0">
-                      {Math.round(item.value).toLocaleString()} ₼
+                      {Math.round(item.value).toLocaleString()} {getCurrencySymbol()}
                     </span>
                   </div>
                 )
@@ -150,11 +148,11 @@ function CostBreakdown({ data }: { data: any }) {
       <div className="border-t mt-3 pt-3 space-y-1.5 px-3">
         <div className="flex justify-between font-medium">
           <span>{t("totalCostF")}</span>
-          <span className="font-mono tabular-nums">{fmt(data.grandTotalF)}</span>
+          <span className="font-mono tabular-nums">{fmtAmount(data.grandTotalF)}</span>
         </div>
         <div className="flex justify-between font-semibold text-primary">
           <span>{t("fullServiceCostG")}</span>
-          <span className="font-mono tabular-nums">{fmt(data.grandTotalG)}</span>
+          <span className="font-mono tabular-nums">{fmtAmount(data.grandTotalG)}</span>
         </div>
       </div>
 
@@ -277,19 +275,19 @@ export default function ProfitabilityPage() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <ColorStatCard
               label={t("totalCostMonth")}
-              value={fmt(grandTotalG)}
+              value={fmtAmount(grandTotalG)}
               icon={<DollarSign className="h-4 w-4" />}
               color="red"
             />
             <ColorStatCard
               label={t("totalRevenueMonth")}
-              value={fmt(summary.totalRevenue)}
+              value={fmtAmount(summary.totalRevenue)}
               icon={<TrendingUp className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
               label={t("marginMonth")}
-              value={fmt(summary.totalMargin)}
+              value={fmtAmount(summary.totalMargin)}
               icon={<TrendingDown className="h-4 w-4" />}
               color={summary.totalMargin >= 0 ? "teal" : "red"}
             />
@@ -301,7 +299,7 @@ export default function ProfitabilityPage() {
             />
             <ColorStatCard
               label={t("costPerUser")}
-              value={fmt(costPerUserF)}
+              value={fmtAmount(costPerUserF)}
               icon={<Users className="h-4 w-4" />}
               color="violet"
             />
@@ -313,7 +311,7 @@ export default function ProfitabilityPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">{t("costComposition")}</CardTitle>
-                <p className="text-xs text-muted-foreground">Sec G: {fmt(grandTotalG)}</p>
+                <p className="text-xs text-muted-foreground">Sec G: {fmtAmount(grandTotalG)}</p>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={220}>
@@ -331,9 +329,9 @@ export default function ProfitabilityPage() {
                         <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={((value: number) => fmt(value)) as any} />
+                    <Tooltip formatter={((value: number) => fmtAmount(value)) as any} />
                     <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-xs">Sec F</text>
-                    <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-sm font-bold">{(grandTotalF / 1000).toFixed(1)}K ₼</text>
+                    <text x="50%" y="55%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-sm font-bold">{(grandTotalF / 1000).toFixed(1)}K {getCurrencySymbol()}</text>
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
@@ -364,7 +362,7 @@ export default function ProfitabilityPage() {
                   <BarChart data={serviceBarData} layout="vertical">
                     <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
                     <YAxis dataKey="name" type="category" width={90} className="text-xs" />
-                    <Tooltip formatter={((value: number) => fmt(value)) as any} />
+                    <Tooltip formatter={((value: number) => fmtAmount(value)) as any} />
                     <Legend />
                     <Bar dataKey="cost" name={t("cost")} fill="#ef4444" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="revenue" name={t("revenue")} fill="#22c55e" radius={[0, 4, 4, 0]} />
@@ -376,7 +374,7 @@ export default function ProfitabilityPage() {
                     <div key={s.svc} className="flex justify-between px-2">
                       <span className="text-muted-foreground">{s.name}</span>
                       <span className={s.balance >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                        {s.balance >= 0 ? "+" : ""}{s.balance.toLocaleString()} ₼
+                        {s.balance >= 0 ? "+" : ""}{s.balance.toLocaleString()} {getCurrencySymbol()}
                       </span>
                     </div>
                   ))}
@@ -392,11 +390,11 @@ export default function ProfitabilityPage() {
         <TabsContent value="services" className="space-y-6">
           {/* Summary cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <ColorStatCard label={t("totalCost")} value={fmt(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} color="red" />
-            <ColorStatCard label={t("totalRevenue")} value={fmt(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} color="green" />
+            <ColorStatCard label={t("totalCost")} value={fmtAmount(totalServiceCost)} icon={<DollarSign className="h-4 w-4" />} color="red" />
+            <ColorStatCard label={t("totalRevenue")} value={fmtAmount(totalServiceRevenue)} icon={<TrendingUp className="h-4 w-4" />} color="green" />
             <ColorStatCard
               label={t("totalBalance")}
-              value={fmt(totalServiceBalance)}
+              value={fmtAmount(totalServiceBalance)}
               icon={<DollarSign className="h-4 w-4" />}
               color={totalServiceBalance >= 0 ? "teal" : "red"}
             />
@@ -437,7 +435,7 @@ export default function ProfitabilityPage() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">{t("cost")}</span>
-                        <span className="font-medium">{fmt(cost)}</span>
+                        <span className="font-medium">{fmtAmount(cost)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">
                         <div
@@ -450,7 +448,7 @@ export default function ProfitabilityPage() {
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">{t("revenue")}</span>
-                        <span className="font-medium">{fmt(revenue)}</span>
+                        <span className="font-medium">{fmtAmount(revenue)}</span>
                       </div>
                       <div className="h-2 rounded-full bg-muted overflow-hidden">
                         <div
@@ -476,7 +474,7 @@ export default function ProfitabilityPage() {
                         <div className="text-[10px] text-muted-foreground">{t("clients")}</div>
                       </div>
                       <div>
-                        <div className="text-sm font-bold">{costPerEmp > 0 ? fmt(costPerEmp) : "-"}</div>
+                        <div className="text-sm font-bold">{costPerEmp > 0 ? fmtAmount(costPerEmp) : "-"}</div>
                         <div className="text-[10px] text-muted-foreground">{t("costPerStaff")}</div>
                       </div>
                     </div>

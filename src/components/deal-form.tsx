@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface DealFormProps {
   open: boolean
@@ -157,9 +157,9 @@ export function DealForm({ open, onOpenChange, onSaved, initialData, orgId, pipe
               <div>
                 <Label htmlFor="currency">{tc("currency")}</Label>
                 <Select value={form.currency} onChange={e => update("currency", e.target.value)}>
-                  <option value="AZN">AZN ₼</option>
-                  <option value="USD">USD $</option>
-                  <option value="EUR">EUR &euro;</option>
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                    <option key={code} value={code}>{code} {sym}</option>
+                  ))}
                 </Select>
               </div>
             </div>

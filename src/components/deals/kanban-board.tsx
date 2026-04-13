@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react"
 import { motion } from "framer-motion"
 import { DealCard } from "./deal-card"
-import { cn } from "@/lib/utils"
+import { cn, fmtAmount } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 
 interface Stage {
@@ -103,7 +103,7 @@ export function KanbanBoard({ stages, deals, onDealClick, onDealMove, onQuickAdd
               </div>
               {total > 0 && (
                 <p className="text-[11px] text-muted-foreground mt-0.5 pl-4 tabular-nums">
-                  {total.toLocaleString()} ₼
+                  {fmtAmount(total)}
                 </p>
               )}
             </div>

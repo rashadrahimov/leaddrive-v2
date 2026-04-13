@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Save, RotateCcw, Loader2 } from "lucide-react"
 import { useParameters, useUpdateParameters } from "@/lib/cost-model/hooks"
+import { getCurrencySymbol } from "@/lib/constants"
 import type { CostModelParams } from "@/lib/cost-model/types"
 
 interface FieldDef {
@@ -246,7 +247,7 @@ export function ParametersTab() {
                 {params.totalUsers > 0
                   ? ((serverParams?.totalUsers ? (serverParams as any).costPerUser : 0) || "N/A")
                   : "N/A"
-                } ₼
+                } {getCurrencySymbol()}
               </span>
             </div>
             <div className="flex justify-between p-2 rounded bg-muted/50">

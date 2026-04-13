@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
 import { useTranslations } from "next-intl"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface ContractFormData {
   contractNumber: string
@@ -238,10 +238,9 @@ export function ContractForm({ open, onOpenChange, onSaved, initialData, orgId }
               <div>
                 <Label htmlFor="currency">{tc("currency")}</Label>
                 <Select value={form.currency} onChange={(e) => update("currency", e.target.value)}>
-                  <option value="AZN">AZN (₼)</option>
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="RUB">RUB (₽)</option>
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                    <option key={code} value={code}>{code} ({sym})</option>
+                  ))}
                 </Select>
               </div>
             </div>

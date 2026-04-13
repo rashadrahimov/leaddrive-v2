@@ -10,7 +10,7 @@ import { Select } from "@/components/ui/select"
 import { Plus, Trash2, Loader2, Building2, FileText, ShoppingCart, Calculator } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface Company {
   id: string
@@ -239,9 +239,9 @@ export function OfferForm({
             </div>
             <div className="w-24">
               <Select value={currency} onChange={e => setCurrency(e.target.value)} label={t("currency")}>
-                <option value="AZN">AZN</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
+                {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                  <option key={code} value={code}>{code} {sym}</option>
+                ))}
               </Select>
             </div>
             <label className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted/30 cursor-pointer whitespace-nowrap">

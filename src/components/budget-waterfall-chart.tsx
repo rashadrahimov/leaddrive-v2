@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl"
 import { ComposedChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine, LabelList, CartesianGrid } from "recharts"
 import { BUDGET_COLORS, ANIMATION, AXIS_TICK, fmtK, fmt } from "@/lib/budget-chart-theme"
+import { getCurrencySymbol } from "@/lib/constants"
 
 interface WaterfallChartProps {
   totalPlanned: number
@@ -93,7 +94,7 @@ export function BudgetWaterfallChart({
     if (!item) return null
 
     // Show value label on all bars
-    const valueLabel = fmtK(item.value) + " ₼"
+    const valueLabel = fmtK(item.value) + " " + getCurrencySymbol()
     const pctLabelText = item.label
 
     const isNegative = pctLabelText?.startsWith("-")

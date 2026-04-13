@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2, Check, X, Pencil, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { getCurrencySymbol } from "@/lib/constants"
 import {
   useOverheadItems,
   useCreateOverhead,
@@ -159,7 +160,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">{t("adminOverhead")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums tracking-tight">{adminTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{adminTotal.toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}</p>
           </CardContent>
         </Card>
         <Card>
@@ -167,7 +168,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">{t("techInfra")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums tracking-tight">{techTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{techTotal.toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}</p>
           </CardContent>
         </Card>
         <Card>
@@ -175,7 +176,7 @@ export function OverheadTab() {
             <CardTitle className="text-sm text-muted-foreground">{t("ohTotalOverhead")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums tracking-tight">{grandTotal.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</p>
+            <p className="text-2xl font-bold tabular-nums tracking-tight">{grandTotal.toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}</p>
           </CardContent>
         </Card>
       </div>
@@ -298,7 +299,7 @@ export function OverheadTab() {
                             </Badge>
                           </td>
                           <td className="py-2 pr-4 text-right font-mono">
-                            {calculateMonthly(editForm).toLocaleString("en", { minimumFractionDigits: 2 })} ₼
+                            {calculateMonthly(editForm).toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}
                           </td>
                           <td className="py-2 flex gap-1">
                             <Button
@@ -341,7 +342,7 @@ export function OverheadTab() {
                             </Badge>
                           </td>
                           <td className="py-2 pr-4 text-right font-mono font-medium">
-                            {calculateMonthly(item).toLocaleString("en", { minimumFractionDigits: 2 })} ₼
+                            {calculateMonthly(item).toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}
                           </td>
                           <td className="py-2 flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => startEdit(item)} className="h-7 w-7 p-0">

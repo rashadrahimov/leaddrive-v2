@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge"
 import { History, ChevronDown, ChevronUp, Undo2, Plus, Trash2, Pencil, User } from "lucide-react"
 import { useBudgetChangelog, useUndoBudgetChange } from "@/lib/budgeting/hooks"
 import type { ChangeLogItem } from "@/lib/budgeting/hooks"
+import { fmtAmount } from "@/lib/utils"
 
 function formatAmount(n: number) {
-  return Math.round(n).toLocaleString() + " ₼"
+  return fmtAmount(n)
 }
 
 function formatRelativeTime(iso: string, t: (key: string, values?: Record<string, any>) => string) {

@@ -12,6 +12,7 @@ import {
   CalendarDays, Users, Globe, MapPin, DollarSign, X, Plus,
   Presentation, Video, Wrench, Coffee, Building2, HelpCircle,
 } from "lucide-react"
+import { getCurrencySymbol } from "@/lib/constants"
 
 const TYPE_OPTIONS = [
   { value: "conference", icon: Presentation, color: "bg-blue-100 text-blue-600 border-blue-300" },
@@ -240,11 +241,11 @@ export function EventForm({ open, onOpenChange, onSaved, orgId, initialData }: E
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {t("budget")} (₼)</Label>
+                  <Label className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {t("budget")} ({getCurrencySymbol()})</Label>
                   <Input type="number" value={form.budget} onChange={e => set("budget", e.target.value)} className="mt-1" />
                 </div>
                 <div>
-                  <Label>{t("expectedRevenue")} (₼)</Label>
+                  <Label>{t("expectedRevenue")} ({getCurrencySymbol()})</Label>
                   <Input type="number" value={form.expectedRevenue} onChange={e => set("expectedRevenue", e.target.value)} className="mt-1" />
                 </div>
               </div>

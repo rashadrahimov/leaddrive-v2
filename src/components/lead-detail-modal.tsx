@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
 import { FileText, X, Trash2, Ban, Plus, Pencil, Ticket, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, fmtAmount } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 import { useTranslations } from "next-intl"
 import { DEFAULT_CURRENCY } from "@/lib/constants"
 import { toast } from "sonner"
@@ -277,9 +278,9 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                 <span className="text-[10px] text-muted-foreground block">{t("ldmIndustry")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
                 <span className="text-xs">{fullData?.industry || company.industry || "—"}</span>
               </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(`${t("ldmEstimatedValue")} (₼)`, "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
+              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(`${t("ldmEstimatedValue")} (${getCurrencySymbol()})`, "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
                 <span className="text-[10px] text-muted-foreground block">{t("ldmEstimatedValue")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? `${(fullData?.annualRevenue || company.annualRevenue).toLocaleString()} ₼` : "—"}</span>
+                <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? fmtAmount(fullData?.annualRevenue || company.annualRevenue) : "—"}</span>
               </div>
               <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmUsers"), "userCount", fullData?.userCount ?? company.userCount, true)}>
                 <span className="text-[10px] text-muted-foreground block">{t("ldmUsers")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
@@ -408,7 +409,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               <h4 className="font-medium text-sm">{t("ldmDeals")} ({(fullData?.deals || company.deals)?.length || 0})</h4>
               {(fullData?.deals || company.deals)?.length > 0 && (
                 <p className="text-xs font-medium text-primary">
-                  Pipeline: {(fullData?.deals || company.deals).reduce((sum: number, d: any) => sum + (d.valueAmount || 0), 0).toLocaleString()} ₼
+                  Pipeline: {fmtAmount((fullData?.deals || company.deals).reduce((sum: number, d: any) => sum + (d.valueAmount || 0), 0))}
                 </p>
               )}
             </div>
@@ -418,7 +419,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                   onClick={() => { onOpenChange(false); router.push(`/deals/${d.id}`) }}>
                   <span className="font-medium">{d.name || d.title}</span>
                   <div className="flex gap-1.5 items-center">
-                    {d.valueAmount ? <span className="font-medium">{d.valueAmount.toLocaleString()} ₼</span> : null}
+                    {d.valueAmount ? <span className="font-medium">{fmtAmount(d.valueAmount)}</span> : null}
                     <Badge variant="outline" className="text-[10px]">{d.stage}</Badge>
                   </div>
                 </div>
@@ -508,7 +509,7 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
                     <p className="text-[10px] text-muted-foreground">{c.startDate ? new Date(c.startDate).toLocaleDateString() : ""} {c.endDate ? `— ${new Date(c.endDate).toLocaleDateString()}` : ""}</p>
                   </div>
                   <div className="flex gap-1.5 items-center ml-2">
-                    {c.totalValue ? <span className="font-medium">{c.totalValue.toLocaleString()} ₼</span> : null}
+                    {c.totalValue ? <span className="font-medium">{fmtAmount(c.totalValue)}</span> : null}
                     <Badge variant={c.status === "active" ? "default" : "outline"} className="text-[10px]">{c.status || "draft"}</Badge>
                   </div>
                 </div>

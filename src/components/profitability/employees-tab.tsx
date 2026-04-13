@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2, Check, X, Pencil, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { getCurrencySymbol } from "@/lib/constants"
 import {
   useEmployees,
   useCreateEmployee,
@@ -158,7 +159,7 @@ export function EmployeesTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("empTotalLaborCost")}</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{Math.round(totalLaborCost).toLocaleString()} ₼</p></CardContent>
+          <CardContent><p className="text-2xl font-bold tabular-nums tracking-tight">{Math.round(totalLaborCost).toLocaleString()} {getCurrencySymbol()}</p></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{t("empDepartments")}</CardTitle></CardHeader>
@@ -255,7 +256,7 @@ export function EmployeesTab() {
                             {calcSuperGross(calcGross(editForm.netSalary || 0)).toFixed(2)}
                           </td>
                           <td className="py-2 pr-4 text-right font-mono font-medium">
-                            {calcTotal(editForm.netSalary || 0, editForm.count || 1).toLocaleString("en", { minimumFractionDigits: 2 })} ₼
+                            {calcTotal(editForm.netSalary || 0, editForm.count || 1).toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}
                           </td>
                           <td className="py-2 flex gap-1">
                             <Button
@@ -286,7 +287,7 @@ export function EmployeesTab() {
                           <td className="py-2.5 pr-4 text-right font-mono">{emp.netSalary.toLocaleString("en", { minimumFractionDigits: 2 })}</td>
                           <td className="py-2.5 pr-4 text-right font-mono text-muted-foreground">{gross.toFixed(2)}</td>
                           <td className="py-2.5 pr-4 text-right font-mono text-muted-foreground">{superGross.toFixed(2)}</td>
-                          <td className="py-2.5 pr-4 text-right font-mono font-medium">{total.toLocaleString("en", { minimumFractionDigits: 2 })} ₼</td>
+                          <td className="py-2.5 pr-4 text-right font-mono font-medium">{total.toLocaleString("en", { minimumFractionDigits: 2 })} {getCurrencySymbol()}</td>
                           <td className="py-2.5 flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => startEdit(emp)} className="h-7 w-7 p-0">
                               <Pencil className="h-3.5 w-3.5" />

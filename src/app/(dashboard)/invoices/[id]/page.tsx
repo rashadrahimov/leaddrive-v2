@@ -50,7 +50,7 @@ import {
   Loader2,
   X,
 } from "lucide-react"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 // ---------- Types ----------
 
@@ -1894,10 +1894,9 @@ export default function InvoiceDetailPage() {
                   value={editForm.currency}
                   onChange={(e) => setEditForm((p) => ({ ...p, currency: e.target.value }))}
                 >
-                  <option value="AZN">AZN</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="RUB">RUB</option>
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                    <option key={code} value={code}>{code} {sym}</option>
+                  ))}
                 </Select>
               </div>
             </div>

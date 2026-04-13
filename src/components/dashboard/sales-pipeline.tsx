@@ -3,14 +3,14 @@
 import { useTranslations } from "next-intl"
 import { Target } from "lucide-react"
 import { STAGE_COLORS } from "@/lib/constants"
+import { fmtCurrencyCompact } from "@/lib/utils"
 const stageKeys: Record<string, string> = {
   LEAD: "stageLead", QUALIFIED: "stageQualified", PROPOSAL: "stageProposal",
   NEGOTIATION: "stageNegotiation", WON: "stageWon", LOST: "stageLost",
 }
 
 function fmt(n: number): string {
-  if (n >= 1000) return `₼${(n / 1000).toFixed(0)}K`
-  return `₼${n}`
+  return fmtCurrencyCompact(n)
 }
 
 export function SalesPipeline({ pipeline }: { pipeline: any }) {

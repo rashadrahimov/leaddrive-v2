@@ -8,6 +8,7 @@ import { Camera, Calendar, TrendingUp, TrendingDown, Loader2 } from "lucide-reac
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
 import { useSnapshots, useCreateSnapshot } from "@/lib/cost-model/hooks"
+import { fmtAmountDecimal } from "@/lib/utils"
 
 interface SnapshotRow {
   id: string
@@ -30,7 +31,7 @@ function formatMonth(month: string): string {
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString("en", { minimumFractionDigits: 2 }) + " ₼"
+  return fmtAmountDecimal(n)
 }
 
 export function SnapshotsTab() {

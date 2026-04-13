@@ -13,6 +13,7 @@ import {
   CalendarDays, Users, CheckCircle2, Clock, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 
 interface Project {
   id: string
@@ -445,7 +446,7 @@ export default function ProjectsPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">{t("budget")} (AZN)</label>
+                    <label className="text-sm font-medium mb-1 block">{t("budget")} ({getCurrencySymbol()})</label>
                     <input type="number" value={formBudget} onChange={e => setFormBudget(e.target.value)} placeholder="0" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
                   </div>
                   <div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { fmtK } from "@/lib/budget-chart-theme"
+import { getCurrencySymbol } from "@/lib/constants"
 
 interface BarLabelProps {
   x?: number
@@ -17,7 +18,7 @@ interface BarLabelProps {
 export function BudgetBarLabel({ x = 0, y = 0, width = 0, height = 0, value, horizontal = true }: BarLabelProps) {
   if (value == null || value === 0) return null
 
-  const text = fmtK(value) + " ₼"
+  const text = fmtK(value) + " " + getCurrencySymbol()
 
   if (horizontal) {
     // Horizontal bars: label to the right of bar

@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Plus, Trash2, ArrowDownToLine, ArrowUpFromLine, History, Settings2, PiggyBank, AlertTriangle } from "lucide-react"
 import type { Fund } from "@/lib/finance/types"
+import { getCurrencySymbol } from "@/lib/constants"
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -43,7 +44,7 @@ export function FundManager() {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{t("totalBalance")}</p>
-          <p className="text-2xl font-bold tabular-nums">{fmt(totalBalance)} AZN</p>
+          <p className="text-2xl font-bold tabular-nums">{fmt(totalBalance)} {getCurrencySymbol()}</p>
         </div>
         <Button size="sm" onClick={() => setShowCreate(true)}>
           <Plus className="w-4 h-4 mr-1" /> {t("newFund")}
@@ -318,7 +319,7 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
               <Input type="number" value={pct} onChange={(e) => setPct(e.target.value)} placeholder="%" className="w-20" />
             )}
             {trigger === "fixed_monthly" && (
-              <Input type="number" value={fixed} onChange={(e) => setFixed(e.target.value)} placeholder="AZN" className="w-24" />
+              <Input type="number" value={fixed} onChange={(e) => setFixed(e.target.value)} placeholder={getCurrencySymbol()} className="w-24" />
             )}
             <Button size="sm" onClick={handleAdd} disabled={createRule.isPending}><Plus className="w-4 h-4" /></Button>
           </div>
@@ -333,7 +334,7 @@ function RulesDialog({ fundId, onClose }: { fundId: string; onClose: () => void 
                 <p className="text-sm font-medium">{rule.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {rule.triggerType === "revenue_percentage" && `${((rule.percentage || 0) * 100).toFixed(0)}% ${t("ruleRevenue")}`}
-                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} AZN/${t("ruleFixed")}`}
+                  {rule.triggerType === "fixed_monthly" && `${fmt(rule.fixedAmount || 0)} ${getCurrencySymbol()}/${t("ruleFixed")}`}
                   {rule.triggerType === "invoice_paid" && t("ruleInvoice")}
                 </p>
               </div>

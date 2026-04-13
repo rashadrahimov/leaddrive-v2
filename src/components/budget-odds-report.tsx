@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, ChevronRight, TrendingUp, TrendingDown, ArrowDownToLine, ArrowUpFromLine } from "lucide-react"
+import { getCurrencySymbol } from "@/lib/constants"
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -113,7 +114,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-lg font-bold tabular-nums ${section.net >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {section.net >= 0 ? "+" : ""}{fmt(section.net)} AZN
+                    {section.net >= 0 ? "+" : ""}{fmt(section.net)} {getCurrencySymbol()}
                   </span>
                   {section.yoyChange !== undefined && (
                     <Badge variant={section.yoyChange >= 0 ? "default" : "destructive"} className="text-[10px]">
@@ -131,7 +132,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowDownToLine className="w-3.5 h-3.5 text-green-600" />
-                      <span className="text-xs font-semibold text-green-600">{t("oddsReport_inflows")} {fmt(section.totalInflow)} AZN</span>
+                      <span className="text-xs font-semibold text-green-600">{t("oddsReport_inflows")} {fmt(section.totalInflow)} {getCurrencySymbol()}</span>
                     </div>
                     {section.inflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -151,7 +152,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <ArrowUpFromLine className="w-3.5 h-3.5 text-red-600" />
-                      <span className="text-xs font-semibold text-red-600">{t("oddsReport_outflows")} {fmt(section.totalOutflow)} AZN</span>
+                      <span className="text-xs font-semibold text-red-600">{t("oddsReport_outflows")} {fmt(section.totalOutflow)} {getCurrencySymbol()}</span>
                     </div>
                     {section.outflowByCategory.length > 0 ? (
                       <div className="space-y-1">
@@ -190,7 +191,7 @@ export function BudgetODDSReport({ year }: { year: number }) {
               <div className="text-right pl-3 border-l">
                 <span className="text-xs text-muted-foreground block">{t("oddsReport_netLabel")}</span>
                 <span className={`text-lg font-bold tabular-nums ${data.grandNet >= 0 ? "text-green-600" : "text-red-600"}`}>
-                  {data.grandNet >= 0 ? "+" : ""}{fmt(data.grandNet)} AZN
+                  {data.grandNet >= 0 ? "+" : ""}{fmt(data.grandNet)} {getCurrencySymbol()}
                 </span>
               </div>
             </div>

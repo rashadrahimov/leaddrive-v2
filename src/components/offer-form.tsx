@@ -10,7 +10,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslations } from "next-intl"
 import { Plus, Trash2, Package, ChevronDown } from "lucide-react"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface OfferItem {
   id: string
@@ -478,10 +478,9 @@ export function OfferForm({ open, onOpenChange, onSaved, initialData, orgId, dea
                   <div>
                     <Label>{t("currency")}</Label>
                     <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                      <option value="AZN">AZN ₼</option>
-                      <option value="USD">USD $</option>
-                      <option value="EUR">EUR €</option>
-                      <option value="RUB">RUB ₽</option>
+                      {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                        <option key={code} value={code}>{code} {sym}</option>
+                      ))}
                     </Select>
                   </div>
                   <div>

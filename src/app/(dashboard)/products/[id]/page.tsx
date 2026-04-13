@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 const categoryColors: Record<string, string> = {
   service: "bg-blue-500", product: "bg-green-500", addon: "bg-purple-500", consulting: "bg-amber-500",
@@ -239,9 +239,9 @@ export default function ProductDetailPage() {
                     <div className="flex gap-2">
                       <Input type="number" value={price} onChange={e => setPrice(e.target.value)} className="flex-1" />
                       <Select value={currency} onChange={e => setCurrency(e.target.value)} className="w-24">
-                        <option value="AZN">AZN</option>
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
+                        {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                          <option key={code} value={code}>{code} {sym}</option>
+                        ))}
                       </Select>
                     </div>
                   </div>

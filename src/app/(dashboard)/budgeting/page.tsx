@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo, useRef } from "react"
 import { useTranslations } from "next-intl"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, getCurrencySymbol } from "@/lib/constants"
+import { fmtAmount, fmtCurrencyCompact } from "@/lib/utils"
 import { useSession as useSessionHook } from "next-auth/react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ColorStatCard } from "@/components/color-stat-card"
@@ -109,7 +110,7 @@ import { toast } from "sonner"
 const PIE_COLORS = BUDGET_COLORS.pie
 
 function fmt(n: number): string {
-  return Math.round(n).toLocaleString() + " ₼"
+  return fmtAmount(n)
 }
 
 function statusBadge(status: string, t: (key: string) => string) {
@@ -455,11 +456,11 @@ function AddLineForm({ planId, existingCategories }: { planId: string; existingC
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">{t("fieldPlannedAmount")} (₼)</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldPlannedAmount")} ({getCurrencySymbol()})</label>
             <Input title={t("hintFieldAmount")} type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">{t("fieldForecastAmount")} (₼)</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldForecastAmount")} ({getCurrencySymbol()})</label>
             <Input type="number" value={forecastAmount} onChange={e => setForecastAmount(e.target.value)} min={0} step={0.01} placeholder={t("placeholderForecast")} />
           </div>
           <div className="sm:col-span-2">
@@ -566,7 +567,7 @@ function AddActualForm({ planId, existingCategories }: { planId: string; existin
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium mb-1 block">{t("fieldActualAmount")} (₼)</label>
+            <label className="text-xs font-medium mb-1 block">{t("fieldActualAmount")} ({getCurrencySymbol()})</label>
             <Input type="number" value={amount} onChange={e => setAmount(e.target.value)} min={0} step={0.01} required />
           </div>
           <div>
@@ -631,7 +632,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
   const [compactNumbers, setCompactNumbers] = useState(false)
   // List/Matrix view mode
   const [workspaceView, setWorkspaceView] = useState<"list" | "matrix">("list")
-  const fmt = compactNumbers ? (n: number) => fmtK(n) + " ₼" : (n: number) => Math.round(n).toLocaleString() + " ₼"
+  const fmt = compactNumbers ? (n: number) => fmtCurrencyCompact(n) : (n: number) => fmtAmount(n)
 
   // New actual form for expand
   const [newActual, setNewActual] = useState({ amount: "", description: "", date: "" })
@@ -1538,7 +1539,7 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
             <span>%</span>
             <span>{t("or") || "или"}</span>
             <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" />
-            <span>₼</span>
+            <span>{getCurrencySymbol()}</span>
           </div>
         )}
         <Button size="sm" variant={compactNumbers ? "default" : "outline"} className="h-8 text-xs font-mono"
@@ -1600,8 +1601,8 @@ function WorkspaceTab({ planId, onNavigateTab }: { planId: string; onNavigateTab
                 <tr>
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/90"><span className="inline-flex items-center gap-1.5">{t("colCategory")} <InfoHint text={t("hintColCategory")} size={12} /></span></th>
                   <th className="px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/70"><span className="inline-flex items-center gap-1.5">{t("colDepartment")} <InfoHint text={t("hintColDepartment")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300"><span className="inline-flex items-center gap-1 justify-end">{t("colPlan")} ₼ <InfoHint text={t("hintColPlan")} size={12} /></span></th>
-                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300"><span className="inline-flex items-center gap-1 justify-end">{t("colActual")} ₼ <InfoHint text={t("hintColActual")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-sky-300"><span className="inline-flex items-center gap-1 justify-end">{t("colPlan")} {getCurrencySymbol()} <InfoHint text={t("hintColPlan")} size={12} /></span></th>
+                  <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-300"><span className="inline-flex items-center gap-1 justify-end">{t("colActual")} {getCurrencySymbol()} <InfoHint text={t("hintColActual")} size={12} /></span></th>
                   <th className="px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-amber-300"><span className="inline-flex items-center gap-1 justify-end">{t("colVariancePct")} <InfoHint text={t("hintColVariance")} size={12} /></span></th>
                   <th className="px-2 py-3 w-10" />
                 </tr>
@@ -2669,7 +2670,7 @@ function ComparisonTab() {
               <Input type="number" value={materialityPct} onChange={e => setMaterialityPct(Number(e.target.value))} className="h-7 w-16 text-xs text-right" /> %
             </div>
             <div className="flex items-center gap-1">
-              <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" /> ₼
+              <Input type="number" value={materialityAbs} onChange={e => setMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" /> {getCurrencySymbol()}
             </div>
             <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setShowAll(!showAll)}>
               {showAll ? t("btnHideMaterial") : t("btnShowAll")}
@@ -2919,7 +2920,7 @@ function PLTab({ planId }: { planId: string }) {
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-muted-foreground">/ <AnimatedNumber value={planned} duration={700} className="inline" /></span>
           <span className={`text-xs font-semibold ${isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-            <AnimatedNumber value={variance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} className="inline" />
+            <AnimatedNumber value={variance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} className="inline" />
           </span>
         </div>
         <div className="mt-2 flex items-center gap-2">
@@ -2980,7 +2981,7 @@ function PLTab({ planId }: { planId: string }) {
               <AnimatedNumber value={secPlanned} className="text-right min-w-[100px]" duration={800} />
               <AnimatedNumber value={secActual} className={`text-right min-w-[100px] ${secActual >= 0 ? "" : "text-red-600 dark:text-red-400"}`} duration={800} />
               <AnimatedNumber value={secVariance} duration={600}
-                formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`}
+                formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`}
                 className={`text-right min-w-[80px] text-xs self-center ${secVariance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`} />
             </div>
           </div>
@@ -3029,7 +3030,7 @@ function PLTab({ planId }: { planId: string }) {
                               {gVariance >= 0
                                 ? <TrendingUp className="h-3 w-3" />
                                 : <TrendingDown className="h-3 w-3" />}
-                              <AnimatedNumber value={gVariance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+                              <AnimatedNumber value={gVariance} duration={600} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
                             </div>
                           </td>
                         </tr>
@@ -3052,7 +3053,7 @@ function PLTab({ planId }: { planId: string }) {
                                 <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                               </td>
                               <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                                <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+                                <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
                               </td>
                             </tr>
                           )
@@ -3078,7 +3079,7 @@ function PLTab({ planId }: { planId: string }) {
                           <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                         </td>
                         <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                          <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+                          <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
                         </td>
                       </tr>
                     )
@@ -3103,7 +3104,7 @@ function PLTab({ planId }: { planId: string }) {
                         <ExecBar actual={row.actual} planned={row.planned} isExpense={isExpense} />
                       </td>
                       <td className={`px-4 py-2 text-right font-mono text-sm font-semibold ${row.variance >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-400"}`}>
-                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
                       </td>
                     </tr>
                   )
@@ -3205,7 +3206,7 @@ function PLTab({ planId }: { planId: string }) {
             <span>%</span>
             <span>{t("or") || "или"}</span>
             <Input type="number" value={plMaterialityAbs} onChange={e => setPlMaterialityAbs(Number(e.target.value))} className="h-7 w-20 text-xs text-right" />
-            <span>₼</span>
+            <span>{getCurrencySymbol()}</span>
           </div>
         )}
       </div>
@@ -3236,7 +3237,7 @@ function PLTab({ planId }: { planId: string }) {
               <AnimatedNumber value={grossProfitActual} duration={600} />
             </span>
             <span className={`text-sm ${grossProfitActual - grossProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-              <AnimatedNumber value={grossProfitActual - grossProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+              <AnimatedNumber value={grossProfitActual - grossProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
             </span>
           </div>
         </div>
@@ -3266,7 +3267,7 @@ function PLTab({ planId }: { planId: string }) {
               <AnimatedNumber value={opProfitActual} duration={600} />
             </span>
             <span className={`text-sm ${opProfitActual - opProfitPlanned >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-              <AnimatedNumber value={opProfitActual - opProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+              <AnimatedNumber value={opProfitActual - opProfitPlanned} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
             </span>
           </div>
         </div>
@@ -3333,7 +3334,7 @@ function PLTab({ planId }: { planId: string }) {
                     <div className="text-center">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{t("colVariance")}</p>
                       <p className={`font-bold font-mono text-sm ${row.variance >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
-                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${Math.round(n).toLocaleString()} ₼`} />
+                        <AnimatedNumber value={row.variance} duration={400} formatter={(n) => `${n >= 0 ? "+" : ""}${fmtAmount(n)}`} />
                       </p>
                     </div>
                     <div className="text-center">

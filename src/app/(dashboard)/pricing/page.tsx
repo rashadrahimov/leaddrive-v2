@@ -19,6 +19,8 @@ import { toast } from "sonner"
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { fmtAmountDecimal } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 import {
   GROUP_ORDER, BOARD_CATS, CATEGORY_MAP,
   catTotal, applyAdjustments, aggregateBoardCats, emptyAdjustments,
@@ -457,19 +459,19 @@ export default function PricingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <ColorStatCard
               label="Общий ежемесячный доход"
-              value={`${baseTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
+              value={`${baseTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<DollarSign className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
               label="Прогнозируемый ежемесячный доход"
-              value={`${adjTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
+              value={`${adjTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="blue"
             />
             <ColorStatCard
               label="Годовой эффект"
-              value={`${annualEffect.toLocaleString(undefined, { maximumFractionDigits: 0 })} ₼`}
+              value={`${annualEffect.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${getCurrencySymbol()}`}
               icon={<BarChart3 className="h-4 w-4" />}
               color={annualEffect >= 0 ? "teal" : "red"}
             />
@@ -599,7 +601,7 @@ export default function PricingPage() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                         <YAxis dataKey="name" type="category" width={75} tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
+                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ${getCurrencySymbol()}`) as any} />
                         <Legend />
                         <Bar dataKey="Базовая" fill="#8B95A5" barSize={12} />
                         <Bar dataKey="Новая" fill="#2D4A7A" barSize={12} />
@@ -629,7 +631,7 @@ export default function PricingPage() {
                             <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
+                        <Tooltip formatter={((v: number) => `${v.toLocaleString()} ${getCurrencySymbol()}`) as any} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
@@ -660,7 +662,7 @@ export default function PricingPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
                       <YAxis dataKey="name" type="category" width={95} tick={{ fontSize: 11 }} />
-                      <Tooltip formatter={((v: number) => `${v.toLocaleString()} ₼`) as any} />
+                      <Tooltip formatter={((v: number) => `${v.toLocaleString()} ${getCurrencySymbol()}`) as any} />
                       <Legend />
                       <Bar dataKey="Новая" fill="#2D4A7A" barSize={16} />
                     </BarChart>
@@ -691,9 +693,9 @@ export default function PricingPage() {
                           {[
                             { key: "code", label: "Компания" },
                             { key: "group", label: "Группа" },
-                            { key: "base", label: "Базовая ₼" },
-                            { key: "new", label: "Новая ₼" },
-                            { key: "diff", label: "Разница ₼" },
+                            { key: "base", label: `Базовая ${getCurrencySymbol()}` },
+                            { key: "new", label: `Новая ${getCurrencySymbol()}` },
+                            { key: "diff", label: `Разница ${getCurrencySymbol()}` },
                             { key: "pct", label: "%" },
                           ].map(({ key, label }) => (
                             <th
@@ -713,10 +715,10 @@ export default function PricingPage() {
                             <td className="py-2 pr-2 text-muted-foreground">{i + 1}</td>
                             <td className="py-2 pr-4 font-medium">{row.code}</td>
                             <td className="py-2 pr-4">{row.group}</td>
-                            <td className="py-2 pr-4 text-right font-mono">{row.base.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
-                            <td className="py-2 pr-4 text-right font-mono font-medium">{row.newVal.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono">{row.base.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{row.newVal.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</td>
                             <td className={`py-2 pr-4 text-right font-mono ${row.diff >= 0 ? "text-green-600" : "text-red-600"}`}>
-                              {row.diff >= 0 ? "+" : ""}{row.diff.toLocaleString(undefined, { maximumFractionDigits: 0 })} ₼
+                              {row.diff >= 0 ? "+" : ""}{row.diff.toLocaleString(undefined, { maximumFractionDigits: 0 })} {getCurrencySymbol()}
                             </td>
                             <td className={`py-2 pr-4 text-right font-mono ${row.pct >= 0 ? "text-green-600" : "text-red-600"}`}>
                               {row.pct.toFixed(1)}%
@@ -797,7 +799,7 @@ export default function PricingPage() {
                         >
                           <div className="font-medium">{code}</div>
                           <div className="text-xs text-muted-foreground">
-                            {info.monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼/ay
+                            {info.monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}/ay
                           </div>
                         </button>
                       ))}
@@ -987,7 +989,7 @@ export default function PricingPage() {
                   <Button variant="outline" onClick={() => setShowAddSale(false)}>Отмена</Button>
                   {newSale.qty > 0 && newSale.price > 0 && (
                     <span className="text-sm text-muted-foreground ml-auto">
-                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</strong>
+                      Итого: <strong>{(newSale.qty * newSale.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</strong>
                       {newSale.type === "recurring" && <span className="text-green-600"> /мес</span>}
                     </span>
                   )}
@@ -1024,7 +1026,7 @@ export default function PricingPage() {
                           <td className="py-2 pr-4 font-medium">{deal.name}</td>
                           <td className="py-2 pr-4 text-muted-foreground">{deal.company?.name || "—"}</td>
                           <td className="py-2 pr-4 text-right font-mono font-medium">
-                            {(deal.valueAmount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+                            {(deal.valueAmount || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
                           </td>
                           <td className="py-2 pr-4 text-xs text-muted-foreground">
                             {deal.createdAt ? new Date(deal.createdAt).toLocaleDateString(undefined) : "—"}
@@ -1093,13 +1095,13 @@ export default function PricingPage() {
             />
             <ColorStatCard
               label="MRR допродаж"
-              value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
+              value={`${salesData.filter((s) => s.type === "recurring" && s.status === "active").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<TrendingUp className="h-4 w-4" />}
               color="green"
             />
             <ColorStatCard
               label="Единоразовые"
-              value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼`}
+              value={`${salesData.filter((s) => s.type === "one_time").reduce((sum: number, s: any) => sum + s.total, 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} ${getCurrencySymbol()}`}
               icon={<DollarSign className="h-4 w-4" />}
               color="orange"
             />
@@ -1160,8 +1162,8 @@ export default function PricingPage() {
                             <td className="py-2 pr-4">{sale.name}</td>
                             <td className="py-2 pr-4 text-xs text-muted-foreground">{sale.categoryName || "—"}</td>
                             <td className="py-2 pr-4 text-right font-mono">{sale.qty}</td>
-                            <td className="py-2 pr-4 text-right font-mono">{sale.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
-                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼</td>
+                            <td className="py-2 pr-4 text-right font-mono">{sale.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</td>
+                            <td className="py-2 pr-4 text-right font-mono font-medium">{sale.total?.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}</td>
                             <td className="py-2 pr-4 text-xs">
                               {sale.effectiveDate ? new Date(sale.effectiveDate).toLocaleDateString(undefined) : "—"}
                             </td>
@@ -1343,10 +1345,10 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
         <div className="text-right">
           <div className="text-sm text-muted-foreground">Итого Ежемесячно</div>
           <div className="text-xl font-bold text-green-600">
-            {monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+            {monthly.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
           </div>
           <div className="text-xs text-muted-foreground">
-            Ежегодно: {annual.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+            Ежегодно: {annual.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
           </div>
         </div>
       </div>
@@ -1383,7 +1385,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                 </button>
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-mono font-medium ${total > 0 ? "text-green-600" : "text-muted-foreground"}`}>
-                    {total.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+                    {total.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
                   </span>
                   <button
                     onClick={(e) => { e.stopPropagation(); setAddingServiceCat(addingServiceCat === cat ? null : cat); setExpandedCats(new Set([...expandedCats, cat])) }}
@@ -1439,7 +1441,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                               />
                             </td>
                             <td className="py-1.5 text-right font-mono">
-                              {svc.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+                              {svc.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
                             </td>
                             <td className="py-1.5 text-center">
                               <button
@@ -1500,7 +1502,7 @@ function CompanyEditor({ code, data, onSave, onDelete, saving, expandedCats, set
                         </Button>
                         {newSvc.qty > 0 && newSvc.price > 0 && (
                           <span className="text-xs text-muted-foreground self-center ml-auto">
-                            Итого: {(newSvc.qty * newSvc.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+                            Итого: {(newSvc.qty * newSvc.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} {getCurrencySymbol()}
                           </span>
                         )}
                       </div>

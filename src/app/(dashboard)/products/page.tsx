@@ -19,7 +19,7 @@ import { PageDescription } from "@/components/page-description"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS, getCurrencySymbol } from "@/lib/constants"
 
 interface Product {
   id: string
@@ -218,7 +218,7 @@ export default function ProductsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <ColorStatCard label={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} color="blue" hint={t("hintTotalProducts")} />
         <ColorStatCard label={t("statActive")} value={activeCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintActiveProducts")} />
-        <ColorStatCard label={t("statTotalValue")} value={`${totalValue.toLocaleString()} AZN`} icon={<DollarSign className="h-4 w-4" />} color="violet" hint={t("hintTotalRevenue")} />
+        <ColorStatCard label={t("statTotalValue")} value={`${totalValue.toLocaleString()} ${getCurrencySymbol()}`} icon={<DollarSign className="h-4 w-4" />} color="violet" hint={t("hintTotalRevenue")} />
         <ColorStatCard label={t("statCategories")} value={[...new Set(products.map(p => p.category))].length} icon={<Layers className="h-4 w-4" />} color="orange" hint={t("hintAvgPrice")} />
       </div>
 
@@ -269,9 +269,9 @@ export default function ProductsPage() {
               <div className="flex gap-2">
                 <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" className="flex-1" />
                 <Select value={currency} onChange={e => setCurrency(e.target.value)} className="w-24">
-                  <option value="AZN">AZN</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                    <option key={code} value={code}>{code} {sym}</option>
+                  ))}
                 </Select>
               </div>
             </div>

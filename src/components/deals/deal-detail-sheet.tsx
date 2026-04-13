@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DollarSign, Building, User, Calendar, ArrowRight, MessageSquare, Pencil, Trash2, Plus, Loader2 } from "lucide-react"
+import { fmtAmount, fmtAmountDecimal } from "@/lib/utils"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 
@@ -91,7 +92,7 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete, on
           <SheetTitle className="text-xl">{deal.name}</SheetTitle>
           <SheetDescription className="flex items-center gap-4 text-sm">
             <span className="flex items-center gap-1"><Building className="h-3.5 w-3.5" /> {deal.company}</span>
-            <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {deal.value.toLocaleString()} ₼</span>
+            <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {fmtAmount(deal.value)}</span>
           </SheetDescription>
         </SheetHeader>
 
@@ -139,7 +140,7 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete, on
                 </div>
                 <div className="p-2 rounded bg-muted/50">
                   <span className="text-muted-foreground">{t("dealValue")}</span>
-                  <p className="font-medium">{deal.value.toLocaleString()} ₼</p>
+                  <p className="font-medium">{fmtAmount(deal.value)}</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" className="w-full" onClick={onEdit}>
@@ -210,7 +211,7 @@ export function DealDetailSheet({ deal, open, onOpenChange, onEdit, onDelete, on
                         <Button size="sm" variant="ghost" onClick={() => setShowPricingForm(false)}>{t("pricingCancel")}</Button>
                         {pricingForm.qty > 0 && pricingForm.price > 0 && (
                           <span className="text-xs text-muted-foreground self-center ml-auto">
-                            {(pricingForm.qty * pricingForm.price).toLocaleString(undefined, { maximumFractionDigits: 2 })} ₼
+                            {fmtAmountDecimal(pricingForm.qty * pricingForm.price)}
                             {pricingForm.type === "recurring" && ` /${t("pricingPerMonth")}`}
                           </span>
                         )}

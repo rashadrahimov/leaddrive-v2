@@ -5,12 +5,7 @@ import { useTranslations } from "next-intl"
 import { MotionPage, MotionCard } from "@/components/ui/motion"
 import { TrendingUp, Target, DollarSign, BarChart3 } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts"
-
-function fmtCurrency(n: number): string {
-  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M ₼`
-  if (n >= 1000) return `${(n / 1000).toFixed(0)}K ₼`
-  return `${n.toLocaleString()} ₼`
-}
+import { fmtCurrencyCompact } from "@/lib/utils"
 
 interface QuotaRow {
   id: string
@@ -114,21 +109,21 @@ export default function ForecastPage() {
             <DollarSign className="h-4 w-4 text-emerald-500" />
             <span className="text-xs text-muted-foreground">Подтверждено</span>
           </div>
-          <p className="text-lg font-bold text-emerald-600">{fmtCurrency(totalCommitted)}</p>
+          <p className="text-lg font-bold text-emerald-600">{fmtCurrencyCompact(totalCommitted)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-purple-500" />
             <span className="text-xs text-muted-foreground">Лучший сценарий</span>
           </div>
-          <p className="text-lg font-bold text-purple-600">{fmtCurrency(totalBestCase)}</p>
+          <p className="text-lg font-bold text-purple-600">{fmtCurrencyCompact(totalBestCase)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="h-4 w-4 text-slate-500" />
             <span className="text-xs text-muted-foreground">Воронка (взвеш.)</span>
           </div>
-          <p className="text-lg font-bold">{fmtCurrency(totalPipeline)}</p>
+          <p className="text-lg font-bold">{fmtCurrencyCompact(totalPipeline)}</p>
         </MotionCard>
         <MotionCard className="p-4 rounded-xl border bg-card">
           <div className="flex items-center gap-2 mb-2">
@@ -136,7 +131,7 @@ export default function ForecastPage() {
             <span className="text-xs text-muted-foreground">Квота Q{selectedQuarter}</span>
           </div>
           <p className="text-lg font-bold">{overallAttainment}%</p>
-          <p className="text-[10px] text-muted-foreground">{fmtCurrency(totalActual)} / {fmtCurrency(totalQuota)}</p>
+          <p className="text-[10px] text-muted-foreground">{fmtCurrencyCompact(totalActual)} / {fmtCurrencyCompact(totalQuota)}</p>
         </MotionCard>
       </div>
 
@@ -156,11 +151,11 @@ export default function ForecastPage() {
               </linearGradient>
             </defs>
             <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtCurrency(v)} width={60} />
+            <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v: number) => fmtCurrencyCompact(v)} width={60} />
             <Tooltip
               formatter={((v: number, name: string) => {
                 const labels: Record<string, string> = { actual: "Факт", committed: "Подтвержд.", bestCase: "Лучший", pipeline: "Воронка" }
-                return [fmtCurrency(v), labels[name] || name]
+                return [fmtCurrencyCompact(v), labels[name] || name]
               }) as any}
             />
             <Area type="monotone" dataKey="actual" stroke="#10b981" fill="url(#fgActual)" strokeWidth={2} />
@@ -206,7 +201,7 @@ export default function ForecastPage() {
                   </div>
                   <div className="w-32 text-right shrink-0">
                     <span className="text-[10px] text-muted-foreground">
-                      {fmtCurrency(q.actual)} / {fmtCurrency(q.amount)}
+                      {fmtCurrencyCompact(q.actual)} / {fmtCurrencyCompact(q.amount)}
                     </span>
                   </div>
                 </div>
@@ -230,11 +225,11 @@ export default function ForecastPage() {
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
                     <span className="text-[10px] text-muted-foreground">Всего</span>
-                    <span className="text-xs font-medium">{fmtCurrency(pl.total)}</span>
+                    <span className="text-xs font-medium">{fmtCurrencyCompact(pl.total)}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-muted-foreground">Взвешенная</span>
-                    <span className="text-xs font-bold text-primary">{fmtCurrency(pl.weighted)}</span>
+                    <span className="text-xs font-bold text-primary">{fmtCurrencyCompact(pl.weighted)}</span>
                   </div>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">

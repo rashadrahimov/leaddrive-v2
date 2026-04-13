@@ -28,7 +28,7 @@ import {
   Play,
   Pause,
 } from "lucide-react"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface RecurringInvoice {
   id: string
@@ -660,9 +660,9 @@ export default function RecurringInvoicesPage() {
                     setForm((f) => ({ ...f, currency: e.target.value }))
                   }
                 >
-                  <option value="AZN">AZN</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
+                  {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                    <option key={code} value={code}>{code} {sym}</option>
+                  ))}
                 </Select>
               </div>
               <div className="space-y-1">

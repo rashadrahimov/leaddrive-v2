@@ -201,7 +201,7 @@ function BankAccountDialog({ open, onClose, onSave, isPending, isEdit, initial }
             </div>
             <div>
               <Label className="text-xs">{t("currency")}</Label>
-              <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} placeholder="AZN" />
+              <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} placeholder={DEFAULT_CURRENCY} />
             </div>
           </div>
           <label className="flex items-center gap-2 cursor-pointer">

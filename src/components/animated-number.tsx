@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { fmtAmount } from "@/lib/utils"
 
 interface AnimatedNumberProps {
   value: number
@@ -26,7 +27,7 @@ export function AnimatedNumber({
   const prevValue = useRef(trigger === "mount" ? 0 : value)
   const rafRef = useRef<number>(0)
 
-  const fmt = formatter ?? ((n: number) => Math.round(n).toLocaleString() + " ₼")
+  const fmt = formatter ?? ((n: number) => fmtAmount(n))
 
   useEffect(() => {
     const from = prevValue.current
@@ -61,8 +62,8 @@ export function AnimatedNumber({
   return <span className={className}>{fmt(display)}</span>
 }
 
-/** Format number with ₼ suffix */
-export const fmtManat = (n: number) => Math.round(n).toLocaleString() + " ₼"
+/** Format number with currency suffix (backward compat alias) */
+export const fmtManat = (n: number) => fmtAmount(n)
 
 /** Format as percentage */
 export const fmtPct = (n: number) => n.toFixed(1) + "%"

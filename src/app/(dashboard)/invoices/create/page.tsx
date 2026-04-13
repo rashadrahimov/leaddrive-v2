@@ -13,7 +13,7 @@ import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Plus, Trash2, Save, Send, Package, ChevronDown, ChevronUp } from "lucide-react"
 import { toast } from "sonner"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 interface InvoiceItem {
   id: string
@@ -668,9 +668,9 @@ export default function CreateInvoicePage() {
                 <div className="space-y-1">
                   <Label className="text-xs">{t("currency") || "Currency"}</Label>
                   <Select value={currency} onChange={(e) => setCurrency(e.target.value)} className="h-8 text-sm">
-                    <option value="AZN">AZN</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
+                    {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                      <option key={code} value={code}>{code} {sym}</option>
+                    ))}
                   </Select>
                 </div>
                 <div className="space-y-1">

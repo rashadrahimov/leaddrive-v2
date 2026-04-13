@@ -12,6 +12,7 @@ import {
 import { BUDGET_COLORS, ANIMATION, AXIS_TICK, GRID_STYLE } from "@/lib/budget-chart-theme"
 import { BudgetChartTooltip } from "@/components/budget-chart-tooltip"
 import { TrendingUp, TrendingDown, Target } from "lucide-react"
+import { getCurrencySymbol } from "@/lib/constants"
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -258,7 +259,7 @@ function VarianceCard({ title, plan, fact, variance, variancePct, positiveIsGood
         </div>
         <div className="mt-1 pt-1 border-t">
           <span className={`text-xs font-semibold tabular-nums ${isGood ? "text-green-600" : "text-red-600"}`}>
-            {variance >= 0 ? "+" : ""}{fmt(variance)} AZN
+            {variance >= 0 ? "+" : ""}{fmt(variance)} {getCurrencySymbol()}
           </span>
         </div>
       </CardContent>

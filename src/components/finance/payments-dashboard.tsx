@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
 import {
@@ -477,9 +477,9 @@ function CreateOrderDialog({
             <div>
               <Label className="text-xs">{t("currency")}</Label>
               <Select className="h-9" value={form.currency} onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}>
-                <option value="AZN">AZN</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
+                {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                  <option key={code} value={code}>{code} {sym}</option>
+                ))}
               </Select>
             </div>
           </div>

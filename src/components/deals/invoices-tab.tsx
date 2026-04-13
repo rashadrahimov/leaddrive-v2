@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Plus, FileSpreadsheet, ExternalLink } from "lucide-react"
+import { fmtAmount } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 
 interface Invoice {
   id: string
@@ -62,19 +64,19 @@ export function InvoicesTab({ dealId, orgId }: { dealId: string; orgId: string }
           <Card>
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">{t("totalInvoiced")}</p>
-              <p className="text-xl font-bold">{totalInvoiced.toLocaleString()} AZN</p>
+              <p className="text-xl font-bold">{fmtAmount(totalInvoiced)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">{t("totalPaid")}</p>
-              <p className="text-xl font-bold text-green-600">{totalPaid.toLocaleString()} AZN</p>
+              <p className="text-xl font-bold text-green-600">{fmtAmount(totalPaid)}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-4">
               <p className="text-sm text-muted-foreground">{t("balanceDue")}</p>
-              <p className="text-xl font-bold text-orange-600">{(totalInvoiced - totalPaid).toLocaleString()} AZN</p>
+              <p className="text-xl font-bold text-orange-600">{fmtAmount(totalInvoiced - totalPaid)}</p>
             </CardContent>
           </Card>
         </div>

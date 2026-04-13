@@ -16,6 +16,7 @@ import {
 } from "recharts"
 import { Plus, DollarSign, AlertTriangle, Clock, CreditCard, Trash2, ArrowRight, CheckSquare, XCircle } from "lucide-react"
 import type { Bill } from "@/lib/finance/types"
+import { getCurrencySymbol } from "@/lib/constants"
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -78,8 +79,8 @@ export function APDashboard() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard title={t("totalPayables")} value={`${fmt(stats?.total || 0)} AZN`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
-        <SummaryCard title={t("overdueTotal")} value={`${fmt(stats?.overdueTotal || 0)} AZN`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
+        <SummaryCard title={t("totalPayables")} value={`${fmt(stats?.total || 0)} ${getCurrencySymbol()}`} icon={<CreditCard className="w-5 h-5" />} color="#8b5cf6" />
+        <SummaryCard title={t("overdueTotal")} value={`${fmt(stats?.overdueTotal || 0)} ${getCurrencySymbol()}`} icon={<AlertTriangle className="w-5 h-5" />} color="#ef4444" />
         <SummaryCard title={t("overdueCount")} value={String(stats?.overdueCount || 0)} icon={<Clock className="w-5 h-5" />} color="#f59e0b" />
       </div>
 
@@ -103,7 +104,7 @@ export function APDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
-                  <Tooltip formatter={((value: number) => [`${fmt(value)} AZN`, t("tooltipAmount")]) as any} />
+                  <Tooltip formatter={((value: number) => [`${fmt(value)} ${getCurrencySymbol()}`, t("tooltipAmount")]) as any} />
                   <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
                     {stats.aging.map((_, i) => (
                       <Cell key={i} fill={AGING_COLORS[i]} />
@@ -134,7 +135,7 @@ export function APDashboard() {
                         <p className="text-xs text-muted-foreground">{t("billCount", { count: v.billCount })}</p>
                       </div>
                     </div>
-                    <p className="text-sm font-bold tabular-nums">{fmt(v.amount)} AZN</p>
+                    <p className="text-sm font-bold tabular-nums">{fmt(v.amount)} {getCurrencySymbol()}</p>
                   </div>
                 ))}
               </div>

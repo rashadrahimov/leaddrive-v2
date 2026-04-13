@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, ComposedChart, Line, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, PieChart, Pie, Cell, BarChart,
 } from "recharts"
+import { getCurrencySymbol } from "@/lib/constants"
 
 function fmt(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
@@ -115,7 +116,7 @@ export function FinanceDashboard() {
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v} />
                 <Tooltip
-                  formatter={((value: number, name: string) => [fmt(value) + " AZN", name === "revenue" ? t("revenue") : name === "expenses" ? t("expenses") : t("netProfit")]) as any}
+                  formatter={((value: number, name: string) => [fmt(value) + ` ${getCurrencySymbol()}`, name === "revenue" ? t("revenue") : name === "expenses" ? t("expenses") : t("netProfit")]) as any}
                   labelFormatter={(label) => `${label} ${year}`}
                 />
                 <Bar dataKey="revenue" fill="#22c55e" opacity={0.8} radius={[4, 4, 0, 0]} name="revenue" />
@@ -149,7 +150,7 @@ export function FinanceDashboard() {
                         <Cell key={i} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={((value: number) => fmt(value) + " AZN") as any} />
+                    <Tooltip formatter={((value: number) => fmt(value) + ` ${getCurrencySymbol()}`) as any} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="space-y-1 mt-2">
@@ -184,7 +185,7 @@ export function FinanceDashboard() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={(v) => fmt(v)} />
                   <YAxis type="category" dataKey="label" tick={{ fontSize: 11 }} width={50} />
-                  <Tooltip formatter={((value: number) => fmt(value) + " AZN") as any} />
+                  <Tooltip formatter={((value: number) => fmt(value) + ` ${getCurrencySymbol()}`) as any} />
                   <Bar dataKey="amount" radius={[0, 4, 4, 0]}>
                     {arAging.map((_, i) => (
                       <Cell key={i} fill={["#3b82f6", "#22c55e", "#f59e0b", "#f97316", "#ef4444"][i % 5]} />
@@ -229,7 +230,7 @@ function SummaryRow({ label, value, color, bold }: { label: string; value: numbe
     <div className="flex items-center justify-between">
       <span className={`text-xs ${bold ? "font-semibold" : "text-muted-foreground"}`}>{label}</span>
       <span className={`text-sm tabular-nums ${bold ? "font-bold" : "font-medium"}`} style={{ color }}>
-        {fmt(value)} AZN
+        {fmt(value)} {getCurrencySymbol()}
       </span>
     </div>
   )

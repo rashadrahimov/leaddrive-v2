@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { TrendingUp } from "lucide-react"
+import { fmtAmount } from "@/lib/utils"
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 
 export function RevenueTrend({ forecast }: { forecast: any[] }) {
@@ -51,7 +52,7 @@ export function RevenueTrend({ forecast }: { forecast: any[] }) {
             <Tooltip
               formatter={((v: number, name: string) => {
                 const labels: Record<string, string> = { actual: t("chartActual"), committed: t("chartCommitted"), bestCase: t("chartBestCase"), pipeline: t("chartPipeline") }
-                return [`₼${v.toLocaleString()}`, labels[name] || name]
+                return [fmtAmount(v), labels[name] || name]
               }) as any}
               labelStyle={{ fontSize: 11 }}
             />

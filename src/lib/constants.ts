@@ -3,12 +3,24 @@
 // ═══════════════════════════════════════════════════════════
 
 // ── Currency ──────────────────────────────────────────────
-export const DEFAULT_CURRENCY = "AZN"
+// DEFAULT_CURRENCY and INITIAL_CURRENCIES are configurable per tenant via env vars.
+// Set DEFAULT_CURRENCY env var to override (e.g. "USD", "EUR").
+export const DEFAULT_CURRENCY = process.env.NEXT_PUBLIC_DEFAULT_CURRENCY || "USD"
+
+export const CURRENCY_SYMBOLS: Record<string, string> = {
+  AZN: "₼", USD: "$", EUR: "€", GBP: "£", RUB: "₽", PLN: "zł",
+  TRY: "₺", JPY: "¥", CNY: "¥", CHF: "Fr", SEK: "kr", NOK: "kr",
+  CAD: "CA$", AUD: "A$", INR: "₹", BRL: "R$", KRW: "₩",
+}
+
+export function getCurrencySymbol(code?: string): string {
+  return CURRENCY_SYMBOLS[code || DEFAULT_CURRENCY] || code || DEFAULT_CURRENCY
+}
 
 export const INITIAL_CURRENCIES = [
-  { code: "AZN", name: "Azerbaijani Manat", symbol: "₼", exchangeRate: 1, isBase: true },
-  { code: "USD", name: "US Dollar", symbol: "$", exchangeRate: 0.59 },
-  { code: "EUR", name: "Euro", symbol: "€", exchangeRate: 0.54 },
+  { code: "USD", name: "US Dollar", symbol: "$", exchangeRate: 1, isBase: true },
+  { code: "EUR", name: "Euro", symbol: "€", exchangeRate: 0.92 },
+  { code: "GBP", name: "British Pound", symbol: "£", exchangeRate: 0.79 },
 ] as const
 
 // ── Pipeline Stages ──────────────────────────────────────

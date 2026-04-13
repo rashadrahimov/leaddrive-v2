@@ -12,7 +12,7 @@ import { Select } from "@/components/ui/select"
 import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Upload, X, Mail } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/invoice-html"
-import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
 
 export default function InvoiceSettingsPage() {
   const { data: session } = useSession()
@@ -360,9 +360,9 @@ export default function InvoiceSettingsPage() {
                 onChange={(e) => updateField("defaultCurrency", e.target.value)}
                 className="mt-1"
               >
-                <option value="AZN">AZN — Azerbaijani Manat</option>
-                <option value="USD">USD — US Dollar</option>
-                <option value="EUR">EUR — Euro</option>
+                {Object.entries(CURRENCY_SYMBOLS).map(([code, sym]) => (
+                  <option key={code} value={code}>{code} {sym}</option>
+                ))}
               </Select>
             </div>
           </div>

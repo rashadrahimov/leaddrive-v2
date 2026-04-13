@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { Handshake, Star } from "lucide-react"
+import { fmtAmount } from "@/lib/utils"
 
 const stageColors: Record<string, string> = {
   LEAD: "text-muted-foreground", QUALIFIED: "text-blue-500", PROPOSAL: "text-violet-500",
@@ -32,7 +33,7 @@ export function RecentDeals({ deals }: { deals: any[] }) {
                 </div>
                 <span className="text-[10px] text-muted-foreground">{d.company?.name || "—"}</span>
               </div>
-              <span className="text-xs font-semibold text-emerald-600 shrink-0">₼{d.valueAmount?.toLocaleString() || 0}</span>
+              <span className="text-xs font-semibold text-emerald-600 shrink-0">{fmtAmount(d.valueAmount || 0)}</span>
             </div>
           ))}
         </div>

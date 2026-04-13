@@ -8,6 +8,7 @@ import { ArrowUpDown, Search, Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { useCostModelAnalytics } from "@/lib/cost-model/hooks"
+import { fmtAmountDecimal } from "@/lib/utils"
 import type { ClientMargin } from "@/lib/cost-model/types"
 
 const STATUS_STYLES: Record<string, { labelKey: string; className: string }> = {
@@ -34,7 +35,7 @@ function getFieldValue(client: ClientMargin & { primaryRevenue: number; primaryM
 }
 
 function fmt(n: number): string {
-  return n.toLocaleString("en", { minimumFractionDigits: 2 }) + " ₼"
+  return fmtAmountDecimal(n)
 }
 
 export function ClientsTab() {

@@ -13,6 +13,8 @@ import {
   Clock, Target, FileText, Receipt, Users, Swords, Package, Plus, X,
   Pencil, Loader2, Check, Search,
 } from "lucide-react"
+import { fmtAmount } from "@/lib/utils"
+import { getCurrencySymbol } from "@/lib/constants"
 import { useFieldPermissions } from "@/hooks/use-field-permissions"
 
 interface Deal {
@@ -606,7 +608,7 @@ export function DealSidebar({ deal, orgId, offersCount, invoicesCount, onEdit, f
                       <div className="flex"><span className="text-muted-foreground w-20">{tc("loyalty")}</span><span className="font-medium">{(cr as any).loyalty}</span></div>
                     )}
                     {cr.cashbackType && cr.cashbackValue != null && (
-                      <div className="flex"><span className="text-muted-foreground w-20">{tc("cashback")}</span><span className="font-semibold text-green-600 dark:text-green-400">{cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : `${cr.cashbackValue} ₼`}</span></div>
+                      <div className="flex"><span className="text-muted-foreground w-20">{tc("cashback")}</span><span className="font-semibold text-green-600 dark:text-green-400">{cr.cashbackType === "percent" ? `${cr.cashbackValue}%` : fmtAmount(cr.cashbackValue)}</span></div>
                     )}
                     {cr.contact.email && (
                       <div className="flex"><span className="text-muted-foreground w-20">Email</span><a href={`mailto:${cr.contact.email}`} className="font-medium text-primary hover:underline truncate">{cr.contact.email}</a></div>
