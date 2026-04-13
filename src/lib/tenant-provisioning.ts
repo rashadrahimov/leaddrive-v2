@@ -102,9 +102,12 @@ export async function provisionTenant(input: TenantInput): Promise<ProvisionResu
       },
     })
 
-    // 3. Create default pipeline stages
+    // 3. Create default pipeline + stages
+    const defaultPipeline = await tx.pipeline.create({
+      data: { organizationId: organization.id, name: "Sales Pipeline", isDefault: true, sortOrder: 0 },
+    })
     for (const s of DEFAULT_PIPELINE_STAGES) {
-      await tx.pipelineStage.create({ data: { organizationId: organization.id, ...s } })
+      await tx.pipelineStage.create({ data: { organizationId: organization.id, pipelineId: defaultPipeline.id, ...s } })
     }
 
     // 4. Create default SLA policies

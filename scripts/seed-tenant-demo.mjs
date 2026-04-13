@@ -73,25 +73,53 @@ async function main() {
   }
   console.log(`Team members: ${teamMembers.length}`)
 
-  // ─── Pipeline Stages ───
+  // ─── Pipeline + Stages ───
+  let pipeline = await prisma.pipeline.findFirst({ where: { organizationId: orgId, isDefault: true } })
+  if (!pipeline) {
+    pipeline = await prisma.pipeline.create({
+      data: { organizationId: orgId, name: "Sales Pipeline", isDefault: true, sortOrder: 0 },
+    })
+    console.log("Pipeline: created")
+  } else {
+    console.log(`Pipeline: ${pipeline.name} (existing)`)
+  }
+
   let stages = await prisma.pipelineStage.findMany({
-    where: { organizationId: orgId },
+    where: { organizationId: orgId, pipelineId: pipeline.id },
     orderBy: { sortOrder: "asc" },
   })
   if (stages.length === 0) {
-    const stageData = [
-      { name: "LEAD", displayName: "New Lead", color: "#6366f1", probability: 10, sortOrder: 0 },
-      { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 1 },
-      { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 2 },
-      { name: "NEGOTIATION", displayName: "Negotiation", color: "#8b5cf6", probability: 75, sortOrder: 3 },
-      { name: "WON", displayName: "Won", color: "#10b981", probability: 100, sortOrder: 4, isWon: true },
-      { name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 5, isLost: true },
-    ]
-    for (const s of stageData) {
-      await prisma.pipelineStage.create({ data: { ...s, organizationId: orgId } })
+    // Check if stages exist without pipelineId (legacy provisioning) and fix them
+    const orphanStages = await prisma.pipelineStage.findMany({
+      where: { organizationId: orgId, pipelineId: null },
+    })
+    if (orphanStages.length > 0) {
+      for (const s of orphanStages) {
+        await prisma.pipelineStage.update({ where: { id: s.id }, data: { pipelineId: pipeline.id } })
+      }
+      stages = await prisma.pipelineStage.findMany({
+        where: { organizationId: orgId, pipelineId: pipeline.id },
+        orderBy: { sortOrder: "asc" },
+      })
+      console.log(`Pipeline stages: ${stages.length} (fixed orphans → linked to pipeline)`)
+    } else {
+      const stageData = [
+        { name: "LEAD", displayName: "New Lead", color: "#6366f1", probability: 10, sortOrder: 0 },
+        { name: "QUALIFIED", displayName: "Qualified", color: "#3b82f6", probability: 25, sortOrder: 1 },
+        { name: "PROPOSAL", displayName: "Proposal", color: "#f59e0b", probability: 50, sortOrder: 2 },
+        { name: "NEGOTIATION", displayName: "Negotiation", color: "#8b5cf6", probability: 75, sortOrder: 3 },
+        { name: "WON", displayName: "Won", color: "#10b981", probability: 100, sortOrder: 4, isWon: true },
+        { name: "LOST", displayName: "Lost", color: "#ef4444", probability: 0, sortOrder: 5, isLost: true },
+      ]
+      for (const s of stageData) {
+        await prisma.pipelineStage.create({ data: { ...s, organizationId: orgId, pipelineId: pipeline.id } })
+      }
+      stages = await prisma.pipelineStage.findMany({
+        where: { organizationId: orgId, pipelineId: pipeline.id },
+        orderBy: { sortOrder: "asc" },
+      })
+      console.log(`Pipeline stages: ${stages.length} (created)`)
     }
-    stages = await prisma.pipelineStage.findMany({ where: { organizationId: orgId }, orderBy: { sortOrder: "asc" } })
-    console.log("Pipeline stages: created")
   } else {
     console.log(`Pipeline stages: ${stages.length} (existing)`)
   }
@@ -179,10 +207,10 @@ async function main() {
   for (const d of deals) {
     const existing = await prisma.deal.findFirst({ where: { organizationId: orgId, name: d.name } })
     if (!existing) {
-      const stageObj = stages.find((s) => s.name === d.stage)
       await prisma.deal.create({
         data: {
           organizationId: orgId,
+          pipelineId: pipeline.id,
           name: d.name,
           companyId: createdCompanies[d.companyIdx].id,
           contactId: createdContacts[d.contactIdx].id,
