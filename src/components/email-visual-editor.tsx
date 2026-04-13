@@ -216,9 +216,9 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
     }
 
     return (
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg flex flex-col flex-1" style={{ minHeight: 0 }}>
         {/* Preview toggle toolbar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30">
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/30 flex-shrink-0">
           <span className="text-xs font-medium text-muted-foreground">{labels?.title || t("visualEditor")}</span>
           <div className="flex items-center gap-1">
             <button
@@ -250,8 +250,8 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
           </div>
         </div>
 
-        {/* Editor container — MUST be visible for Unlayer to initialize */}
-        <div style={{ position: "relative", minHeight: 600 }}>
+        {/* Editor container — flex-1 fills all available space */}
+        <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
           {loading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-muted/60">
               <div className="text-center">
@@ -282,7 +282,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
             style={{
               flex: 1,
               display: "flex",
-              minHeight: 600,
+              minHeight: 0,
             }}
           />
         </div>

@@ -230,9 +230,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
         </div>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-        <div className={cn("flex-1 min-h-0", isFullscreen ? "p-4" : "p-6 overflow-y-auto")}>
+        <div className={cn("flex-1 min-h-0", isFullscreen ? "p-4 flex flex-col" : "p-6 overflow-y-auto")}>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
-          <div className="grid gap-3">
+          <div className={cn("gap-3", isFullscreen ? "flex flex-col flex-1 min-h-0" : "grid")}>
             {/* Name + Category — compact row in visual mode */}
             <div className={cn("grid gap-3", isFullscreen ? "grid-cols-4" : "grid-cols-2")}>
               <div>
@@ -287,9 +287,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
             </div>
 
             {/* Editor type toggle */}
-            <div>
-              <Label className="text-xs uppercase text-muted-foreground mb-2 block">{tc("content")}</Label>
-              <div className="flex items-center gap-2 mb-3">
+            <div className={cn(isFullscreen && "flex flex-col flex-1 min-h-0")}>
+              <Label className="text-xs uppercase text-muted-foreground mb-2 block flex-shrink-0">{tc("content")}</Label>
+              <div className="flex items-center gap-2 mb-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => update("editorType", "visual")}
