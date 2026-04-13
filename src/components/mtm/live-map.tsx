@@ -1,7 +1,19 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle } from "react-leaflet"
+import { useEffect } from "react"
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle, useMap } from "react-leaflet"
 import L from "leaflet"
+
+// Force Leaflet to recalculate container size after mount
+function InvalidateSize() {
+  const map = useMap()
+  useEffect(() => {
+    // Small delay to let parent container finish layout
+    const timer = setTimeout(() => map.invalidateSize(), 200)
+    return () => clearTimeout(timer)
+  }, [map])
+  return null
+}
 
 interface AgentLocation {
   agentId: string
@@ -64,7 +76,8 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
     .map(p => [p.latitude, p.longitude])
 
   return (
-    <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}>
+    <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%", minHeight: 400 }}>
+      <InvalidateSize />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

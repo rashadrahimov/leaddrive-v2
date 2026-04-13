@@ -1,7 +1,17 @@
 "use client"
 
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet"
+import { useEffect } from "react"
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet"
 import L from "leaflet"
+
+function InvalidateSize() {
+  const map = useMap()
+  useEffect(() => {
+    const timer = setTimeout(() => map.invalidateSize(), 200)
+    return () => clearTimeout(timer)
+  }, [map])
+  return null
+}
 
 interface RoutePoint {
   id: string
@@ -49,7 +59,8 @@ export default function MtmRouteMap({ points }: Props) {
   ])
 
   return (
-    <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+    <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%", minHeight: 400 }}>
+      <InvalidateSize />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
