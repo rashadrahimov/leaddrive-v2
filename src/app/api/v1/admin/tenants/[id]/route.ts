@@ -182,7 +182,15 @@ export async function DELETE(
     })
 
     // Hard delete (cascade)
-    await hardDeleteTenant(id)
+    try {
+      await hardDeleteTenant(id)
+    } catch (deleteErr: any) {
+      console.error(`[TENANT] Hard delete failed for "${existing.name}":`, deleteErr)
+      return NextResponse.json(
+        { error: `Deletion failed: ${deleteErr.message || "Unknown error"}` },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
