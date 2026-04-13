@@ -1,25 +1,15 @@
 "use client"
 
 import { useRef, useCallback, useEffect, useState, useImperativeHandle, forwardRef } from "react"
-import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Monitor, Smartphone, Download } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
-// Unlayer must be loaded client-side only
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const EmailEditor: any = dynamic(() => import("react-email-editor").then(mod => mod.default) as any, {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
-      <div className="text-center">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">...</p>
-      </div>
-    </div>
-  ),
-})
+// Direct Unlayer integration — bypasses react-email-editor wrapper
+// which has stale module-level closure issues with Next.js dynamic + React 19
+
+const UNLAYER_SCRIPT_URL = "https://editor.unlayer.com/embed.js?2"
 
 const MERGE_TAGS = {
   client_name: { name: "Client Name", value: "{{client_name}}" },
@@ -34,6 +24,36 @@ const MERGE_TAGS = {
   year: { name: "Year", value: "{{year}}" },
 }
 
+/** Load Unlayer embed script once */
+function loadUnlayerScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    // Already loaded
+    if (typeof window !== "undefined" && (window as any).unlayer) {
+      resolve()
+      return
+    }
+    // Check if script tag exists but hasn't finished loading
+    const existing = document.querySelector(`script[src*="editor.unlayer.com"]`)
+    if (existing) {
+      existing.addEventListener("load", () => resolve())
+      // If already loaded (cached), unlayer should exist
+      if ((window as any).unlayer) { resolve(); return }
+      // Fallback: poll briefly in case load event already fired
+      const check = setInterval(() => {
+        if ((window as any).unlayer) { clearInterval(check); resolve() }
+      }, 100)
+      setTimeout(() => { clearInterval(check); reject(new Error("Unlayer script timeout")) }, 15000)
+      return
+    }
+    const script = document.createElement("script")
+    script.src = UNLAYER_SCRIPT_URL
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Failed to load Unlayer embed script"))
+    document.head.appendChild(script)
+  })
+}
+
 export interface EmailVisualEditorHandle {
   exportHtml: () => Promise<{ design: any; html: string }>
 }
@@ -45,30 +65,103 @@ interface Props {
   mergeTagNames?: Record<string, string>
 }
 
+let editorIdCounter = 0
+
 export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
   function EmailVisualEditor({ designJson, onExport, labels, mergeTagNames }, ref) {
     const t = useTranslations("emailTemplates")
     const editorRef = useRef<any>(null)
+    const containerIdRef = useRef<string>(`unlayer-editor-${++editorIdCounter}`)
     const [ready, setReady] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
+    const destroyedRef = useRef(false)
 
-    const onReady = useCallback((unlayer: any) => {
-      editorRef.current = unlayer
+    // Initialize Unlayer editor directly
+    useEffect(() => {
+      destroyedRef.current = false
+      let editorInstance: any = null
 
-      if (designJson) {
-        unlayer.loadDesign(designJson)
+      const init = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+          await loadUnlayerScript()
+
+          if (destroyedRef.current) return
+
+          const unlayer = (window as any).unlayer
+          if (!unlayer) {
+            setError("Unlayer global not found after script load")
+            setLoading(false)
+            return
+          }
+
+          // Build merge tags with optional translated names
+          const tags: Record<string, any> = {}
+          for (const [key, val] of Object.entries(MERGE_TAGS)) {
+            tags[key] = { ...val, name: mergeTagNames?.[key] || val.name }
+          }
+
+          editorInstance = unlayer.createEditor({
+            id: containerIdRef.current,
+            displayMode: "email",
+            appearance: { theme: "modern_light" },
+            features: { stockImages: { enabled: true, safeSearch: true } },
+            tools: {
+              image: { enabled: true },
+              button: { enabled: true },
+              divider: { enabled: true },
+              html: { enabled: true },
+              social: { enabled: true },
+              video: { enabled: true },
+            },
+            mergeTags: tags,
+            source: { name: "react-email-editor", version: "1.8.0" },
+          })
+
+          editorInstance.addEventListener("editor:ready", () => {
+            if (destroyedRef.current) return
+            editorRef.current = editorInstance
+
+            if (designJson) {
+              editorInstance.loadDesign(designJson)
+            }
+
+            editorInstance.setMergeTags(tags)
+            setReady(true)
+            setLoading(false)
+          })
+        } catch (err: any) {
+          if (!destroyedRef.current) {
+            setError(err.message || "Failed to initialize editor")
+            setLoading(false)
+          }
+        }
       }
 
-      // Build merge tags with optional translated names
-      const tags: Record<string, any> = {}
-      for (const [key, val] of Object.entries(MERGE_TAGS)) {
-        tags[key] = { ...val, name: mergeTagNames?.[key] || val.name }
-      }
-      unlayer.setMergeTags(tags)
-      setReady(true)
-    }, [designJson, mergeTagNames])
+      init()
 
-    // Promise-based export — reliable, no setTimeout hacks
+      return () => {
+        destroyedRef.current = true
+        if (editorInstance) {
+          try { editorInstance.destroy() } catch {}
+        }
+        editorRef.current = null
+        setReady(false)
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
+    // Load design when designJson changes after init
+    useEffect(() => {
+      if (ready && editorRef.current && designJson) {
+        editorRef.current.loadDesign(designJson)
+      }
+    }, [designJson, ready])
+
+    // Promise-based export
     const exportHtmlAsync = useCallback((): Promise<{ design: any; html: string }> => {
       return new Promise((resolve, reject) => {
         if (!editorRef.current) {
@@ -98,7 +191,6 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
     const togglePreview = (mode: "desktop" | "mobile") => {
       setPreviewMode(mode)
       if (editorRef.current) {
-        // Use Unlayer's native preview API
         editorRef.current.showPreview(mode)
       }
     }
@@ -138,22 +230,31 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
           </div>
         </div>
 
-        {/* Editor */}
-        <EmailEditor
-          onReady={onReady}
-          minHeight={600}
-          options={{
-            appearance: { theme: "modern_light" },
-            features: { stockImages: { enabled: true, safeSearch: true } },
-            tools: {
-              image: { enabled: true },
-              button: { enabled: true },
-              divider: { enabled: true },
-              html: { enabled: true },
-              social: { enabled: true },
-              video: { enabled: true },
-            },
-            mergeTags: MERGE_TAGS,
+        {/* Editor container */}
+        {loading && (
+          <div className="flex items-center justify-center h-[600px] bg-muted/30">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">{labels?.loading || "Loading editor..."}</p>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center justify-center h-[600px] bg-destructive/5">
+            <div className="text-center">
+              <p className="text-sm text-destructive font-medium">Editor failed to load</p>
+              <p className="text-xs text-muted-foreground mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
+        <div
+          id={containerIdRef.current}
+          style={{
+            flex: 1,
+            display: loading || error ? "none" : "flex",
+            minHeight: 600,
           }}
         />
       </div>
