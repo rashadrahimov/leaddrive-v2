@@ -84,33 +84,33 @@ interface Props {
 
 export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [ready, setReady] = useState(false)
+  const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
 
-  // Wait for container to have real dimensions before rendering MapContainer
-  // This prevents Leaflet from capturing wrong viewport size during initialization
+  // Measure container and pass exact pixel dimensions to MapContainer
+  // This avoids the "height: 100%" inheritance chain that breaks Leaflet
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
 
-    const check = () => {
+    const measure = () => {
       const { width, height } = el.getBoundingClientRect()
       if (width > 100 && height > 100) {
-        setReady(true)
+        setDimensions({ width: Math.floor(width), height: Math.floor(height) })
       }
     }
 
-    // Check immediately
-    check()
+    // Measure immediately
+    measure()
 
-    // Also observe for layout changes
+    // Re-measure on resize
     let observer: ResizeObserver | null = null
     if (typeof ResizeObserver !== "undefined") {
-      observer = new ResizeObserver(() => check())
+      observer = new ResizeObserver(() => measure())
       observer.observe(el)
     }
 
-    // Fallback timer
-    const fallback = setTimeout(() => setReady(true), 500)
+    // Fallback
+    const fallback = setTimeout(measure, 300)
 
     return () => {
       observer?.disconnect()
@@ -129,8 +129,8 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
 
   return (
     <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
-      {ready ? (
-        <MapContainer center={center} zoom={12} style={{ height: "100%", width: "100%" }}>
+      {dimensions ? (
+        <MapContainer center={center} zoom={12} style={{ height: dimensions.height, width: dimensions.width }}>
           <InvalidateSize />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
