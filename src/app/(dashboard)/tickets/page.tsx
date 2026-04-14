@@ -273,7 +273,7 @@ export default function TicketsPage() {
           <PageDescription text={t("pageDescription")} />
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex rounded-lg border">
+          <div data-tour-id="tickets-kanban-toggle" className="flex rounded-lg border">
             <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("list")}</button>
             <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("kanban")}</button>
           </div>
@@ -285,7 +285,7 @@ export default function TicketsPage() {
         <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" hint={t("hintTotalTickets")} />
         <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" hint={t("hintFirstResponseRate")} />
         <ColorStatCard label={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} color="orange" />
-        <ColorStatCard data-tour-id="tickets-sla" label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintSlaBreached")} />
+        <div data-tour-id="tickets-sla"><ColorStatCard label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintSlaBreached")} /></div>
         <ColorStatCard label={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintAvgResolution")} />
       </div>
 

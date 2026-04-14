@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
 import { ArrowLeft, ArrowRight, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen, ChevronLeft, ChevronRight, Keyboard, Timer, Play } from "lucide-react"
 import { InfoHint } from "@/components/info-hint"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { useTicketShortcuts, TICKET_SHORTCUTS } from "@/hooks/use-ticket-shortcuts"
 
 interface TicketData {
@@ -111,6 +112,7 @@ export default function TicketDetailPage() {
   const t360 = useTranslations("customer360")
   const tsk = useTranslations("ticketShortcuts")
   const params = useParams()
+  useAutoTour("ticketDetail")
   const { data: session } = useSession()
   const ticketId = params.id as string
   const [ticket, setTicket] = useState<TicketData | null>(null)
@@ -496,7 +498,7 @@ export default function TicketDetailPage() {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg font-bold truncate">{ticket.subject}</h1>
-            <span className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
+            <span data-tour-id="ticket-header-sla" className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
             {/* Handle timer */}
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Timer className="h-3 w-3" />
@@ -535,7 +537,7 @@ export default function TicketDetailPage() {
           {/* Macros dropdown — click toggle */}
           {macros.filter((m: any) => m.isActive).length > 0 && (
             <div className="relative">
-              <Button size="sm" variant="outline" onClick={() => setShowMacrosMenu(!showMacrosMenu)}>
+              <Button data-tour-id="ticket-macros" size="sm" variant="outline" onClick={() => setShowMacrosMenu(!showMacrosMenu)}>
                 <Zap className="h-3.5 w-3.5 mr-1" /> {tc("macros") || "Macros"}
               </Button>
               {showMacrosMenu && (
@@ -785,7 +787,7 @@ export default function TicketDetailPage() {
           </Card>
 
           {/* Comments */}
-          <Card>
+          <Card data-tour-id="ticket-comments">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-base">Комментарии ({filteredComments.length})</CardTitle>
               <Button variant="ghost" size="sm" onClick={() => setShowInternal(!showInternal)}>
@@ -866,6 +868,7 @@ export default function TicketDetailPage() {
 
                   {/* Da Vinci buttons */}
                   <Button
+                    data-tour-id="ticket-ai-draft"
                     variant="outline"
                     size="sm"
                     onClick={() => handleAiAction("reply")}
@@ -876,6 +879,7 @@ export default function TicketDetailPage() {
                     {t("aiReply")}
                   </Button>
                   <Button
+                    data-tour-id="ticket-ai-summary"
                     variant="outline"
                     size="sm"
                     onClick={() => handleAiAction("summary")}
@@ -886,6 +890,7 @@ export default function TicketDetailPage() {
                     {t("aiSummary")}
                   </Button>
                   <Button
+                    data-tour-id="ticket-ai-steps"
                     variant="outline"
                     size="sm"
                     onClick={() => handleAiAction("steps")}

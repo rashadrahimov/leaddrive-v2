@@ -22,9 +22,7 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     steps: [
       { targetId: "dashboard-stats", titleKey: "statsTitle", descKey: "statsDesc" },
       { targetId: "dashboard-pipeline", titleKey: "pipelineTitle", descKey: "pipelineDesc" },
-      { targetId: "dashboard-tasks", titleKey: "tasksTitle", descKey: "tasksDesc" },
       { targetId: "dashboard-activity", titleKey: "activityTitle", descKey: "activityDesc" },
-      { targetId: "dashboard-widget-settings", titleKey: "widgetTitle", descKey: "widgetDesc" },
     ],
   },
 
@@ -54,7 +52,6 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
       { targetId: "tickets-list", titleKey: "listTitle", descKey: "listDesc" },
       { targetId: "tickets-sla", titleKey: "slaTitle", descKey: "slaDesc" },
       { targetId: "tickets-kanban-toggle", titleKey: "kanbanTitle", descKey: "kanbanDesc" },
-      { targetId: "tickets-auto-assign", titleKey: "autoTitle", descKey: "autoDesc" },
       { targetId: "tickets-new", titleKey: "newTitle", descKey: "newDesc" },
     ],
   },

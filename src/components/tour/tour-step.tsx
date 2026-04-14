@@ -16,6 +16,7 @@ interface TourStepProps {
   onSkip: () => void
   isFirst: boolean
   isLast: boolean
+  labels?: { back?: string; next?: string; done?: string }
 }
 
 export function TourStep({
@@ -29,6 +30,7 @@ export function TourStep({
   onSkip,
   isFirst,
   isLast,
+  labels,
 }: TourStepProps) {
   const [pos, setPos] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [popoverSide, setPopoverSide] = useState<"bottom" | "top">("bottom")
@@ -36,7 +38,11 @@ export function TourStep({
 
   useEffect(() => {
     const el = document.querySelector(`[data-tour-id="${targetId}"]`)
-    if (!el) return
+    if (!el) {
+      // Target not found — auto-skip to next step after short delay
+      const timer = setTimeout(() => onNext(), 100)
+      return () => clearTimeout(timer)
+    }
 
     const rect = el.getBoundingClientRect()
     setPos({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
@@ -161,11 +167,11 @@ export function TourStep({
             <div className="flex items-center gap-1.5">
               {!isFirst && (
                 <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={onPrev}>
-                  <ChevronLeft className="h-3 w-3 mr-0.5" /> Back
+                  <ChevronLeft className="h-3 w-3 mr-0.5" /> {labels?.back || "Back"}
                 </Button>
               )}
               <Button size="sm" className="h-7 px-3 text-xs" onClick={isLast ? onSkip : onNext}>
-                {isLast ? "Done" : "Next"}
+                {isLast ? (labels?.done || "Done") : (labels?.next || "Next")}
                 {!isLast && <ChevronRight className="h-3 w-3 ml-0.5" />}
               </Button>
             </div>

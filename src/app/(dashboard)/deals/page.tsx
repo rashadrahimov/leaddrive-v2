@@ -291,6 +291,7 @@ export default function DealsPage() {
           </div>
           {pipelines.length > 1 && (
             <Select
+              data-tour-id="deals-pipeline-select"
               value={selectedPipelineId}
               onChange={e => setSelectedPipelineId(e.target.value)}
               className="w-[180px]"
@@ -515,7 +516,7 @@ export default function DealsPage() {
       ) : (
         /* KANBAN VIEW */
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
+          <div data-tour-id="deals-summary" className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
             <ColorStatCard label={t("statTotal")} value={filteredDeals.length} icon={<Handshake className="h-4 w-4" />} color="blue" hint={t("hintTotalDeals")} />
             <ColorStatCard label={t("statPipelineValue")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintPipelineValue")} />
             <ColorStatCard label={t("statWon")} value={`${wonValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintWonValue")} />
@@ -575,6 +576,7 @@ export default function DealsPage() {
             </div>
           )}
 
+          <div data-tour-id="deals-card">
           <KanbanBoard
             stages={STAGES}
             deals={kanbanDeals}
@@ -589,6 +591,7 @@ export default function DealsPage() {
               fetchDeals()
             }}
           />
+          </div>
         </>
       )}
 

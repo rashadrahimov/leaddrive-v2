@@ -363,7 +363,7 @@ export default function ReportsPage() {
       {/* Main grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Financial Overview (T43) */}
-        <Card>
+        <Card data-tour-id="reports-pipeline-funnel">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
@@ -438,7 +438,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Lead Funnel -- Pyramid (C4.2) */}
-        <Card>
+        <Card data-tour-id="reports-lead-funnel">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>

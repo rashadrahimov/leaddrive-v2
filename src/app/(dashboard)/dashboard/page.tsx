@@ -126,7 +126,7 @@ export default function DashboardPage() {
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (
-        <MotionList data-tour-id="dashboard-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" staggerDelay={0.06}>
+        <div data-tour-id="dashboard-stats"><MotionList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" staggerDelay={0.06}>
           <MotionItem>
             <KpiCard
               title={t("kpiRevenue")}
@@ -181,7 +181,7 @@ export default function DashboardPage() {
               color="#ec4899"
             />
           </MotionItem>
-        </MotionList>
+        </MotionList></div>
       )}
 
       {/* ═══ Risks Banner ═══ */}

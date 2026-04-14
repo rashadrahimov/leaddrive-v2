@@ -12,6 +12,7 @@ import { TOUR_DEFINITIONS } from "@/lib/tour-definitions"
  */
 export function TourRenderer() {
   const t = useTranslations("tour")
+  const tc = useTranslations("common")
   const { activeTour, currentStep, nextStep, prevStep, skipTour, completeTour, setTotalSteps } = useTour()
 
   const tourDef = activeTour ? TOUR_DEFINITIONS[activeTour] : null
@@ -55,6 +56,7 @@ export function TourRenderer() {
       onSkip={skipTour}
       isFirst={currentStep === 0}
       isLast={currentStep === totalSteps - 1}
+      labels={{ back: tc("back"), next: tc("next"), done: tc("done") }}
     />
   )
 }

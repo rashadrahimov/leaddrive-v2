@@ -255,11 +255,11 @@ export default function LeadsPage() {
             <ColorStatCard label={t("title")} value={leads.length} icon={<UserPlus className="h-4 w-4" />} color="blue" hint={t("hintTotalLeads")} />
             <ColorStatCard label={t("hotLeads")} value={hotLeads} icon={<Flame className="h-4 w-4" />} color="orange" hint={t("hintHotLeads")} />
             <ColorStatCard label={t("avgScore")} value={`${avgScore}/100`} icon={<TrendingUp className="h-4 w-4" />} color="indigo" hint={t("hintColScore")} />
-            <ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" />
+            <div data-tour-id="leads-convert"><ColorStatCard label={t("statusConverted")} value={statusCounts.converted || 0} icon={<CheckCircle className="h-4 w-4" />} color="green" /></div>
           </div>
 
           {/* Status filter tabs */}
-          <div className="flex flex-wrap gap-2">
+          <div data-tour-id="leads-status-filter" className="flex flex-wrap gap-2">
             <Button
               variant={statusFilter === "all" ? "default" : "outline"}
               size="sm"
