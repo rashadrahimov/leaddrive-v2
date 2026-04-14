@@ -2748,7 +2748,8 @@
     "automatic": "Avtomatik",
     "configured": "Konfiqurasiya edilib",
     "briefingLanguage": "İcmal dili",
-    "saved": "Saxlandı!"
+    "saved": "Saxlandı!",
+    "resetTours": "Turları sıfırla"
   },
   "tour": {
     "dashboard": {

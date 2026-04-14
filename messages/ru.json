@@ -2753,7 +2753,8 @@
     "automatic": "Автоматически",
     "configured": "Настроено",
     "briefingLanguage": "Язык дайджеста",
-    "saved": "Сохранено!"
+    "saved": "Сохранено!",
+    "resetTours": "Сбросить туры"
   },
   "tour": {
     "dashboard": {

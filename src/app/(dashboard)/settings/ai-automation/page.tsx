@@ -12,7 +12,7 @@ import {
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare,
 } from "lucide-react"
-import { useAutoTour } from "@/components/tour/tour-provider"
+import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface ShadowAction {
@@ -49,8 +49,10 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
 export default function AiAutomationPage() {
   const { data: session } = useSession()
   const t = useTranslations("aiSettings")
+  const { resetAllTours } = useTour()
   useAutoTour("aiAutomation")
   const orgId = (session?.user as any)?.organizationId
+  const [toursReset, setToursReset] = useState(false)
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
   const [shadowTotal, setShadowTotal] = useState(0)
@@ -190,9 +192,14 @@ export default function AiAutomationPage() {
             {t("subtitle")}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={fetchData}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => { resetAllTours(); setToursReset(true); setTimeout(() => setToursReset(false), 3000) }}>
+            {toursReset ? "✓" : "↺"} {t("resetTours")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchData}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}
+          </Button>
+        </div>
       </div>
 
       {/* Budget Card */}

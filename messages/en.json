@@ -2753,7 +2753,8 @@
     "automatic": "Automatic",
     "configured": "Configured",
     "briefingLanguage": "Briefing language",
-    "saved": "Saved!"
+    "saved": "Saved!",
+    "resetTours": "Reset Tours"
   },
   "tour": {
     "dashboard": {
