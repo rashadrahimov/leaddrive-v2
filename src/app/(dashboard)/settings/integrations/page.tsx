@@ -11,6 +11,8 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Webhook, Calendar, MessageSquare, Zap, Plus, Trash2, Check, X, ExternalLink, Copy, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface WebhookData {
   id: string
@@ -39,6 +41,7 @@ const WEBHOOK_EVENTS = [
 export default function IntegrationsPage() {
   const { data: session } = useSession()
   const t = useTranslations("integrationsPage")
+  useAutoTour("integrations")
   const orgId = session?.user?.organizationId
 
   // Webhooks
@@ -182,7 +185,7 @@ export default function IntegrationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <h1 data-tour-id="integrations-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="integrations" /></h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
         <PageDescription text={t("description")} />
       </div>

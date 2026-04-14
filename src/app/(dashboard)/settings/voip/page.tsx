@@ -11,11 +11,14 @@ import { Switch } from "@/components/ui/switch"
 import { Select } from "@/components/ui/select"
 import { Phone, Save, Loader2, TestTube, CheckCircle, XCircle } from "lucide-react"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 type Provider = "twilio" | "threecx" | "asterisk" | "custom-sip"
 
 export default function VoipSettingsPage() {
   const t = useTranslations("voipSettings")
+  useAutoTour("voip")
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -205,10 +208,15 @@ export default function VoipSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <PageDescription
-        title={t("title")}
-        description={t("description")}
-      />
+      <div data-tour-id="voip-header" className="flex items-center gap-2">
+        <div className="flex-1">
+          <PageDescription
+            title={t("title")}
+            description={t("description")}
+          />
+        </div>
+        <TourReplayButton tourId="voip" />
+      </div>
 
       {/* Provider Selector */}
       <Card>

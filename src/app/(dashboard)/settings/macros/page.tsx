@@ -11,6 +11,8 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Plus, Trash2, Zap, GripVertical } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface MacroAction {
   type: string
@@ -44,6 +46,7 @@ const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
 export default function MacrosSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("macrosPage")
+  useAutoTour("macros")
   const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
   const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
@@ -133,7 +136,7 @@ export default function MacrosSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 data-tour-id="macros-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="macros" /></h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("description")} />
         </div>

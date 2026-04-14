@@ -12,6 +12,8 @@ import {
   Settings2, Plus, Trash2, Shield, ChevronRight, X, Loader2, CheckCircle2,
   Pencil, GripVertical, ArrowUp, ArrowDown, AlertCircle, Save,
 } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface PipelineStage {
   id: string
@@ -110,6 +112,7 @@ interface Pipeline {
 export default function PipelinesSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("pipelineSettings")
+  useAutoTour("pipelines")
   const tc = useTranslations("common")
   const orgId = session?.user?.organizationId ? String(session.user.organizationId) : undefined
 
@@ -436,9 +439,9 @@ export default function PipelinesSettingsPage() {
       </AnimatePresence>
 
       <div>
-        <h1 className="text-lg font-bold tracking-tight flex items-center gap-2">
+        <h1 data-tour-id="pipelines-header" className="text-lg font-bold tracking-tight flex items-center gap-2">
           <Settings2 className="h-5 w-5 text-muted-foreground" />
-          {t("title")}
+          {t("title")} <TourReplayButton tourId="pipelines" />
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           {t("subtitle")}

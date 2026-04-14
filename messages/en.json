@@ -2973,6 +2973,102 @@
       "statsDesc": "Track approval rate: approved vs rejected. Low rate? Review pricing or value proposition.",
       "newTitle": "Win the Deal",
       "newDesc": "Link to deal for conversion tracking. Offer → Contract → Invoice = full revenue chain."
+    },
+    "settingsHub": {
+      "gridTitle": "Control Center",
+      "gridDesc": "All CRM settings in one place. Start with AI Automation and Workflows — they have the biggest impact."
+    },
+    "aiAutomation": {
+      "budgetTitle": "Control AI Spending",
+      "budgetDesc": "Set daily limit, watch usage. If bar hits red — AI features pause until tomorrow.",
+      "deliveryTitle": "Where Do Alerts Go?",
+      "deliveryDesc": "Configure email, Telegram, Slack delivery. Morning briefings and anomaly alerts go to all channels you set up.",
+      "togglesTitle": "Pick Your Features",
+      "togglesDesc": "Each AI feature has its own toggle. Start with Analytics (safe), then enable Autopilot in shadow mode."
+    },
+    "workflows": {
+      "listTitle": "Automation Rules",
+      "listDesc": "When X happens → do Y. Example: deal created → notify Slack + create follow-up task. Active rules run automatically.",
+      "newTitle": "Automate Repetition",
+      "newDesc": "Pick entity (deal/ticket/lead), trigger (created/updated), conditions, and actions. Test before activating."
+    },
+    "pipelines": {
+      "headerTitle": "Design Your Sales Process",
+      "headerDesc": "Define stages and win probability per stage. Multiple pipelines for different sales types. Default pipeline applies to new deals."
+    },
+    "users": {
+      "listTitle": "Your Team",
+      "listDesc": "Roles control access: admin > manager > agent. Skills affect ticket auto-assignment. Availability = gets new tickets.",
+      "newTitle": "Add Team Member",
+      "newDesc": "Set role, skills, and max tickets. They'll receive daily AI briefings if admin/manager role."
+    },
+    "slaPolicies": {
+      "headerTitle": "Set Response Standards",
+      "headerDesc": "Define first response and resolution times per priority. Breaches trigger escalation rules (notifications, priority bump, reassignment)."
+    },
+    "macros": {
+      "headerTitle": "One-Click Actions",
+      "headerDesc": "Create macros for ticket agents: change status + add comment + reassign in one click. Assign keyboard shortcuts for speed."
+    },
+    "channels": {
+      "headerTitle": "Connect Your Channels",
+      "headerDesc": "WhatsApp, Telegram, Facebook, email — connect here. Messages flow into Inbox and auto-create tickets."
+    },
+    "integrations": {
+      "headerTitle": "Extend Your CRM",
+      "headerDesc": "Webhooks push events to external systems. API keys let other apps read/write CRM data. Scope permissions per key."
+    },
+    "customFields": {
+      "headerTitle": "Make CRM Yours",
+      "headerDesc": "Add fields to any entity: text, number, date, dropdown. They appear in forms and can be used in workflow conditions."
+    },
+    "currencies": {
+      "headerTitle": "Multi-Currency Support",
+      "headerDesc": "Add currencies used in deals and invoices. Set exchange rates for report consolidation. One default currency for totals."
+    },
+    "invoiceSettings": {
+      "headerTitle": "Invoice Defaults",
+      "headerDesc": "Set numbering format, company details, bank info, default payment terms. Applied to every new invoice automatically."
+    },
+    "financeNotifications": {
+      "headerTitle": "Stay on Top of Payments",
+      "headerDesc": "Get Telegram/email alerts for overdue invoices, payment approvals, and upcoming deadlines. Never miss a payment again."
+    },
+    "voip": {
+      "headerTitle": "Phone Integration",
+      "headerDesc": "Connect Twilio or 3CX. Calls log automatically to contacts, recordings attach to timeline. Click-to-call from any contact."
+    },
+    "fieldPermissions": {
+      "headerTitle": "Who Sees What",
+      "headerDesc": "Control field visibility per role. Hide salary data from agents, restrict deal values to managers. Read vs write per field."
+    },
+    "organization": {
+      "headerTitle": "Your Identity",
+      "headerDesc": "Company name and logo appear in emails, invoices, and portal. Branding colors customize the CRM look."
+    },
+    "billing": {
+      "headerTitle": "Your Plan",
+      "headerDesc": "Current subscription, user/contact limits, renewal date. Upgrade to increase limits and unlock features."
+    },
+    "security": {
+      "headerTitle": "Lock It Down",
+      "headerDesc": "Enable 2FA for all users — blocks 99% of unauthorized access. Set password complexity rules."
+    },
+    "auditLog": {
+      "headerTitle": "Full Transparency",
+      "headerDesc": "Every action logged: who changed what, when. Filter by user, action type, or date. Essential for compliance."
+    },
+    "portalUsers": {
+      "headerTitle": "Customer Self-Service",
+      "headerDesc": "Manage portal access. Customers create tickets, read KB, chat with AI — reducing your support load."
+    },
+    "customDomains": {
+      "headerTitle": "Your Brand, Your Domain",
+      "headerDesc": "Point your domain to the CRM portal. Customers see your brand, not ours. SSL certificates auto-configured."
+    },
+    "dashboardSettings": {
+      "headerTitle": "Customize Your View",
+      "headerDesc": "Toggle widgets on/off. Show what matters to your role — sales see pipeline, support sees tickets, finance sees AR."
     }
   },
   "dashboardSettings": {

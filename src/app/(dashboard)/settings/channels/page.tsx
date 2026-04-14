@@ -13,6 +13,8 @@ import {
   Search, Radio,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface ChannelConfig {
   id: string
@@ -38,6 +40,7 @@ const channelMeta: Record<string, { label: string; icon: any; color: string; bgC
 export default function ChannelsPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("channels")
   const tc = useTranslations("common")
   const [channels, setChannels] = useState<ChannelConfig[]>([])
   const [loading, setLoading] = useState(true)
@@ -113,9 +116,9 @@ export default function ChannelsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 data-tour-id="channels-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Settings className="h-6 w-6 text-primary" />
-            {t("channels")}
+            {t("channels")} <TourReplayButton tourId="channels" />
           </h1>
           <p className="text-sm text-muted-foreground">
             {t("channelsDesc")}

@@ -17,6 +17,8 @@ import {
   Loader2, UserCheck, UserX, Search,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface User {
   id: string
@@ -253,6 +255,7 @@ function UserFormDialog({
 export default function UsersSettingsPage() {
   const { data: session } = useSession()
   const ts = useTranslations("settings")
+  useAutoTour("users")
   const tc = useTranslations("common")
   const [users, setUsers] = useState<User[]>([])
   const [availableRoles, setAvailableRoles] = useState<RoleConfig[]>([])
@@ -503,10 +506,10 @@ export default function UsersSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Пользователи ({users.length})</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">Пользователи ({users.length}) <TourReplayButton tourId="users" /></h1>
           <p className="text-sm text-muted-foreground">{ts("hintUsers")}</p>
         </div>
-        <Button onClick={() => { setEditUser(undefined); setShowForm(true) }}>
+        <Button data-tour-id="users-new" onClick={() => { setEditUser(undefined); setShowForm(true) }}>
           <Plus className="h-4 w-4 mr-1" /> Добавить
         </Button>
       </div>
@@ -518,7 +521,7 @@ export default function UsersSettingsPage() {
         <StatCard title="Администраторы" value={adminCount} icon={<Shield className="h-4 w-4" />} />
       </div>
 
-      <DataTable data={users as any} columns={columns as any} searchKey="name" searchPlaceholder="Поиск пользователей..." />
+      <DataTable data-tour-id="users-list" data={users as any} columns={columns as any} searchKey="name" searchPlaceholder="Поиск пользователей..." />
 
       <UserFormDialog
         open={showForm}

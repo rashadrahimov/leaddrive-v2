@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label"
 import { Shield, ShieldCheck, ShieldOff, Copy, Check, Loader2, ArrowLeft, Smartphone, Key, Plus, Trash2, Eye, EyeOff, Link2, Unlink, ToggleLeft, ToggleRight } from "lucide-react"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 export default function SecuritySettingsPage() {
   const t = useTranslations("settings")
+  useAutoTour("security")
   const tc = useTranslations("common")
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -193,7 +196,7 @@ export default function SecuritySettingsPage() {
           <Shield className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-xl font-bold">{t("security")}</h1>
+          <h1 data-tour-id="security-header" className="text-xl font-bold flex items-center gap-2">{t("security")} <TourReplayButton tourId="security" /></h1>
           <p className="text-sm text-muted-foreground">{t("hintSecurity")}</p>
         </div>
       </div>

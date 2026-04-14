@@ -7,6 +7,20 @@ import { cn } from "@/lib/utils"
 import { Plus, Pencil, Trash2, X, CheckCircle2, User, Calendar } from "lucide-react"
 import { type ProjectTask, type ProjectMilestone, taskStatusColors, priorityColors, formatDate } from "./project-types"
 
+const KANBAN_COLUMN_COLORS: Record<string, string> = {
+  todo: "border-t-gray-400",
+  in_progress: "border-t-amber-500",
+  review: "border-t-purple-500",
+  done: "border-t-green-500",
+}
+
+const PRIORITY_BORDER: Record<string, string> = {
+  low: "border-l-gray-300",
+  medium: "border-l-blue-400",
+  high: "border-l-orange-500",
+  critical: "border-l-red-500",
+}
+
 interface ProjectTasksTabProps {
   projectId: string
   tasks: ProjectTask[]
@@ -171,12 +185,12 @@ export function ProjectTasksTab({ projectId, tasks, allTasks, milestones, users,
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/40 bg-primary/[0.03]">
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("name")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("status")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("priority")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("assignedTo")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("dueDate")}</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-muted-foreground">{t("milestones")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("name")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("status")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("priority")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("assignedTo")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("dueDate")}</th>
+                  <th className="text-left px-4 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{t("milestones")}</th>
                   <th className="w-20"></th>
                 </tr>
               </thead>
@@ -214,36 +228,43 @@ export function ProjectTasksTab({ projectId, tasks, allTasks, milestones, users,
         ) : (
           <div className="text-center py-12 text-muted-foreground">
             <CheckCircle2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No tasks match filters</p>
+            <p className="text-sm">{t("noTasks")}</p>
           </div>
         )
       )}
 
       {/* Kanban view */}
       {taskViewMode === "kanban" && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(["todo", "in_progress", "review", "done"] as const).map(status => (
             <div key={status}
-              className={cn("min-h-[200px] rounded-xl p-3 border-2 border-dashed transition-colors", dragTask ? "border-primary/30 bg-primary/5" : "border-transparent bg-muted/20")}
+              className={cn(
+                "min-h-[200px] rounded-xl p-3 border border-border/40 transition-all duration-200 border-t-[3px]",
+                KANBAN_COLUMN_COLORS[status],
+                dragTask ? "bg-primary/5 shadow-inner" : "bg-muted/10",
+              )}
               onDragOver={e => e.preventDefault()}
               onDrop={e => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if (id) handleKanbanDrop(id, status); setDragTask(null) }}
             >
               <div className="flex items-center justify-between mb-3">
-                <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", taskStatusColors[status])}>{taskStatusLabels[status]}</span>
-                <span className="text-xs text-muted-foreground">{tasksByStatus[status].length}</span>
+                <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider", taskStatusColors[status])}>{taskStatusLabels[status]}</span>
+                <span className="text-[11px] font-semibold text-muted-foreground tabular-nums bg-muted/50 px-1.5 py-0.5 rounded-full">{tasksByStatus[status].length}</span>
               </div>
               <div className="space-y-2">
                 {tasksByStatus[status].map(task => (
                   <div key={task.id} draggable
                     onDragStart={e => { e.dataTransfer.setData("text/plain", task.id); setDragTask(task.id) }}
                     onDragEnd={() => setDragTask(null)}
-                    className="rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform]">
-                    <div className="font-medium text-sm mb-1">{task.title}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={cn("px-1.5 py-0.5 rounded font-medium", priorityColors[task.priority])}>{priorityLabels[task.priority]}</span>
+                    className={cn(
+                      "rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-l-[3px]",
+                      PRIORITY_BORDER[task.priority] || "border-l-gray-300",
+                    )}>
+                    <div className="font-medium text-sm mb-1.5">{task.title}</div>
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <span className={cn("px-1.5 py-0.5 rounded-full font-medium", priorityColors[task.priority])}>{priorityLabels[task.priority]}</span>
                       {task.assignedTo && <span className="flex items-center gap-1"><User className="h-3 w-3" /> {getUserName(task.assignedTo)}</span>}
                     </div>
-                    {task.dueDate && <div className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><Calendar className="h-3 w-3" /> {formatDate(task.dueDate)}</div>}
+                    {task.dueDate && <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1"><Calendar className="h-3 w-3" /> {formatDate(task.dueDate)}</div>}
                   </div>
                 ))}
               </div>

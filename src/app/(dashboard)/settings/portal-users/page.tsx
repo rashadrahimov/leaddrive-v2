@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Users, UserCheck, UserX, Clock, Search, Shield, ShieldOff, KeyRound, CheckCircle, MessageSquareX, UserMinus } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface PortalContact {
   id: string
@@ -33,6 +35,7 @@ type FilterType = "all" | "enabled" | "registered" | "pending" | "disabled"
 
 export default function PortalUsersPage() {
   const t = useTranslations("settings")
+  useAutoTour("portalUsers")
   const tc = useTranslations("common")
   const [contacts, setContacts] = useState<PortalContact[]>([])
   const [stats, setStats] = useState<Stats>({ totalWithEmail: 0, enabled: 0, registered: 0, recentLogins: 0 })
@@ -169,7 +172,7 @@ export default function PortalUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("portalUsers")}</h1>
+        <h1 data-tour-id="portal-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("portalUsers")} <TourReplayButton tourId="portalUsers" /></h1>
         <p className="text-sm text-muted-foreground">{t("portalUsersDesc")}</p>
         <p className="text-sm text-muted-foreground mt-1">{t("hintPortalUsers")}</p>
       </div>

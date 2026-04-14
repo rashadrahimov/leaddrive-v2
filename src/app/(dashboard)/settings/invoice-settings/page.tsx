@@ -13,10 +13,13 @@ import { Save, Settings, Building2, FileSpreadsheet, Loader2, CheckCircle, Alert
 import { cn } from "@/lib/utils"
 import { DEFAULT_EMAIL_TEMPLATES } from "@/lib/invoice-html"
 import { DEFAULT_CURRENCY, CURRENCY_SYMBOLS } from "@/lib/constants"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 export default function InvoiceSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("invoiceSettings")
   const tc = useTranslations("common")
   const orgId = (session?.user as { organizationId?: string })?.organizationId
 
@@ -181,7 +184,7 @@ export default function InvoiceSettingsPage() {
             <Settings className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("invoiceSettings")}</h1>
+            <h1 data-tour-id="inv-settings-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("invoiceSettings")} <TourReplayButton tourId="invoiceSettings" /></h1>
             <p className="text-sm text-muted-foreground">
               {t("invoiceSettingsDesc")}
             </p>

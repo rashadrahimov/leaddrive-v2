@@ -12,6 +12,8 @@ import {
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare,
 } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface ShadowAction {
   id: string
@@ -47,6 +49,7 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
 export default function AiAutomationPage() {
   const { data: session } = useSession()
   const t = useTranslations("aiSettings")
+  useAutoTour("aiAutomation")
   const orgId = (session?.user as any)?.organizationId
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
@@ -181,7 +184,7 @@ export default function AiAutomationPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bot className="h-6 w-6" /> {t("title")}
+            <Bot className="h-6 w-6" /> {t("title")} <TourReplayButton tourId="aiAutomation" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {t("subtitle")}
@@ -194,7 +197,7 @@ export default function AiAutomationPage() {
 
       {/* Budget Card */}
       {budget && (
-        <Card className="mb-6">
+        <Card data-tour-id="ai-budget" className="mb-6">
           <CardContent className="pt-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold flex items-center gap-1.5">
@@ -233,7 +236,7 @@ export default function AiAutomationPage() {
       )}
 
       {/* Delivery Channels */}
-      <Card className="mb-6">
+      <Card data-tour-id="ai-delivery" className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Send className="h-4 w-4" /> {t("deliveryChannels")}
@@ -320,7 +323,7 @@ export default function AiAutomationPage() {
       </Card>
 
       {/* Feature Toggles */}
-      <div className="space-y-6 mb-8">
+      <div data-tour-id="ai-toggles" className="space-y-6 mb-8">
         {(Object.entries(grouped) as [string, AiFeature[]][]).map(([cat, items]) => {
           if (items.length === 0) return null
           const catConfig: Record<string, { icon: any; color: string }> = {

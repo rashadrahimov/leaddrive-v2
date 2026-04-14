@@ -10,6 +10,8 @@ import { DataTable } from "@/components/data-table"
 import { SlaPolicyForm } from "@/components/sla-policy-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Plus, Pencil, Trash2, Clock } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface SlaPolicy {
   id: string
@@ -37,6 +39,7 @@ function formatHours(h: number): string {
 export default function SlaPoliciesPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("slaPolicies")
   const tc = useTranslations("common")
   const [policies, setPolicies] = useState<SlaPolicy[]>([])
   const [loading, setLoading] = useState(true)
@@ -114,8 +117,8 @@ export default function SlaPoliciesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Clock className="h-6 w-6" /> {t("slaPolicies")}
+          <h1 data-tour-id="sla-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Clock className="h-6 w-6" /> {t("slaPolicies")} <TourReplayButton tourId="slaPolicies" />
           </h1>
           <p className="text-sm text-muted-foreground">{t("slaPoliciesDesc")}</p>
           <p className="text-sm text-muted-foreground mt-1">{t("hintSla")}</p>

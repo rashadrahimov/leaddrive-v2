@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Building2, Save, Loader2, CheckCircle, Crown, Users, Contact } from "lucide-react"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface OrgData {
   name: string
@@ -30,6 +32,7 @@ const planColors: Record<string, string> = {
 export default function OrganizationSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("organization")
   const tc = useTranslations("common")
 
   const [data, setData] = useState<OrgData | null>(null)
@@ -92,9 +95,9 @@ export default function OrganizationSettingsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+        <h1 data-tour-id="org-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Building2 className="h-6 w-6 text-primary" />
-          {t("orgTitle")}
+          {t("orgTitle")} <TourReplayButton tourId="organization" />
         </h1>
         <PageDescription text={t("orgDescription")} />
       </div>

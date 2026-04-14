@@ -11,6 +11,8 @@ import {
   Building2, Handshake, Shield, Clock, Star, Users,
 } from "lucide-react"
 import { STAGE_COLORS } from "@/lib/constants"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface WidgetSetting {
   enabled: boolean
@@ -208,6 +210,7 @@ const PREVIEW_COMPONENTS: Record<string, () => React.ReactElement> = {
 export default function DashboardSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("dashboardSettings")
+  useAutoTour("customFields")
   const tc = useTranslations("common")
   const ts = useTranslations("settings")
   const orgId = session?.user?.organizationId
@@ -296,7 +299,7 @@ export default function DashboardSettingsPage() {
           <LayoutDashboard className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 data-tour-id="fields-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="customFields" /></h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
           <p className="text-sm text-muted-foreground mt-1">{ts("hintDashboardSettings")}</p>
         </div>

@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface CustomDomain {
   id: string
@@ -33,6 +35,7 @@ const CNAME_TARGET = process.env.NEXT_PUBLIC_CNAME_TARGET || "pages.leaddrivecrm
 
 export default function CustomDomainsPage() {
   const t = useTranslations("customDomains")
+  useAutoTour("customDomains")
   const tc = useTranslations("common")
   const [domains, setDomains] = useState<CustomDomain[]>([])
   const [loading, setLoading] = useState(true)
@@ -151,9 +154,9 @@ export default function CustomDomainsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 data-tour-id="domains-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Globe className="h-6 w-6" />
-            {t("title")}
+            {t("title")} <TourReplayButton tourId="customDomains" />
           </h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("description")} />

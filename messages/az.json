@@ -2968,7 +2968,33 @@
       "statsDesc": "Təsdiq nisbətini izləyin: təsdiqlənmiş vs rədd edilmiş. Aşağı nisbət? Qiymətləri nəzərdən keçirin.",
       "newTitle": "Sövdəni qazanın",
       "newDesc": "Konversiya izləmək üçün sövdəyə bağlayın. Təklif → Müqavilə → Faktura = tam gəlir zənciri."
-    }
+    },
+    "settingsHub": { "gridTitle": "İdarə mərkəzi", "gridDesc": "Bütün CRM parametrləri bir yerdə. AI Avtomatlaşdırma və Workflows-dan başlayın." },
+    "aiAutomation": {
+      "budgetTitle": "AI xərclərini idarə edin", "budgetDesc": "Gündəlik limit təyin edin. Qırmızı olsa — AI funksiyalar sabaha qədər dayanır.",
+      "deliveryTitle": "Xəbərdarlıqlar hara gedir?", "deliveryDesc": "Email, Telegram, Slack konfiqurasiya edin. Səhər icmalları və anomaliyalar bütün kanallara gedəcək.",
+      "togglesTitle": "Funksiyaları seçin", "togglesDesc": "Hər AI funksiya öz toggle-ına malikdir. Analitikadan başlayın (təhlükəsiz), sonra Avtopilotu kölgə rejimində aktivləşdirin."
+    },
+    "workflows": { "listTitle": "Avtomatlaşdırma qaydaları", "listDesc": "X baş verəndə → Y et. Misal: sövdə yaradıldı → Slack bildirişi + follow-up tapşırıq.", "newTitle": "Təkrarı avtomatlaşdırın", "newDesc": "Entity, tətik, şərtlər, hərəkətlər seçin. Aktivləşdirmədən əvvəl test edin." },
+    "pipelines": { "headerTitle": "Satış prosesini dizayn edin", "headerDesc": "Mərhələlər və hər mərhələ üçün qazanma ehtimalı. Yeni sövdələrə default pipeline tətbiq olunur." },
+    "users": { "listTitle": "Komandanız", "listDesc": "Rollar girişi idarə edir: admin > manager > agent. Bacarıqlar bilet təyinatına təsir edir.", "newTitle": "Üzv əlavə edin", "newDesc": "Rol, bacarıqlar, max bilet təyin edin. Admin/manager AI icmalları alacaq." },
+    "slaPolicies": { "headerTitle": "Cavab standartları", "headerDesc": "Prioritetə görə cavab və həll müddəti. Pozulma → eskalasiya: bildiriş, prioritet artımı, yenidən təyinat." },
+    "macros": { "headerTitle": "Bir kliklik əməliyyatlar", "headerDesc": "Bilet agentləri üçün makrolar: status + şərh + təyinat bir klikdə. Sürət üçün qısayol düymələri." },
+    "channels": { "headerTitle": "Kanalları bağlayın", "headerDesc": "WhatsApp, Telegram, Facebook, email bağlayın. Mesajlar Inbox-a gəlir və avtomatik bilet yaradır." },
+    "integrations": { "headerTitle": "CRM-i genişləndirin", "headerDesc": "Webhooks hadisələri xarici sistemlərə göndərir. API açarları digər tətbiqlərə giriş verir." },
+    "customFields": { "headerTitle": "CRM-i özünüzə uyğunlaşdırın", "headerDesc": "İstənilən entity-yə sahə əlavə edin: mətn, rəqəm, tarix, dropdown. Formalarda və workflow şərtlərində görünür." },
+    "currencies": { "headerTitle": "Çoxvalyutalı dəstək", "headerDesc": "Sövdə və fakturalarda istifadə olunan valyutalar. Hesabat konsolidasiyası üçün məzənnələr." },
+    "invoiceSettings": { "headerTitle": "Faktura defoltları", "headerDesc": "Nömrələmə formatı, şirkət məlumatları, bank rekvizitləri, ödəniş şərtləri. Hər yeni fakturaya avtomatik tətbiq olunur." },
+    "financeNotifications": { "headerTitle": "Ödənişləri izləyin", "headerDesc": "Vaxtı keçmiş fakturalar, ödəniş təsdiqləri, son tarixlər üçün Telegram/email xəbərdarlıqları." },
+    "voip": { "headerTitle": "Telefon inteqrasiyası", "headerDesc": "Twilio və ya 3CX bağlayın. Zənglər kontaktlara avtomatik qeyd olunur, yazılar tarixçəyə əlavə olunur." },
+    "fieldPermissions": { "headerTitle": "Kim nəyi görür", "headerDesc": "Rola görə sahə görünürlüyü. Maaşları agentlərdən gizlədin. Hər sahə üçün oxuma vs yazma." },
+    "organization": { "headerTitle": "Kimliyiniz", "headerDesc": "Şirkət adı və logo emaillər, fakturalar, portalda görünür. Branding rəngləri CRM-i fərdiləşdirir." },
+    "billing": { "headerTitle": "Planınız", "headerDesc": "Cari abunə, istifadəçi/kontakt limitləri, yenilənmə tarixi. Limitləri artırmaq üçün yüksəldin." },
+    "security": { "headerTitle": "Təhlükəsizlik", "headerDesc": "Bütün istifadəçilər üçün 2FA aktivləşdirin — icazəsiz girişin 99%-ni bloklayır." },
+    "auditLog": { "headerTitle": "Tam şəffaflıq", "headerDesc": "Hər hərəkət qeydə alınıb: kim, nə, nə vaxt. İstifadəçi, hərəkət növü, tarixə görə filtr." },
+    "portalUsers": { "headerTitle": "Müştəri özünəxidmət", "headerDesc": "Müştərilər bilet yaradır, KB oxuyur, AI ilə danışır — dəstək yükünü azaldır." },
+    "customDomains": { "headerTitle": "Sizin domeniniz", "headerDesc": "Portal üçün öz domeninizi göstərin. Müştərilər sizin brendinizi görür. SSL avtomatik konfiqurasiya olunur." },
+    "dashboardSettings": { "headerTitle": "Görünüşü fərdiləşdirin", "headerDesc": "Vidjetləri açın/bağlayın. Satış pipeline görür, dəstək biletləri, maliyyə debitor." }
   },
   "dashboardSettings": {
     "title": "İdarə paneli parametrləri",

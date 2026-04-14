@@ -10,6 +10,8 @@ import { DataTable } from "@/components/data-table"
 import { CurrencyForm } from "@/components/currency-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Plus, Pencil, Trash2 } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface Currency {
   id: string
@@ -24,6 +26,7 @@ interface Currency {
 export default function CurrenciesPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("currencies")
   const tc = useTranslations("common")
   const [currencies, setCurrencies] = useState<Currency[]>([])
   const [loading, setLoading] = useState(true)
@@ -102,7 +105,7 @@ export default function CurrenciesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("currencies")}</h1>
+          <h1 data-tour-id="currencies-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("currencies")} <TourReplayButton tourId="currencies" /></h1>
           <p className="text-muted-foreground">{t("currenciesDesc")}</p>
           <p className="text-sm text-muted-foreground mt-1">{t("hintCurrencies")}</p>
         </div>

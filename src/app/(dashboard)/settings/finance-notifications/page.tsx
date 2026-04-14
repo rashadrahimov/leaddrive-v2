@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Bell, Save, Loader2 } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface NotifCategory {
   enabled: boolean
@@ -33,6 +35,7 @@ const DEFAULTS: Settings = {
 
 export default function FinanceNotificationsPage() {
   const t = useTranslations("finance.notif")
+  useAutoTour("financeNotifications")
   const { data: session } = useSession()
   const orgId = (session?.user as any)?.organizationId || ""
   const [settings, setSettings] = useState<Settings>(DEFAULTS)
@@ -106,7 +109,7 @@ export default function FinanceNotificationsPage() {
     <div className="flex-1 space-y-6 p-4 md:p-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 data-tour-id="fin-notif-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="financeNotifications" /></h1>
           <p className="text-sm text-muted-foreground mt-1">{t("description")}</p>
         </div>
         <Button onClick={handleSave} disabled={saving}>

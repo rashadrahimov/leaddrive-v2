@@ -7,10 +7,13 @@ import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lo
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 export default function SettingsPage() {
   const router = useRouter()
   const t = useTranslations("settings")
+  useAutoTour("settingsHub")
 
   const SETTINGS_SECTIONS = [
     { icon: Building2, title: t("orgTitle"), description: t("orgDescription"), href: "/settings/organization", hint: t("hintOrganization") },
@@ -35,12 +38,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="settingsHub" /></h1>
         <p className="text-muted-foreground">{t("subtitle")}</p>
         <PageDescription text={t("pageDescription")} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div data-tour-id="settings-grid" className="grid gap-4 md:grid-cols-2">
         {SETTINGS_SECTIONS.map((section) => {
           const IconComponent = section.icon
           return (

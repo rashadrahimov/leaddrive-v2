@@ -17,6 +17,8 @@ import {
   UserPlus, ArrowRight,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface WorkflowAction {
   id: string
@@ -76,6 +78,7 @@ export default function WorkflowsPage() {
   const t = useTranslations("workflows")
   const tc = useTranslations("common")
   const ts = useTranslations("settings")
+  useAutoTour("workflows")
   const [workflows, setWorkflows] = useState<WorkflowRule[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -203,12 +206,12 @@ export default function WorkflowsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Workflow className="h-6 w-6 text-primary" />
-            {t("title")}
+            {t("title")} <TourReplayButton tourId="workflows" />
           </h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           <p className="text-sm text-muted-foreground mt-1">{ts("hintWorkflows")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
+        <Button data-tour-id="workflows-new" onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> {t("newWorkflow")}
         </Button>
       </div>
@@ -232,7 +235,7 @@ export default function WorkflowsPage() {
       </div>
 
       {/* Workflow cards */}
-      <div className="space-y-3">
+      <div data-tour-id="workflows-list" className="space-y-3">
         {filtered.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
             <Workflow className="h-8 w-8 text-muted-foreground mx-auto mb-3" />

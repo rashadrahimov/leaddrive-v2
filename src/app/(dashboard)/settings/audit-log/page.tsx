@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/data-table"
 import { Shield } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface AuditLog {
   id: string
@@ -27,6 +29,7 @@ const actionColors: Record<string, "default" | "secondary" | "destructive" | "ou
 export default function AuditLogPage() {
   const { data: session } = useSession()
   const t = useTranslations("settings")
+  useAutoTour("auditLog")
   const tc = useTranslations("common")
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -76,8 +79,8 @@ export default function AuditLogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Shield className="h-6 w-6" /> {t("auditLog")}
+        <h1 data-tour-id="audit-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <Shield className="h-6 w-6" /> {t("auditLog")} <TourReplayButton tourId="auditLog" />
         </h1>
         <p className="text-sm text-muted-foreground">{t("auditLogDesc")}</p>
         <p className="text-sm text-muted-foreground mt-1">{t("hintAuditLog")}</p>

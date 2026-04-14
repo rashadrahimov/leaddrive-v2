@@ -241,5 +241,76 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     ],
   },
 
-  // ── Phase 4 (Settings) — to be added ──
+  // ── Phase 4: Settings ──
+
+  settingsHub: { steps: [
+    { targetId: "settings-grid", titleKey: "gridTitle", descKey: "gridDesc" },
+  ]},
+  aiAutomation: { steps: [
+    { targetId: "ai-budget", titleKey: "budgetTitle", descKey: "budgetDesc" },
+    { targetId: "ai-delivery", titleKey: "deliveryTitle", descKey: "deliveryDesc" },
+    { targetId: "ai-toggles", titleKey: "togglesTitle", descKey: "togglesDesc" },
+  ]},
+  workflows: { steps: [
+    { targetId: "workflows-list", titleKey: "listTitle", descKey: "listDesc" },
+    { targetId: "workflows-new", titleKey: "newTitle", descKey: "newDesc" },
+  ]},
+  pipelines: { steps: [
+    { targetId: "pipelines-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  users: { steps: [
+    { targetId: "users-list", titleKey: "listTitle", descKey: "listDesc" },
+    { targetId: "users-new", titleKey: "newTitle", descKey: "newDesc" },
+  ]},
+  slaPolicies: { steps: [
+    { targetId: "sla-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  macros: { steps: [
+    { targetId: "macros-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  channels: { steps: [
+    { targetId: "channels-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  integrations: { steps: [
+    { targetId: "integrations-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  customFields: { steps: [
+    { targetId: "fields-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  currencies: { steps: [
+    { targetId: "currencies-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  invoiceSettings: { steps: [
+    { targetId: "inv-settings-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  financeNotifications: { steps: [
+    { targetId: "fin-notif-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  voip: { steps: [
+    { targetId: "voip-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  fieldPermissions: { steps: [
+    { targetId: "perms-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  organization: { steps: [
+    { targetId: "org-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  billing: { steps: [
+    { targetId: "billing-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  security: { steps: [
+    { targetId: "security-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  auditLog: { steps: [
+    { targetId: "audit-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  portalUsers: { steps: [
+    { targetId: "portal-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  customDomains: { steps: [
+    { targetId: "domains-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
+  dashboardSettings: { steps: [
+    { targetId: "widget-header", titleKey: "headerTitle", descKey: "headerDesc" },
+  ]},
 }

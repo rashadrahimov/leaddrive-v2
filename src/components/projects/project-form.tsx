@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { motion, AnimatePresence } from "framer-motion"
 import { X } from "lucide-react"
 import { CURRENCY_SYMBOLS, getCurrencySymbol } from "@/lib/constants"
 
@@ -125,11 +126,21 @@ export function ProjectForm({ open, onClose, onSaved, editData }: ProjectFormPro
     } catch (err) { console.error(err) } finally { setSaving(false) }
   }
 
-  if (!open) return null
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-background rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+    <AnimatePresence>
+    {open && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 8 }}
+        transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
+        className="bg-background rounded-xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold">{editData ? t("editProject") : t("newProject")}</h2>
@@ -245,7 +256,9 @@ export function ProjectForm({ open, onClose, onSaved, editData }: ProjectFormPro
             </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    )}
+    </AnimatePresence>
   )
 }

@@ -13,6 +13,8 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Shield, Save, Loader2, RotateCcw, Plus, Trash2, ToggleLeft, ToggleRight } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 const ENTITY_TYPES = [
   { value: "company", label: "Companies" },
@@ -45,6 +47,7 @@ interface SharingRule {
 export default function FieldPermissionsPage() {
   const { data: session } = useSession()
   const t = useTranslations()
+  useAutoTour("fieldPermissions")
 
   const [entityType, setEntityType] = useState("company")
   const [matrix, setMatrix] = useState<Record<string, Record<string, string>>>({})
@@ -200,10 +203,15 @@ export default function FieldPermissionsPage() {
 
   return (
     <div className="space-y-6">
-      <PageDescription
-        title={t("fieldPermissions.title")}
-        description={t("fieldPermissions.description")}
-      />
+      <div data-tour-id="perms-header" className="flex items-center gap-2">
+        <div className="flex-1">
+          <PageDescription
+            title={t("fieldPermissions.title")}
+            description={t("fieldPermissions.description")}
+          />
+        </div>
+        <TourReplayButton tourId="fieldPermissions" />
+      </div>
 
       {/* Permission Matrix */}
       <Card>

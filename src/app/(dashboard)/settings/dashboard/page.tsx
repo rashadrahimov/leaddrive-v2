@@ -11,6 +11,8 @@ import {
   FileText, CheckCircle2, PieChart, Wallet, Clock, Handshake,
   Eye, EyeOff, Loader2,
 } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 type WidgetConfig = { enabled: boolean; roles: string[] }
 
@@ -34,6 +36,7 @@ const WIDGET_ORDER = [
 export default function DashboardSettingsPage() {
   const { data: session } = useSession()
   const t = useTranslations("dashboardWidgets")
+  useAutoTour("dashboardSettings")
   const [widgets, setWidgets] = useState<Record<string, WidgetConfig>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
@@ -99,7 +102,7 @@ export default function DashboardSettingsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <h1 data-tour-id="widget-header" className="text-2xl font-bold flex items-center gap-2">{t("title")} <TourReplayButton tourId="dashboardSettings" /></h1>
         <p className="text-sm text-muted-foreground mt-1">
           {t("subtitle")}
         </p>
