@@ -807,7 +807,7 @@ export default function TasksPage() {
           onRowClick={(item: any) => router.push(`/tasks/${item.id}`)}
           rowClassName={(item: any) =>
             isOverdue(item.dueDate) && item.status !== "completed" && item.status !== "cancelled"
-              ? "!bg-red-50 dark:!bg-red-950/30"
+              ? "!bg-red-100/70 dark:!bg-red-950/40"
               : ""
           }
         />
