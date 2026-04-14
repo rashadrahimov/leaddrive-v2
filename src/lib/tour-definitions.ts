@@ -86,7 +86,77 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     ],
   },
 
-  // ── Phase 2 (Comms + Finance) — to be added ──
+  // ── Phase 2: Communications ──
+
+  inbox: {
+    steps: [
+      { targetId: "inbox-channels", titleKey: "channelsTitle", descKey: "channelsDesc" },
+      { targetId: "inbox-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "inbox-conversations", titleKey: "convTitle", descKey: "convDesc" },
+      { targetId: "inbox-thread", titleKey: "threadTitle", descKey: "threadDesc" },
+    ],
+  },
+
+  campaigns: {
+    steps: [
+      { targetId: "campaigns-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "campaigns-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "campaigns-list", titleKey: "listTitle", descKey: "listDesc" },
+    ],
+  },
+
+  journeys: {
+    steps: [
+      { targetId: "journeys-header", titleKey: "headerTitle", descKey: "headerDesc" },
+      { targetId: "journeys-list", titleKey: "listTitle", descKey: "listDesc" },
+      { targetId: "journeys-new", titleKey: "newTitle", descKey: "newDesc" },
+    ],
+  },
+
+  segments: {
+    steps: [
+      { targetId: "segments-filters", titleKey: "filtersTitle", descKey: "filtersDesc" },
+      { targetId: "segments-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "segments-list", titleKey: "listTitle", descKey: "listDesc" },
+    ],
+  },
+
+  // ── Phase 2: Finance ──
+
+  invoices: {
+    steps: [
+      { targetId: "invoices-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "invoices-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "invoices-list", titleKey: "listTitle", descKey: "listDesc" },
+    ],
+  },
+
+  finance: {
+    steps: [
+      { targetId: "finance-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
+    ],
+  },
+
+  budgeting: {
+    steps: [
+      { targetId: "budgeting-header", titleKey: "headerTitle", descKey: "headerDesc" },
+    ],
+  },
+
+  profitability: {
+    steps: [
+      { targetId: "profitability-kpi", titleKey: "kpiTitle", descKey: "kpiDesc" },
+      { targetId: "profitability-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
+      { targetId: "profitability-charts", titleKey: "chartsTitle", descKey: "chartsDesc" },
+    ],
+  },
+
+  pricing: {
+    steps: [
+      { targetId: "pricing-header", titleKey: "headerTitle", descKey: "headerDesc" },
+    ],
+  },
+
   // ── Phase 3 (Other modules) — to be added ──
   // ── Phase 4 (Settings) — to be added ──
 }

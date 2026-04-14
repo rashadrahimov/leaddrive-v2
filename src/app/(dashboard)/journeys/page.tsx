@@ -199,10 +199,14 @@ function EnrollmentTable({ journeyId }: { journeyId: string }) {
   )
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function JourneysPage() {
   const { data: session } = useSession()
   const t = useTranslations("journeys")
   const tc = useTranslations("common")
+  useAutoTour("journeys")
   const [journeys, setJourneys] = useState<Journey[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -409,15 +413,15 @@ export default function JourneysPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 data-tour-id="journeys-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Workflow className="h-6 w-6 text-primary" />
-            {t("title")}
+            {t("title")} <TourReplayButton tourId="journeys" />
           </h1>
           <p className="text-sm text-muted-foreground">
             {t("subtitle")}
           </p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
+        <Button data-tour-id="journeys-new" onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> {t("newJourney")}
         </Button>
       </div>
@@ -445,7 +449,7 @@ export default function JourneysPage() {
       )}
 
       {/* Journey cards */}
-      <div className="space-y-3">
+      <div data-tour-id="journeys-list" className="space-y-3">
         {journeys.length === 0 ? (
           <div className="rounded-lg border-2 border-dashed bg-muted/20 py-16 text-center">
             <Workflow className="h-8 w-8 text-muted-foreground mx-auto mb-3" />

@@ -37,9 +37,13 @@ function getConditionChips(conditions: Record<string, any>, labelMap: Record<str
   return chips
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function SegmentsPage() {
   const { data: session } = useSession()
   const t = useTranslations("segments")
+  useAutoTour("segments")
 
   const conditionLabelMap: Record<string, string> = {
     company: t("condCompany"),
@@ -130,10 +134,10 @@ export default function SegmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="segments" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
+        <Button data-tour-id="segments-new" onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-1.5">
           <Plus className="h-4 w-4" /> {t("newSegment")}
         </Button>
       </div>
@@ -141,7 +145,7 @@ export default function SegmentsPage() {
       <PageDescription text={t("pageDescription")} />
 
       {/* Stats row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div data-tour-id="segments-filters" className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <button
           onClick={() => setTypeFilter("all")}
           className={cn(
@@ -230,7 +234,7 @@ export default function SegmentsPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div data-tour-id="segments-list" className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map(segment => {
             const condObj = (segment.conditions && typeof segment.conditions === "object") ? segment.conditions as Record<string, any> : {}
             const chips = getConditionChips(condObj, conditionLabelMap)

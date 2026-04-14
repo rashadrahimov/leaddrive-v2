@@ -103,11 +103,15 @@ const channelLabel = (ch: string) => {
 const CHANNELS = ["all", "email", "telegram", "sms", "whatsapp", "facebook", "instagram", "tiktok", "voip"] as const
 
 /* -- Page -- */
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function InboxPage() {
   const { data: session } = useSession()
   const t = useTranslations("inbox")
   const tc = useTranslations("common")
   const orgId = session?.user?.organizationId
+  useAutoTour("inbox")
 
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [stats, setStats] = useState<Stats>({ totalMessages: 0, inbound: 0, outbound: 0, conversations: 0 })
@@ -363,7 +367,7 @@ export default function InboxPage() {
             <InboxIcon className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="inbox" /></h1>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>
@@ -387,7 +391,7 @@ export default function InboxPage() {
       <PageDescription text={t("pageDescription")} />
 
       {/* -- Stats cards -- */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div data-tour-id="inbox-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <ColorStatCard label={t("statMessages")} value={stats.totalMessages} icon={<MessageSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalMessages")} />
         <ColorStatCard label={t("statIncoming")} value={stats.inbound} icon={<ArrowDownLeft className="h-4 w-4" />} color="green" hint={t("hintInbound")} />
         <ColorStatCard label={t("statOutgoing")} value={stats.outbound} icon={<ArrowUpRight className="h-4 w-4" />} color="orange" hint={t("hintOutbound")} />
@@ -395,7 +399,7 @@ export default function InboxPage() {
       </div>
 
       {/* -- Channel filter tabs -- */}
-      <div className="flex items-center gap-1 border-b pb-2">
+      <div data-tour-id="inbox-channels" className="flex items-center gap-1 border-b pb-2">
         {CHANNELS.map(ch => (
           <button
             key={ch}
@@ -415,7 +419,7 @@ export default function InboxPage() {
       {/* -- Main layout: conversation list + thread -- */}
       <div className="flex gap-4 h-[calc(100vh-380px)] min-h-[400px]">
         {/* -- Left: conversation list -- */}
-        <div className="w-80 flex flex-col shrink-0">
+        <div data-tour-id="inbox-conversations" className="w-80 flex flex-col shrink-0">
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -517,7 +521,7 @@ export default function InboxPage() {
         </div>
 
         {/* -- Right: message thread -- */}
-        <div className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-card">
+        <div data-tour-id="inbox-thread" className="flex-1 flex flex-col border rounded-lg overflow-hidden bg-card">
           {selectedConvo ? (
             <>
               {/* Thread header */}

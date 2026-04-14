@@ -102,10 +102,14 @@ function CollapsibleSection({ title, defaultOpen, children }: {
 }
 
 // ─── Main Page ──────────────────────────────────────────────
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function PricingPage() {
   const { data: session } = useSession()
   const tp = useTranslations("pricing")
   const orgId = session?.user?.organizationId
+  useAutoTour("pricing")
 
   const [pricingData, setPricingData] = useState<PricingData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -388,7 +392,7 @@ export default function PricingPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{tp("title")}</h1>
+          <h1 data-tour-id="pricing-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{tp("title")} <TourReplayButton tourId="pricing" /></h1>
           <PageDescription text={tp("pageDescription")} />
         </div>
         <div className="flex gap-2">

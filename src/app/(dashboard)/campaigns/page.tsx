@@ -51,11 +51,15 @@ const typeIcons: Record<string, string> = {
   sms: "📱",
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function CampaignsPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const t = useTranslations("campaigns")
   const tc = useTranslations("common")
+  useAutoTour("campaigns")
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -156,7 +160,7 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="campaigns" /></h1>
           <p className="text-sm text-muted-foreground">{total} {t("title").toLowerCase()}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -183,14 +187,14 @@ export default function CampaignsPage() {
               {tc("list")}
             </button>
           </div>
-          <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Button data-tour-id="campaigns-new" onClick={() => { setEditData(undefined); setShowForm(true) }}>
             <Plus className="h-4 w-4 mr-1" /> {t("newCampaign")}
           </Button>
         </div>
       </div>
 
       {/* Stats — 5 status cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div data-tour-id="campaigns-stats" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <ColorStatCard label={t("statusDraft")} value={statusCounts.draft} icon={<Megaphone className="h-4 w-4" />} color="slate" hint={t("hintTotalCampaigns")} />
         <ColorStatCard label={t("statusScheduled")} value={statusCounts.scheduled} icon={<Megaphone className="h-4 w-4" />} color="blue" hint={t("hintSentMonth")} />
         <ColorStatCard label={t("statusSending")} value={statusCounts.sending} icon={<Megaphone className="h-4 w-4" />} color="amber" hint={t("hintOpenRate")} />
@@ -214,7 +218,7 @@ export default function CampaignsPage() {
           </div>
 
           {/* Campaign cards */}
-          <div className="space-y-3">
+          <div data-tour-id="campaigns-list" className="space-y-3">
             {filtered.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 {campaigns.length === 0 ? t("noCampaigns") : t("noResults")}

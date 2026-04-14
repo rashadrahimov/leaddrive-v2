@@ -2836,6 +2836,68 @@
       "forecastDesc": "12 aylıq görünüş: tarixçə + AI proqnoz.",
       "aiComTitle": "AI Şərh",
       "aiComDesc": "Pipeline, qazanclar və riskləri AI ilə analiz edib mətn şərhi alın."
+    },
+    "inbox": {
+      "channelsTitle": "Kanallar",
+      "channelsDesc": "Bütün mesajlar bir yerdə: email, WhatsApp, Telegram, Facebook, Instagram.",
+      "statsTitle": "Statistika",
+      "statsDesc": "Söhbətlər, oxunmamışlar, orta cavab müddəti — bir baxışda.",
+      "convTitle": "Söhbətlər",
+      "convDesc": "Kontakta görə qruplanıb. Son mesaj və kanalı görünür.",
+      "threadTitle": "Yazışma",
+      "threadDesc": "Kontaktla bütün kanallar üzrə tam tarixçə."
+    },
+    "campaigns": {
+      "statsTitle": "Kampaniya statistikası",
+      "statsDesc": "İcmal: qaralamalar, planlanmış, göndərilmiş, açılma faizi.",
+      "newTitle": "Yeni kampaniya",
+      "newDesc": "Növ (email/SMS), alıcılar, məzmun, göndərmə cədvəli.",
+      "listTitle": "Kampaniya siyahısı",
+      "listDesc": "Bütün kampaniyalar statuslar, alıcılar və A/B testlərlə."
+    },
+    "journeys": {
+      "headerTitle": "Zəncirlər",
+      "headerDesc": "Avtomatik hərəkət zəncirləri. Tətik → addımlar → hədəf.",
+      "listTitle": "Zəncir siyahısı",
+      "listDesc": "Aktiv və qaralama zəncirlər. Redaktə və ya statistika üçün klikləyin.",
+      "newTitle": "Zəncir yarat",
+      "newDesc": "Vizual konstruktor: email → gözləmə → şərt → tapşırıq → SMS."
+    },
+    "segments": {
+      "filtersTitle": "Seqment növləri",
+      "filtersDesc": "Hamısı, dinamik (avto-yenilənmə) və ya statik (sabit siyahı).",
+      "newTitle": "Yeni seqment",
+      "newDesc": "Şərtlər: 'aktivlik > 50 VƏ sahə = IT'. Kampaniya və zəncirlərdə istifadə edin.",
+      "listTitle": "Seqment siyahısı",
+      "listDesc": "Seqmentlər kontakt sayı ilə. Baxmaq üçün klikləyin."
+    },
+    "invoices": {
+      "statsTitle": "Faktura icmalı",
+      "statsDesc": "Cəmi, ödənilmiş, vaxtı keçmiş, qalıq. Pul axınını izləyin.",
+      "newTitle": "Yeni faktura",
+      "newDesc": "Maddələr, vergilər, endirimlər. Sövdə və ya şirkətə bağlayın.",
+      "listTitle": "Faktura siyahısı",
+      "listDesc": "Bütün fakturalar statuslarla: qaralama → göndərilmiş → baxılmış → ödənilmiş / vaxtı keçmiş."
+    },
+    "finance": {
+      "tabsTitle": "Maliyyə modulları",
+      "tabsDesc": "İcmal, debitor, kreditor, fondlar və ödəniş tapşırıqları — bir yerdə."
+    },
+    "budgeting": {
+      "headerTitle": "Büdcələşdirmə",
+      "headerDesc": "Büdcə planları, fərq (plan vs fakt), AI sapma analizi."
+    },
+    "profitability": {
+      "kpiTitle": "Əsas göstəricilər",
+      "kpiDesc": "Gəlir, xərclər, marja, EBITDA — rentabellik bir baxışda.",
+      "tabsTitle": "Analiz tabları",
+      "tabsDesc": "Xidmətlər, müştərilər, overhead, işçilər, parametrlər — hər sahəni araşdırın.",
+      "chartsTitle": "Qrafiklər",
+      "chartsDesc": "Xərc və gəlir vizuallaşdırması. Pul hara gedir."
+    },
+    "pricing": {
+      "headerTitle": "Qiymətləndirmə",
+      "headerDesc": "Qiymət profilləri, tarif kartları, xidmət dəyərləri. Sövdələrə bağlayın."
     }
   },
   "dashboardSettings": {

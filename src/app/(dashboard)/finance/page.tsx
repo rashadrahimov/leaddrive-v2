@@ -10,11 +10,14 @@ import { APDashboard } from "@/components/finance/ap-dashboard"
 import { FundManager } from "@/components/finance/fund-manager"
 import { PaymentsDashboard } from "@/components/finance/payments-dashboard"
 import { LayoutDashboard, FileText, CreditCard, PiggyBank, Banknote } from "lucide-react"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 export default function FinancePage() {
   const t = useTranslations("finance.dash")
   const tn = useTranslations("nav")
   const searchParams = useSearchParams()
+  useAutoTour("finance")
   const initialTab = searchParams.get("tab") || "overview"
   const [activeTab, setActiveTab] = useState(initialTab)
 
@@ -29,11 +32,11 @@ export default function FinancePage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{tn("finance")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{tn("finance")} <TourReplayButton tourId="finance" /></h1>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
+        <TabsList data-tour-id="finance-tabs">
           {TABS.map(({ value, label, icon: Icon }) => (
             <TabsTrigger key={value} value={value} className="gap-1.5">
               <Icon className="w-4 h-4" />

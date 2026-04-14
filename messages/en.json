@@ -2841,6 +2841,68 @@
       "forecastDesc": "12-month view: historical revenue + AI-powered forecast.",
       "aiComTitle": "AI Commentary",
       "aiComDesc": "Click to get an AI analysis of your pipeline, wins, and risks as a text narrative."
+    },
+    "inbox": {
+      "channelsTitle": "Channels",
+      "channelsDesc": "All messages in one place: email, WhatsApp, Telegram, Facebook, Instagram.",
+      "statsTitle": "Statistics",
+      "statsDesc": "Conversations, unread messages, average response time at a glance.",
+      "convTitle": "Conversations",
+      "convDesc": "Grouped by contact. See the last message and which channel it came from.",
+      "threadTitle": "Message Thread",
+      "threadDesc": "Full history with the contact across all channels."
+    },
+    "campaigns": {
+      "statsTitle": "Campaign Stats",
+      "statsDesc": "Overview: draft, scheduled, sent, open rate. Track performance of each campaign.",
+      "newTitle": "Create Campaign",
+      "newDesc": "Choose type (email/SMS), select recipients, write content, schedule send time.",
+      "listTitle": "Campaign List",
+      "listDesc": "All campaigns with status, recipients, and A/B test results."
+    },
+    "journeys": {
+      "headerTitle": "Journeys",
+      "headerDesc": "Automated action chains. Trigger → series of steps → goal. Automate follow-ups, onboarding, reminders.",
+      "listTitle": "Journey List",
+      "listDesc": "Your active and draft journeys. Click to edit the flow or view enrollment stats.",
+      "newTitle": "Create Journey",
+      "newDesc": "Build a visual chain: email → wait → condition → task → SMS. Drag and drop blocks."
+    },
+    "segments": {
+      "filtersTitle": "Segment Types",
+      "filtersDesc": "Filter by All, Dynamic (auto-updating) or Static (fixed list). Dynamic segments recalculate automatically.",
+      "newTitle": "Create Segment",
+      "newDesc": "Define conditions like 'engagement > 50 AND industry = IT'. Use in campaigns and journeys.",
+      "listTitle": "Segment List",
+      "listDesc": "Your segments with contact count. Click to view members or edit conditions."
+    },
+    "invoices": {
+      "statsTitle": "Invoice Overview",
+      "statsDesc": "Total invoiced, paid, overdue, and outstanding amounts. Track your cash flow.",
+      "newTitle": "Create Invoice",
+      "newDesc": "Add line items, taxes, discounts. Link to a deal or company. Set payment terms.",
+      "listTitle": "Invoice List",
+      "listDesc": "All invoices with status: draft → sent → viewed → paid / overdue."
+    },
+    "finance": {
+      "tabsTitle": "Finance Modules",
+      "tabsDesc": "Overview, Receivables (AR), Payables (AP), Funds, and Payment Orders — all in one place."
+    },
+    "budgeting": {
+      "headerTitle": "Budgeting",
+      "headerDesc": "Create budget plans, track variance (plan vs actual), and get AI analysis of deviations."
+    },
+    "profitability": {
+      "kpiTitle": "Key Metrics",
+      "kpiDesc": "Revenue, costs, margins, EBITDA — your profitability at a glance.",
+      "tabsTitle": "Analysis Tabs",
+      "tabsDesc": "Services, Clients, Overhead, Employees, Parameters — drill down into each cost area.",
+      "chartsTitle": "Charts",
+      "chartsDesc": "Visual breakdown of costs and revenue. Identify where money goes."
+    },
+    "pricing": {
+      "headerTitle": "Pricing",
+      "headerDesc": "Manage pricing profiles, rate cards, and service costs. Link to deals for accurate quoting."
     }
   },
   "dashboardSettings": {

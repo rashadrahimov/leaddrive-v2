@@ -4082,8 +4082,12 @@ function TemplateSeedButton({ planId }: { planId: string }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function BudgetingPage() {
   const t = useTranslations("budgeting")
+  useAutoTour("budgeting")
   const { data: plans = [], isLoading: plansLoading } = useBudgetPlans()
   const [activePlanId, setActivePlanId] = useState<string>("")
   const [showCreate, setShowCreate] = useState(false)
@@ -4101,7 +4105,7 @@ export default function BudgetingPage() {
             <PiggyBank className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{t("title")}</h1>
+            <h1 data-tour-id="budgeting-header" className="text-xl font-bold flex items-center gap-2">{t("title")} <TourReplayButton tourId="budgeting" /></h1>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
         </div>

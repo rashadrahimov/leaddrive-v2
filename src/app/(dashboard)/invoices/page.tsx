@@ -77,6 +77,9 @@ const statusBadge = (status: string) => {
   }
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function InvoicesPage() {
   const { data: session } = useSession()
   const t = useTranslations("invoices")
@@ -84,6 +87,7 @@ export default function InvoicesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dealIdFilter = searchParams.get("dealId")
+  useAutoTour("invoices")
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("")
@@ -306,7 +310,7 @@ export default function InvoicesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="invoices" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -336,7 +340,7 @@ export default function InvoicesPage() {
           <Button variant="outline" onClick={() => router.push("/invoices/recurring")}>
             <RefreshCw className="h-4 w-4 mr-1" /> {t("recurringInvoices")}
           </Button>
-          <Button onClick={() => router.push("/invoices/create")}>
+          <Button data-tour-id="invoices-new" onClick={() => router.push("/invoices/create")}>
             <Plus className="h-4 w-4 mr-1" /> {t("newInvoice")}
           </Button>
         </div>
@@ -344,7 +348,7 @@ export default function InvoicesPage() {
       <PageDescription text={t("pageDescription")} />
 
       {/* Row 1 — Financial summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div data-tour-id="invoices-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <ColorStatCard
           label={t("statTotalInvoiced")}
           value={`${stats.totalInvoiced.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${stats.currency}`}
@@ -470,7 +474,7 @@ export default function InvoicesPage() {
             </Select>
           </div>
 
-          <DataTable
+          <div data-tour-id="invoices-list"><DataTable
             columns={columns}
             data={invoices}
             searchPlaceholder={t("searchPlaceholder")}
@@ -482,7 +486,7 @@ export default function InvoicesPage() {
               if (item.status === "partially_paid") return "bg-yellow-50/60 dark:bg-yellow-950/20"
               return ""
             }}
-          />
+          /></div>
         </>
       )}
 

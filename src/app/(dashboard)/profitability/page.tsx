@@ -165,9 +165,13 @@ function CostBreakdown({ data }: { data: any }) {
   )
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ProfitabilityPage() {
   const t = useTranslations("profitability")
   const [activeTab, setActiveTab] = useState("analytics")
+  useAutoTour("profitability")
   const { data, isLoading, isError } = useCostModelAnalytics()
 
   if (isLoading) {
@@ -252,7 +256,7 @@ export default function ProfitabilityPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Calculator className="h-6 w-6" /> {t("title")}
+            <Calculator className="h-6 w-6" /> {t("title")} <TourReplayButton tourId="profitability" />
           </h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
@@ -260,7 +264,7 @@ export default function ProfitabilityPage() {
       <PageDescription text={t("pageDescription")} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList data-tour-id="profitability-tabs">
           <TabsTrigger value="analytics" className="gap-1">{t("tabAnalytics")} <InfoHint text={t("hintTabCostBreakdown")} size={12} /></TabsTrigger>
           <TabsTrigger value="services" className="gap-1">{t("tabServices")} <InfoHint text={t("hintTabServices")} size={12} /></TabsTrigger>
           <TabsTrigger value="clients" className="gap-1">{t("tabClients")} <InfoHint text={t("hintTabClients")} size={12} /></TabsTrigger>
@@ -272,7 +276,7 @@ export default function ProfitabilityPage() {
         {/* ═══════════ ANALYTICS TAB ═══════════ */}
         <TabsContent value="analytics" className="space-y-6">
           {/* KPI cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <div data-tour-id="profitability-kpi" className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <ColorStatCard
               label={t("totalCostMonth")}
               value={fmtAmount(grandTotalG)}
@@ -306,7 +310,7 @@ export default function ProfitabilityPage() {
           </div>
 
           {/* Charts row */}
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div data-tour-id="profitability-charts" className="grid gap-4 lg:grid-cols-2">
             {/* Pie chart — cost composition + breakdown */}
             <Card>
               <CardHeader>
