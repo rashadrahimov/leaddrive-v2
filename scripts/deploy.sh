@@ -41,12 +41,15 @@ ssh -o ConnectTimeout=10 root@$SERVER "
 "
 ok "Build complete"
 
-# ─── Step 4: Copy static + Restart ───
+# ─── Step 4: Copy static + public + Restart ───
 step 4 "Copying static files & restarting PM2..."
 ssh root@$SERVER "
   cd $APP_DIR &&
   cp -r .next/static .next/standalone/.next/static &&
-  cp -r public/* .next/standalone/public/ &&
+  mkdir -p .next/standalone/public &&
+  rm -rf .next/standalone/public/public &&
+  cp -a public/. .next/standalone/public/ &&
+  echo \"  wallpapers: \$(ls .next/standalone/public/wallpapers/ 2>/dev/null | wc -l) files\" &&
   pm2 restart leaddrive-cloud
   pm2 save
 "
