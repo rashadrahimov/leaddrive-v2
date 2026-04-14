@@ -73,6 +73,29 @@ async function main() {
   }
   console.log(`Team members: ${teamMembers.length}`)
 
+  // ─── Enable AI features + all modules ───
+  const allFeatures = [
+    "deals", "leads", "tasks", "contracts", "campaigns", "journeys", "events",
+    "omnichannel", "tickets", "voip", "knowledge-base", "portal", "invoices",
+    "budgeting", "profitability", "currencies", "reports", "ai", "projects",
+    "workflows", "custom-fields",
+    // AI Automation features
+    "ai_daily_briefing", "ai_anomaly_detection", "ai_lead_scoring",
+    "ai_auto_followup_shadow", "ai_auto_acknowledge_shadow", "ai_auto_payment_reminder_shadow",
+  ]
+  await prisma.organization.update({
+    where: { id: orgId },
+    data: {
+      features: allFeatures,
+      settings: {
+        ...(typeof org.settings === "object" && org.settings !== null ? org.settings : {}),
+        aiDailyBudgetUsd: 10,
+        language: "en",
+      },
+    },
+  })
+  console.log(`Features: ${allFeatures.length} enabled (incl. AI automation)`)
+
   // ─── Pipeline + Stages ───
   let pipeline = await prisma.pipeline.findFirst({ where: { organizationId: orgId, isDefault: true } })
   if (!pipeline) {
@@ -454,10 +477,20 @@ async function main() {
     { ticketNumber: "TK-1008", subject: "User role permissions not applying", description: "New 'Lab Technician' role not restricting access to financial modules as configured.", priority: "high", status: "in_progress", category: "bug", contactIdx: 10, companyIdx: 10 },
   ]
 
+  // SLA hours lookup for ticket creation
+  const slaHoursMap = { critical: 1, high: 2, medium: 4, low: 8 }
   for (const t of tickets) {
     const existing = await prisma.ticket.findFirst({ where: { organizationId: orgId, ticketNumber: t.ticketNumber } })
     if (!existing) {
       const { contactIdx, companyIdx, ...rest } = t
+      // Create tickets with SLA dates so AI auto-acknowledge can work
+      const createdAt = t.status === "new"
+        ? new Date(now - (1 + Math.random() * 3) * 60 * 60 * 1000) // 1-4 hours ago for "new" tickets
+        : new Date(now - (1 + Math.random() * 5) * DAY)
+      const slaHours = slaHoursMap[t.priority] || 4
+      const slaFirstResponseDueAt = new Date(createdAt.getTime() + slaHours * 60 * 60 * 1000)
+      const slaDueAt = new Date(createdAt.getTime() + slaHours * 4 * 60 * 60 * 1000)
+
       await prisma.ticket.create({
         data: {
           ...rest,
@@ -466,13 +499,18 @@ async function main() {
           companyId: createdCompanies[companyIdx].id,
           assignedTo: user.id,
           createdBy: user.id,
+          createdAt,
+          slaFirstResponseDueAt: t.status === "new" ? slaFirstResponseDueAt : null,
+          slaDueAt,
+          slaPolicyName: `${t.priority.charAt(0).toUpperCase() + t.priority.slice(1)} Priority SLA`,
+          firstResponseAt: t.status !== "new" ? new Date(createdAt.getTime() + 30 * 60 * 1000) : null,
           tags: [],
           escalationLevel: 0,
         },
       })
     }
   }
-  console.log(`Tickets: ${tickets.length}`)
+  console.log(`Tickets: ${tickets.length} (with SLA dates for AI demo)`)
 
   // ─── Campaigns ───
   const campaigns = [
@@ -524,6 +562,37 @@ async function main() {
     }
   }
   console.log(`Activities: ${activities.length}`)
+
+  // ─── Deal-linked activities (some stale for AI shadow demo) ───
+  const createdDeals = await prisma.deal.findMany({ where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } }, select: { id: true, name: true }, take: 12 })
+  let dealActCount = 0
+  for (let i = 0; i < createdDeals.length; i++) {
+    const deal = createdDeals[i]
+    const existing = await prisma.activity.findFirst({ where: { organizationId: orgId, relatedType: "deal", relatedId: deal.id } })
+    if (existing) continue
+    // First 3 deals: recent activity (1-3 days ago) → healthy
+    // Next 3 deals: stale activity (10-20 days ago) → triggers AI auto-followup shadow
+    // Rest: medium (4-7 days ago)
+    let daysAgo
+    if (i < 3) daysAgo = 1 + Math.random() * 2
+    else if (i < 6) daysAgo = 10 + Math.random() * 10
+    else daysAgo = 4 + Math.random() * 3
+
+    await prisma.activity.create({
+      data: {
+        organizationId: orgId,
+        type: ["call", "email", "meeting", "note"][i % 4],
+        subject: `Follow-up: ${deal.name}`,
+        description: `Activity logged for deal tracking.`,
+        relatedType: "deal",
+        relatedId: deal.id,
+        createdBy: user.id,
+        createdAt: new Date(now - daysAgo * DAY),
+      },
+    })
+    dealActCount++
+  }
+  if (dealActCount > 0) console.log(`Deal activities: ${dealActCount} (${Math.min(3, createdDeals.length)} stale >10d for AI shadow demo)`)
 
   // ─── 1. Products ───
   try {
@@ -630,7 +699,7 @@ async function main() {
         { invoiceNumber: "INV-2026-004", title: "EuroMed — Final Delivery", companyId: createdCompanies[11].id, contactId: createdContacts[11].id, status: "paid", subtotal: 32500, taxRate: 0, taxAmount: 0, totalAmount: 32500, paidAmount: 32500, balanceDue: 0, currency: "EUR", issueDate: new Date(now - 90 * DAY), dueDate: new Date(now - 60 * DAY), paidAt: new Date(now - 55 * DAY), items: [
           { name: "Supply Chain Module — Final Milestone", quantity: 1, unitPrice: 32500, total: 32500 },
         ]},
-        { invoiceNumber: "INV-2026-005", title: "BioGenesis — LIMS Assessment", companyId: createdCompanies[5].id, contactId: createdContacts[5].id, status: "overdue", subtotal: 22000, taxRate: 0.19, taxAmount: 4180, totalAmount: 26180, paidAmount: 0, balanceDue: 26180, currency: "EUR", issueDate: new Date(now - 40 * DAY), dueDate: new Date(now - 10 * DAY), items: [
+        { invoiceNumber: "INV-2026-005", title: "BioGenesis — LIMS Assessment", companyId: createdCompanies[5].id, contactId: createdContacts[5].id, status: "overdue", subtotal: 22000, taxRate: 0.19, taxAmount: 4180, totalAmount: 26180, paidAmount: 0, balanceDue: 26180, currency: "EUR", issueDate: new Date(now - 50 * DAY), dueDate: new Date(now - 20 * DAY), items: [
           { name: "LIMS Assessment & Gap Analysis", quantity: 1, unitPrice: 15000, total: 15000 },
           { name: "Technical Architecture Review", quantity: 1, unitPrice: 7000, total: 7000 },
         ]},
