@@ -194,7 +194,7 @@ export function DidYouKnow({ page, className = "", variant = "default" }: { page
   return (
     <div className={`relative rounded-xl p-5 shadow-sm ${
       variant === "glass"
-        ? "border border-white/10 bg-white/10 backdrop-blur-xl text-white"
+        ? "border border-white/15 bg-black/30 backdrop-blur-xl text-white"
         : "border border-violet-300 dark:border-violet-700 bg-gradient-to-r from-violet-100/90 to-indigo-100/90 dark:from-violet-950/40 dark:to-indigo-950/40"
     } ${className}`}>
       {/* Dismiss current tip */}
