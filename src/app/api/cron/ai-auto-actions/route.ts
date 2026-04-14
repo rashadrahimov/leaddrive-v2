@@ -311,14 +311,21 @@ async function runAutoPaymentReminder(orgId: string, now: Date, shadow: boolean)
       if (existingShadow) continue
 
       // Check if contact is already in a payment reminder journey
-      const existingEnrollment = await prisma.journeyEnrollment.findFirst({
-        where: {
-          contactId: invoice.contactId,
-          status: { in: ["active", "paused"] },
-          journey: { name: { contains: "payment" } },
-        },
+      const paymentJourneys = await prisma.journey.findMany({
+        where: { organizationId: orgId, name: { contains: "payment", mode: "insensitive" } },
+        select: { id: true },
       })
-      if (existingEnrollment) continue
+      const paymentJourneyIds = paymentJourneys.map(j => j.id)
+      if (paymentJourneyIds.length > 0) {
+        const existingEnrollment = await prisma.journeyEnrollment.findFirst({
+          where: {
+            contactId: invoice.contactId,
+            journeyId: { in: paymentJourneyIds },
+            status: { in: ["active", "paused"] },
+          },
+        })
+        if (existingEnrollment) continue
+      }
 
       const companyName = (invoice.company as any)?.name || ""
 
