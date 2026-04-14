@@ -60,11 +60,12 @@ export async function GET(req: NextRequest) {
       success: true,
       data: { projects, total, page, limit },
     })
-  } catch {
-    return NextResponse.json({
-      success: true,
-      data: { projects: [], total: 0, page, limit },
-    })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 

@@ -159,6 +159,8 @@ model User {
   assignedTasks       Task[]          @relation("TaskAssignee")
   createdTasks        Task[]          @relation("TaskCreator")
   taskComments        TaskComment[]   @relation("TaskComments")
+  managedProjects     Project[]       @relation("ProjectManager")
+  assignedProjectTasks ProjectTask[]  @relation("ProjectTaskAssignee")
 
   @@unique([organizationId, email])
   @@map("users")
@@ -379,6 +381,7 @@ model Deal {
   offers         Offer[]
   invoices       Invoice[]
   contracts      Contract[]
+  projects       Project[]  @relation("ProjectDeal")
 
   @@index([organizationId])
   @@index([organizationId, stage])
@@ -2358,10 +2361,12 @@ model Project {
   actualCost           Float     @default(0)
   currency             String    @default("AZN")
   completionPercentage Int       @default(0)
-  managerId            String?   // userId of project manager
+  managerId            String?
+  manager              User?     @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
   companyId            String?
   company              Company?  @relation(fields: [companyId], references: [id], onDelete: SetNull)
   dealId               String?
+  deal                 Deal?     @relation("ProjectDeal", fields: [dealId], references: [id], onDelete: SetNull)
   color                String    @default("#6366f1")
   tags                 String[]  @default([])
   createdBy            String?
@@ -2431,6 +2436,7 @@ model ProjectTask {
   status          String    @default("todo") // todo, in_progress, review, done, cancelled
   priority        String    @default("medium")
   assignedTo      String?
+  assignee        User?     @relation("ProjectTaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
   dueDate         DateTime?
   estimatedHours  Float?    @default(0)
   actualHours     Float     @default(0)
@@ -2445,7 +2451,7 @@ model ProjectTask {
   @@index([organizationId])
   @@index([milestoneId])
   @@index([parentId])
-  @@index([organizationId, assignedTo])
+  @@index([assignedTo])
   @@map("project_tasks")
 }
 

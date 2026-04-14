@@ -3,22 +3,16 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { requireAuth, isAuthError } from "@/lib/api-auth"
 
-const createTaskSchema = z.object({
-  title: z.string().min(1).max(255),
+const createMilestoneSchema = z.object({
+  name: z.string().min(1).max(255),
   description: z.string().optional(),
-  status: z.enum(["todo", "in_progress", "review", "done", "cancelled"]).optional(),
-  priority: z.enum(["low", "medium", "high", "critical"]).optional(),
-  milestoneId: z.string().optional().nullable(),
-  parentId: z.string().optional().nullable(),
-  assignedTo: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
-  estimatedHours: z.number().optional(),
-  tags: z.array(z.string()).optional(),
+  color: z.string().optional(),
+  sortOrder: z.number().optional(),
 })
 
-const updateTaskSchema = createTaskSchema.partial().extend({
-  actualHours: z.number().optional(),
-  sortOrder: z.number().optional(),
+const updateMilestoneSchema = createMilestoneSchema.partial().extend({
+  status: z.enum(["pending", "in_progress", "completed", "overdue"]).optional(),
 })
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -29,27 +23,31 @@ export async function GET(req: NextRequest, props: RouteParams) {
   const orgId = auth.orgId
 
   const { id: projectId } = await props.params
-  const { searchParams } = new URL(req.url)
-  const status = searchParams.get("status")
-  const milestoneId = searchParams.get("milestoneId")
-  const assignedTo = searchParams.get("assignedTo")
 
   try {
-    const tasks = await prisma.projectTask.findMany({
-      where: {
-        projectId,
-        organizationId: orgId,
-        ...(status ? { status } : {}),
-        ...(milestoneId ? { milestoneId } : {}),
-        ...(assignedTo ? { assignedTo } : {}),
-      },
+    const milestones = await prisma.projectMilestone.findMany({
+      where: { projectId, organizationId: orgId },
       orderBy: { sortOrder: "asc" },
       include: {
-        milestone: { select: { id: true, name: true, color: true } },
-        children: { select: { id: true, title: true, status: true } },
+        tasks: {
+          select: { id: true, status: true },
+        },
       },
     })
-    return NextResponse.json({ success: true, data: tasks })
+
+    const data = milestones.map((m: typeof milestones[number]) => ({
+      ...m,
+      _count: { tasks: m.tasks.length },
+      _taskBreakdown: {
+        todo: m.tasks.filter((t: { status: string }) => t.status === "todo").length,
+        in_progress: m.tasks.filter((t: { status: string }) => t.status === "in_progress").length,
+        review: m.tasks.filter((t: { status: string }) => t.status === "review").length,
+        done: m.tasks.filter((t: { status: string }) => t.status === "done").length,
+        cancelled: m.tasks.filter((t: { status: string }) => t.status === "cancelled").length,
+      },
+    }))
+
+    return NextResponse.json({ success: true, data })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -63,13 +61,13 @@ export async function POST(req: NextRequest, props: RouteParams) {
 
   const { id: projectId } = await props.params
   const body = await req.json()
-  const parsed = createTaskSchema.safeParse(body)
+  const parsed = createMilestoneSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
   try {
-    const task = await prisma.projectTask.create({
+    const milestone = await prisma.projectMilestone.create({
       data: {
         organizationId: orgId,
         projectId,
@@ -77,7 +75,7 @@ export async function POST(req: NextRequest, props: RouteParams) {
         dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : undefined,
       },
     })
-    return NextResponse.json({ success: true, data: task }, { status: 201 })
+    return NextResponse.json({ success: true, data: milestone }, { status: 201 })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -91,13 +89,13 @@ export async function PUT(req: NextRequest, props: RouteParams) {
 
   const { id: projectId } = await props.params
   const body = await req.json()
-  const { taskId, ...rest } = body
+  const { milestoneId, ...rest } = body
 
-  if (!taskId) {
-    return NextResponse.json({ error: "taskId required" }, { status: 400 })
+  if (!milestoneId) {
+    return NextResponse.json({ error: "milestoneId required" }, { status: 400 })
   }
 
-  const parsed = updateTaskSchema.safeParse(rest)
+  const parsed = updateMilestoneSchema.safeParse(rest)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
@@ -107,28 +105,15 @@ export async function PUT(req: NextRequest, props: RouteParams) {
     if (parsed.data.dueDate !== undefined) {
       data.dueDate = parsed.data.dueDate ? new Date(parsed.data.dueDate) : null
     }
-    if (parsed.data.status === "done") {
+    if (parsed.data.status === "completed") {
       data.completedAt = new Date()
     }
 
-    const task = await prisma.projectTask.update({
-      where: { id: taskId, projectId, organizationId: orgId },
+    const milestone = await prisma.projectMilestone.update({
+      where: { id: milestoneId, projectId, organizationId: orgId },
       data,
     })
-
-    // Auto-update project completion percentage
-    const [totalTasks, doneTasks] = await Promise.all([
-      prisma.projectTask.count({ where: { projectId, organizationId: orgId } }),
-      prisma.projectTask.count({ where: { projectId, organizationId: orgId, status: "done" } }),
-    ])
-    if (totalTasks > 0) {
-      await prisma.project.update({
-        where: { id: projectId },
-        data: { completionPercentage: Math.round((doneTasks / totalTasks) * 100) },
-      })
-    }
-
-    return NextResponse.json({ success: true, data: task })
+    return NextResponse.json({ success: true, data: milestone })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -142,15 +127,15 @@ export async function DELETE(req: NextRequest, props: RouteParams) {
 
   const { id: projectId } = await props.params
   const { searchParams } = new URL(req.url)
-  const taskId = searchParams.get("taskId")
+  const milestoneId = searchParams.get("milestoneId")
 
-  if (!taskId) {
-    return NextResponse.json({ error: "taskId required" }, { status: 400 })
+  if (!milestoneId) {
+    return NextResponse.json({ error: "milestoneId required" }, { status: 400 })
   }
 
   try {
-    await prisma.projectTask.delete({
-      where: { id: taskId, projectId, organizationId: orgId },
+    await prisma.projectMilestone.delete({
+      where: { id: milestoneId, projectId, organizationId: orgId },
     })
     return NextResponse.json({ success: true })
   } catch (e) {

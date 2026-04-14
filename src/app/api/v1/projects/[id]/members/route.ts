@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { requireAuth, isAuthError } from "@/lib/api-auth"
 
 const memberSchema = z.object({
   userId: z.string().min(1),
@@ -12,8 +12,9 @@ const memberSchema = z.object({
 type RouteParams = { params: Promise<{ id: string }> }
 
 export async function GET(req: NextRequest, props: RouteParams) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
 
   const { id: projectId } = await props.params
 
@@ -29,8 +30,9 @@ export async function GET(req: NextRequest, props: RouteParams) {
 }
 
 export async function POST(req: NextRequest, props: RouteParams) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
 
   const { id: projectId } = await props.params
   const body = await req.json()
@@ -57,9 +59,42 @@ export async function POST(req: NextRequest, props: RouteParams) {
   }
 }
 
+const updateMemberSchema = z.object({
+  memberId: z.string().min(1),
+  role: z.enum(["manager", "member", "viewer"]).optional(),
+  hourlyRate: z.number().optional(),
+})
+
+export async function PUT(req: NextRequest, props: RouteParams) {
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
+
+  const { id: projectId } = await props.params
+  const body = await req.json()
+  const parsed = updateMemberSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+  }
+
+  const { memberId, ...data } = parsed.data
+
+  try {
+    const member = await prisma.projectMember.update({
+      where: { id: memberId, projectId, organizationId: orgId },
+      data,
+    })
+    return NextResponse.json({ success: true, data: member })
+  } catch (e) {
+    console.error(e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function DELETE(req: NextRequest, props: RouteParams) {
-  const orgId = await getOrgId(req)
-  if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+  const orgId = auth.orgId
 
   const { id: projectId } = await props.params
   const { searchParams } = new URL(req.url)

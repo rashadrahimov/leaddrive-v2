@@ -248,30 +248,199 @@ async function main() {
   console.log(`Leads: ${leads.length}`)
 
   // ─── Tasks ───
+  // Fetch created deals and leads for entity linking
+  const createdDeals = await prisma.deal.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "asc" }, take: 12 })
+  const createdLeads = await prisma.lead.findMany({ where: { organizationId: orgId }, orderBy: { createdAt: "asc" }, take: 8 })
+
   const tasks = [
-    { title: "Prepare Pfizer Q2 proposal deck", status: "in_progress", priority: "high", dueDate: new Date(now + 3 * DAY) },
-    { title: "Schedule Roche demo call", status: "pending", priority: "high", dueDate: new Date(now + 5 * DAY) },
-    { title: "Send Novartis contract for signing", status: "completed", priority: "high", dueDate: new Date(now - 2 * DAY) },
-    { title: "Review AstraZeneca requirements doc", status: "pending", priority: "medium", dueDate: new Date(now + 7 * DAY) },
-    { title: "Follow up with Merck on Phase 2", status: "in_progress", priority: "high", dueDate: new Date(now + 1 * DAY) },
-    { title: "BioGenesis onboarding kickoff", status: "pending", priority: "medium", dueDate: new Date(now + 10 * DAY) },
-    { title: "Update MedTech pricing model", status: "in_progress", priority: "medium", dueDate: new Date(now + 4 * DAY) },
-    { title: "PharmaCare integration testing", status: "pending", priority: "low", dueDate: new Date(now + 14 * DAY) },
-    { title: "NeuroPharma security audit review", status: "completed", priority: "high", dueDate: new Date(now - 5 * DAY) },
-    { title: "Prepare monthly sales report", status: "pending", priority: "medium", dueDate: new Date(now + 2 * DAY) },
-    { title: "GreenBio initial discovery call", status: "completed", priority: "low", dueDate: new Date(now - 3 * DAY) },
-    { title: "Apex Clinical API documentation", status: "in_progress", priority: "medium", dueDate: new Date(now + 6 * DAY) },
+    {
+      title: "Prepare Pfizer Q2 proposal deck", status: "in_progress", priority: "high",
+      dueDate: new Date(now + 3 * DAY),
+      description: "Create a comprehensive proposal deck for Pfizer covering Q2 deliverables, timeline, and budget breakdown. Include case studies from similar pharma projects.",
+      relatedType: "deal", relatedId: createdDeals[0]?.id,
+    },
+    {
+      title: "Schedule Roche demo call", status: "todo", priority: "high",
+      dueDate: new Date(now + 5 * DAY),
+      description: "Coordinate with Roche's IT team to schedule a live demo of the digital transformation platform. Prepare environment with sample data.",
+      relatedType: "deal", relatedId: createdDeals[1]?.id,
+    },
+    {
+      title: "Send Novartis contract for signing", status: "completed", priority: "high",
+      dueDate: new Date(now - 2 * DAY), completedAt: new Date(now - 2 * DAY + 4 * 3600000),
+      description: "Finalize the procurement platform contract and send via DocuSign. Ensure all legal amendments from last review are incorporated.",
+      relatedType: "company", relatedId: createdCompanies[2]?.id,
+    },
+    {
+      title: "Review AstraZeneca requirements doc", status: "pending", priority: "medium",
+      dueDate: new Date(now + 7 * DAY),
+      description: "Go through the 45-page requirements document from AstraZeneca. Highlight technical risks and prepare estimation for the data analytics module.",
+      relatedType: "deal", relatedId: createdDeals[3]?.id,
+    },
+    {
+      title: "Follow up with Merck on Phase 2", status: "in_progress", priority: "high",
+      dueDate: new Date(now + 1 * DAY),
+      description: "Send Phase 2 progress report and discuss timeline adjustments. Address their concerns about API performance benchmarks.",
+      relatedType: "contact", relatedId: createdContacts[4]?.id,
+    },
+    {
+      title: "BioGenesis onboarding kickoff", status: "pending", priority: "medium",
+      dueDate: new Date(now + 10 * DAY),
+      description: "Organize kickoff meeting with BioGenesis stakeholders. Prepare onboarding checklist, access provisioning plan, and training schedule.",
+      relatedType: "company", relatedId: createdCompanies[5]?.id,
+    },
+    {
+      title: "Update MedTech pricing model", status: "in_progress", priority: "medium",
+      dueDate: new Date(now + 4 * DAY),
+      description: "Revise the pricing tiers based on new feature scope. Calculate ROI projections for the inventory solution module.",
+      relatedType: "deal", relatedId: createdDeals[6]?.id,
+    },
+    {
+      title: "PharmaCare integration testing", status: "todo", priority: "low",
+      dueDate: new Date(now + 14 * DAY),
+      description: "Run end-to-end integration tests for the WMS connector. Verify data mapping for all 12 warehouse endpoints.",
+      relatedType: "company", relatedId: createdCompanies[7]?.id,
+    },
+    {
+      title: "NeuroPharma security audit review", status: "completed", priority: "high",
+      dueDate: new Date(now - 5 * DAY), completedAt: new Date(now - 6 * DAY),
+      description: "Review penetration test results and prepare remediation plan for identified vulnerabilities. Update security documentation.",
+      relatedType: "deal", relatedId: createdDeals[8]?.id,
+    },
+    {
+      title: "Prepare monthly sales report", status: "pending", priority: "medium",
+      dueDate: new Date(now + 2 * DAY),
+      description: "Compile pipeline metrics, conversion rates, and revenue forecast for the monthly leadership review meeting.",
+    },
+    {
+      title: "Contact Dr. Sarah Miller about VaxTech opportunity", status: "completed", priority: "low",
+      dueDate: new Date(now - 3 * DAY), completedAt: new Date(now - 4 * DAY),
+      description: "Initial outreach to discuss CRM integration needs. Qualify the lead and assess budget timeline.",
+      relatedType: "lead", relatedId: createdLeads[0]?.id,
+    },
+    {
+      title: "Apex Clinical API documentation", status: "in_progress", priority: "medium",
+      dueDate: new Date(now + 6 * DAY),
+      description: "Write OpenAPI specs for all patient portal endpoints. Include authentication flow diagrams and rate limiting documentation.",
+      relatedType: "deal", relatedId: createdDeals[10]?.id,
+    },
   ]
 
+  const createdTasks = []
   for (const t of tasks) {
     const existing = await prisma.task.findFirst({ where: { organizationId: orgId, title: t.title } })
     if (!existing) {
-      await prisma.task.create({
-        data: { ...t, organizationId: orgId, assignedTo: user.id, createdBy: user.id },
-      })
+      // Remove undefined relatedId (when entity arrays are empty)
+      const data = { ...t, organizationId: orgId, assignedTo: user.id, createdBy: user.id }
+      if (!data.relatedId) { delete data.relatedType; delete data.relatedId }
+      const created = await prisma.task.create({ data })
+      createdTasks.push(created)
+    } else {
+      createdTasks.push(existing)
     }
   }
-  console.log(`Tasks: ${tasks.length}`)
+  console.log(`Tasks: ${createdTasks.length}`)
+
+  // ─── Task Checklists ───
+  const checklistData = [
+    { taskIdx: 0, items: [
+      { title: "Draft executive summary slide", completed: true, sortOrder: 0 },
+      { title: "Add pricing breakdown table", completed: true, sortOrder: 1 },
+      { title: "Include pharma case studies (2-3)", completed: false, sortOrder: 2 },
+      { title: "Review with sales director", completed: false, sortOrder: 3 },
+      { title: "Export final PDF version", completed: false, sortOrder: 4 },
+    ]},
+    { taskIdx: 1, items: [
+      { title: "Check Roche team availability", completed: false, sortOrder: 0 },
+      { title: "Prepare demo environment with sample data", completed: false, sortOrder: 1 },
+      { title: "Send calendar invite", completed: false, sortOrder: 2 },
+    ]},
+    { taskIdx: 4, items: [
+      { title: "Compile Phase 1 deliverables summary", completed: true, sortOrder: 0 },
+      { title: "Prepare API benchmark results", completed: true, sortOrder: 1 },
+      { title: "Draft Phase 2 timeline adjustments", completed: false, sortOrder: 2 },
+      { title: "Send report to Merck PM", completed: false, sortOrder: 3 },
+    ]},
+    { taskIdx: 5, items: [
+      { title: "Create onboarding checklist", completed: false, sortOrder: 0 },
+      { title: "Set up staging environment", completed: false, sortOrder: 1 },
+      { title: "Prepare training materials", completed: false, sortOrder: 2 },
+      { title: "Schedule kickoff call", completed: false, sortOrder: 3 },
+      { title: "Provision user accounts", completed: false, sortOrder: 4 },
+      { title: "Send welcome package", completed: false, sortOrder: 5 },
+    ]},
+    { taskIdx: 11, items: [
+      { title: "Document auth endpoints", completed: true, sortOrder: 0 },
+      { title: "Document patient data endpoints", completed: true, sortOrder: 1 },
+      { title: "Document reporting endpoints", completed: false, sortOrder: 2 },
+      { title: "Add rate limiting section", completed: false, sortOrder: 3 },
+      { title: "Create Postman collection", completed: false, sortOrder: 4 },
+    ]},
+  ]
+
+  let checklistCount = 0
+  for (const cl of checklistData) {
+    const task = createdTasks[cl.taskIdx]
+    if (!task) continue
+    const existingItems = await prisma.taskChecklist.count({ where: { taskId: task.id } })
+    if (existingItems === 0) {
+      for (const item of cl.items) {
+        await prisma.taskChecklist.create({
+          data: { ...item, organizationId: orgId, taskId: task.id },
+        })
+        checklistCount++
+      }
+    }
+  }
+  console.log(`Task checklist items: ${checklistCount}`)
+
+  // ─── Task Comments ───
+  const commentData = [
+    { taskIdx: 0, comments: [
+      { content: "Started working on the deck. Using the Q1 template as a base.", isSystem: false },
+      { content: "Status changed from pending to in_progress", isSystem: true },
+      { content: "Added ROI calculations — numbers look strong for this quarter.", isSystem: false },
+    ]},
+    { taskIdx: 2, comments: [
+      { content: "Legal approved all amendments. Ready to send.", isSystem: false },
+      { content: "Contract sent via DocuSign. Awaiting signature from Novartis CFO.", isSystem: false },
+      { content: "Status changed to completed", isSystem: true },
+    ]},
+    { taskIdx: 4, comments: [
+      { content: "Merck PM raised concerns about response times on the analytics endpoint. Investigating.", isSystem: false },
+      { content: "Benchmarks show 240ms p95 — within SLA but close to threshold. Optimizing queries.", isSystem: false },
+    ]},
+    { taskIdx: 8, comments: [
+      { content: "Pentest report received. 2 medium, 5 low severity findings.", isSystem: false },
+      { content: "All medium findings addressed. Low severity items tracked in backlog.", isSystem: false },
+      { content: "Status changed to completed", isSystem: true },
+    ]},
+    { taskIdx: 11, comments: [
+      { content: "Auth and patient data sections done. Moving to reporting endpoints next.", isSystem: false },
+    ]},
+  ]
+
+  let commentCount = 0
+  for (const cc of commentData) {
+    const task = createdTasks[cc.taskIdx]
+    if (!task) continue
+    const existingComments = await prisma.taskComment.count({ where: { taskId: task.id } })
+    if (existingComments === 0) {
+      for (const comment of cc.comments) {
+        await prisma.taskComment.create({
+          data: {
+            ...comment,
+            organizationId: orgId,
+            taskId: task.id,
+            userId: user.id,
+            createdAt: new Date(now - Math.floor(Math.random() * 5) * DAY),
+          },
+        })
+        commentCount++
+      }
+    }
+  }
+  console.log(`Task comments: ${commentCount}`)
 
   // ─── Tickets ───
   const tickets = [
