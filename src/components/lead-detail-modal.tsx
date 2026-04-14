@@ -53,11 +53,19 @@ const statusColors: Record<string, string> = {
 }
 
 function getGrade(score: number): { letter: string; color: string } {
-  if (score >= 80) return { letter: "A", color: "bg-green-500 text-white" }
-  if (score >= 60) return { letter: "B", color: "bg-blue-500 text-white" }
-  if (score >= 40) return { letter: "C", color: "bg-yellow-500 text-white" }
-  if (score >= 20) return { letter: "D", color: "bg-orange-500 text-white" }
+  const s = Math.min(100, Math.max(0, score))
+  if (s >= 80) return { letter: "A", color: "bg-emerald-500 text-white" }
+  if (s >= 60) return { letter: "B", color: "bg-blue-500 text-white" }
+  if (s >= 40) return { letter: "C", color: "bg-amber-500 text-white" }
+  if (s >= 20) return { letter: "D", color: "bg-orange-500 text-white" }
   return { letter: "F", color: "bg-red-500 text-white" }
+}
+
+function getTemperature(score: number): { label: string; color: string } {
+  const s = Math.min(100, Math.max(0, score))
+  if (s >= 70) return { label: "HOT", color: "text-emerald-600" }
+  if (s >= 40) return { label: "WARM", color: "text-amber-600" }
+  return { label: "COLD", color: "text-blue-500" }
 }
 
 export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }: LeadDetailModalProps) {
@@ -240,18 +248,18 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
         {/* Tab: Details */}
         {activeTab === "details" && (
           <div className="space-y-4">
-            {/* Quick status change */}
+            {/* Compact funnel status pills */}
             <div>
-              <p className="text-xs text-muted-foreground mb-2">{t("ldmFunnelStatus")}</p>
-              <div className="grid grid-cols-3 gap-1.5">
+              <p className="text-[10px] text-muted-foreground mb-1.5">{t("ldmFunnelStatus")}</p>
+              <div className="flex flex-wrap gap-1">
                 {(["new", "contacted", "qualified", "converted", "rejected", "cancelled"] as const).map(s => (
                   <button
                     key={s}
                     onClick={() => changeStatus(s)}
-                    className={`text-xs py-1.5 px-2 rounded-md border transition-all ${
+                    className={`text-[10px] py-1 px-2.5 rounded-full border transition-all ${
                       (fullData?.leadStatus || company.leadStatus) === s
-                        ? "bg-primary text-primary-foreground border-primary font-medium"
-                        : "bg-background hover:bg-muted border-border"
+                        ? `${statusColors[s]} text-white border-transparent font-medium`
+                        : "bg-background hover:bg-muted border-border text-muted-foreground"
                     }`}
                   >
                     {statusLabels[s]}
@@ -260,59 +268,125 @@ export function LeadDetailModal({ open, onOpenChange, company, orgId, onSaved }:
               </div>
             </div>
 
-            {/* Info grid — all fields clickable to edit */}
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmEmail"), "email", fullData?.email || company.email)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmEmail")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{fullData?.email || company.email || "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmPhone"), "phone", fullData?.phone || company.phone)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmPhone")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{fullData?.phone || company.phone || "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmWebsite"), "website", fullData?.website || company.website)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmWebsite")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{fullData?.website || company.website || "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmIndustry"), "industry", fullData?.industry || company.industry)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmIndustry")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{fullData?.industry || company.industry || "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(`${t("ldmEstimatedValue")} (${getCurrencySymbol()})`, "annualRevenue", fullData?.annualRevenue || company.annualRevenue, true)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmEstimatedValue")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{(fullData?.annualRevenue || company.annualRevenue) ? fmtAmount(fullData?.annualRevenue || company.annualRevenue) : "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmUsers"), "userCount", fullData?.userCount ?? company.userCount, true)}>
-                <span className="text-[10px] text-muted-foreground block">{t("ldmUsers")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className="text-xs">{fullData?.userCount ?? company.userCount ?? 0}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">{t("ldmCreated")}</span>
-                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? new Date(fullData?.createdAt || company.createdAt).toLocaleDateString() : "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">{t("ldmDaysInBase")}</span>
-                <span className="text-xs">{(fullData?.createdAt || company.createdAt) ? `${Math.floor((Date.now() - new Date(fullData?.createdAt || company.createdAt).getTime()) / 86400000)} ${t("ldmDays")}` : "—"}</span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">SLA</span>
-                <span className="text-xs">
-                  {(fullData as any)?.slaPolicy ? (
-                    <span className="text-blue-600 dark:text-blue-400 font-medium">{(fullData as any).slaPolicy.name}</span>
-                  ) : t("ldmSlaDefault")}
-                </span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", fullData?.leadScore ?? company.leadScore, true)}>
-                <span className="text-[10px] text-muted-foreground block">Score <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
-                <span className={`text-xs font-bold ${(fullData?.leadTemperature || company.leadTemperature) === "hot" ? "text-red-500" : (fullData?.leadTemperature || company.leadTemperature) === "warm" ? "text-orange-500" : "text-blue-500"}`}>
-                  {((fullData?.leadTemperature || company.leadTemperature) || "cold").toUpperCase()} {fullData?.leadScore ?? company.leadScore}
-                </span>
-              </div>
-              <div className="p-2 bg-muted/30 rounded">
-                <span className="text-[10px] text-muted-foreground block">{t("ldmContacts")}</span>
-                <span className="text-xs">{fullData?.contacts?.length || company._count?.contacts || 0}</span>
-              </div>
-            </div>
+            {/* Sectioned info — hide empty fields */}
+            {(() => {
+              const d = fullData || company
+              const email = d?.email || company.email
+              const phone = d?.phone || company.phone
+              const website = d?.website || company.website
+              const industry = d?.industry || company.industry
+              const revenue = d?.annualRevenue || company.annualRevenue
+              const users = d?.userCount ?? company.userCount
+              const created = d?.createdAt || company.createdAt
+              const sla = (d as any)?.slaPolicy
+              const score = Math.min(100, Math.max(0, d?.leadScore ?? company.leadScore ?? 0))
+              const temp = getTemperature(score)
+              const hasContact = email || phone || website
+              const hasBusiness = industry || revenue || users
+
+              return (
+                <div className="space-y-3">
+                  {/* Score bar */}
+                  <div className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 group" onClick={() => editField("Score", "leadScore", score, true)}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${grade.color}`}>{grade.letter}</span>
+                      <span className={`text-sm font-semibold ${temp.color}`}>{temp.label}</span>
+                      <span className="text-xs text-muted-foreground">{score}/100</span>
+                      <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100" />
+                    </div>
+                    <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${score >= 70 ? "bg-emerald-500" : score >= 40 ? "bg-amber-500" : "bg-blue-500"}`} style={{ width: `${score}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Contact Info — only filled fields */}
+                  {hasContact && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1">{t("ldmContactInfo") || "Contact"}</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {email && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmEmail"), "email", email)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmEmail")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs truncate">{email}</p>
+                          </div>
+                        )}
+                        {phone && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmPhone"), "phone", phone)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmPhone")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs">{phone}</p>
+                          </div>
+                        )}
+                        {website && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group col-span-2" onClick={() => editField(t("ldmWebsite"), "website", website)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmWebsite")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs truncate">{website}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Business Info — only filled fields */}
+                  {hasBusiness && (
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-1">{t("ldmBusinessInfo") || "Business"}</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {industry && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmIndustry"), "industry", industry)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmIndustry")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs">{industry}</p>
+                          </div>
+                        )}
+                        {revenue && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmEstimatedValue"), "annualRevenue", revenue, true)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmEstimatedValue")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs">{fmtAmount(revenue)}</p>
+                          </div>
+                        )}
+                        {(users != null && users > 0) && (
+                          <div className="p-2 bg-muted/30 rounded cursor-pointer hover:bg-muted/50 group" onClick={() => editField(t("ldmUsers"), "userCount", users, true)}>
+                            <span className="text-[10px] text-muted-foreground">{t("ldmUsers")} <Pencil className="h-2 w-2 inline opacity-0 group-hover:opacity-100" /></span>
+                            <p className="text-xs">{users}</p>
+                          </div>
+                        )}
+                        {sla && (
+                          <div className="p-2 bg-muted/30 rounded">
+                            <span className="text-[10px] text-muted-foreground">SLA</span>
+                            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{sla.name}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Metrics row */}
+                  <div>
+                    <p className="text-[10px] text-muted-foreground mb-1">{t("ldmMetrics") || "Metrics"}</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {created && (
+                        <div className="p-2 bg-muted/30 rounded">
+                          <span className="text-[10px] text-muted-foreground">{t("ldmCreated")}</span>
+                          <p className="text-xs">{new Date(created).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {created && (
+                        <div className="p-2 bg-muted/30 rounded">
+                          <span className="text-[10px] text-muted-foreground">{t("ldmDaysInBase")}</span>
+                          <p className="text-xs">{Math.floor((Date.now() - new Date(created).getTime()) / 86400000)} {t("ldmDays")}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add missing info link */}
+                  {!hasContact && (
+                    <button onClick={() => editField(t("ldmEmail"), "email", "")} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                      <Plus className="h-3 w-3" /> {t("ldmAddContactInfo") || "Add contact info"}
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* FIX #2: About section */}
             <div>

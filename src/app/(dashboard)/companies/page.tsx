@@ -206,67 +206,61 @@ export default function CompaniesPage() {
         ) : (
           filtered.map(company => (
             <MotionItem key={company.id}>
-            <Card className="hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200 cursor-pointer" onClick={() => setSelectedCompany(company)}>
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-semibold text-sm flex-shrink-0">
-                      {company.name.charAt(0)}
-                    </div>
-                    <h3 className="font-bold text-sm truncate">{company.name}</h3>
+            <Card className="hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200 cursor-pointer group/card" onClick={() => setSelectedCompany(company)}>
+              <CardContent className="pt-4 pb-3">
+                {/* Row 1: Avatar + Name + Score badge */}
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-sm flex-shrink-0">
+                    {company.name.charAt(0)}
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${statusColors[company.status] || "bg-muted"}`}>
-                    {statusLabels[company.status] || company.status}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-                  {company.industry && <span>{company.industry}</span>}
-                  {company.industry && company.city && <span>·</span>}
-                  {company.city && <span>{company.city}</span>}
-                  {!company.industry && !company.city && <span>{company.website || "—"}</span>}
-                </div>
-
-                <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" /> {company._count?.contacts || 0} {t("contacts")}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0} {t("deals")}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-3 w-3" /> {company.userCount || 0} {t("users")}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap">
-                  {company.leadTemperature && (
-                    <>
-                      <span className={`text-xs font-bold ${company.leadTemperature === "hot" ? "text-red-500" : company.leadTemperature === "warm" ? "text-orange-500" : "text-blue-500"}`}>
-                        {company.leadTemperature.toUpperCase()}
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-[15px] truncate leading-tight">{company.name}</h3>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${statusColors[company.status] || "bg-muted"}`}>
+                        {statusLabels[company.status] || company.status}
                       </span>
-                      <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-medium">
-                        {company.leadScore}
+                      {(company.industry || company.city) && (
+                        <span className="text-[10px] text-muted-foreground truncate">
+                          {[company.industry, company.city].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Score pill */}
+                  {company.leadScore > 0 && (() => {
+                    const s = Math.min(100, company.leadScore)
+                    const color = s >= 70 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : s >= 40 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    const label = s >= 70 ? "HOT" : s >= 40 ? "WARM" : "COLD"
+                    return (
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-lg flex-shrink-0 ${color}`}>
+                        {label} {s}
                       </span>
-                    </>
-                  )}
+                    )
+                  })()}
+                </div>
+
+                {/* Row 2: Metrics (compact) */}
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3 w-3" /> {company._count?.contacts || 0}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> {company._count?.deals || 0}
+                  </span>
                   {company.slaPolicy && (
-                    <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[10px] text-primary font-medium">
                       SLA: {company.slaPolicy.name}
                     </span>
                   )}
-                  <div className="ml-auto flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => { setEditData(company as any); setFormOpen(true) }}
-                      className="p-1 rounded hover:bg-muted" title={t("edit")}
-                    >
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                  {/* Edit/Delete — appear on hover */}
+                  <div className="ml-auto flex items-center gap-0.5 opacity-0 group-hover/card:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => { setEditData(company as any); setFormOpen(true) }} className="p-1 rounded hover:bg-muted" title={t("edit")}>
+                      <Pencil className="h-3 w-3 text-muted-foreground" />
                     </button>
-                    <button
-                      onClick={() => { setDeleteItem(company); setDeleteOpen(true) }}
-                      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={t("delete")}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
+                    <button onClick={() => { setDeleteItem(company); setDeleteOpen(true) }} className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={t("delete")}>
+                      <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
                     </button>
                   </div>
                 </div>
