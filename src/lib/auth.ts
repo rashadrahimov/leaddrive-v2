@@ -113,6 +113,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow cross-subdomain redirects within *.leaddrivecrm.org
+      try {
+        const target = new URL(url, baseUrl)
+        const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "leaddrivecrm.org"
+        if (target.hostname === baseDomain || target.hostname.endsWith(`.${baseDomain}`)) {
+          return target.toString()
+        }
+      } catch {}
+      // Default: allow relative URLs, block external
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      return baseUrl
+    },
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "microsoft-entra-id") {
         // Find or create user + organization for OAuth
