@@ -126,7 +126,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <DidYouKnow page="dashboard" className="mb-4" />
+      <DidYouKnow page="dashboard" variant="glass" className="mb-4" />
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (

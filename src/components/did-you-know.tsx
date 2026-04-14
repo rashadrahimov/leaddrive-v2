@@ -154,7 +154,7 @@ function saveDismissed(dismissed: Set<string>) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...dismissed])) } catch {}
 }
 
-export function DidYouKnow({ page, className = "" }: { page: string; className?: string }) {
+export function DidYouKnow({ page, className = "", variant = "default" }: { page: string; className?: string; variant?: "default" | "glass" }) {
   const t = useTranslations("tips")
   const router = useRouter()
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
@@ -192,9 +192,15 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
   catch { title = tip.titleKey; desc = tip.descKey; cta = tip.ctaKey }
 
   return (
-    <div className={`relative rounded-xl border border-violet-300 dark:border-violet-700 bg-gradient-to-r from-violet-100/90 to-indigo-100/90 dark:from-violet-950/40 dark:to-indigo-950/40 p-5 shadow-sm ${className}`}>
+    <div className={`relative rounded-xl p-5 shadow-sm ${
+      variant === "glass"
+        ? "border border-white/10 bg-white/10 backdrop-blur-xl text-white"
+        : "border border-violet-300 dark:border-violet-700 bg-gradient-to-r from-violet-100/90 to-indigo-100/90 dark:from-violet-950/40 dark:to-indigo-950/40"
+    } ${className}`}>
       {/* Dismiss current tip */}
-      <button onClick={handleDismiss} className="absolute top-3 right-3 p-1 rounded-md text-violet-400 hover:text-violet-700 hover:bg-violet-200/50 dark:hover:bg-violet-800/40 transition-colors z-10">
+      <button onClick={handleDismiss} className={`absolute top-3 right-3 p-1 rounded-md transition-colors z-10 ${
+        variant === "glass" ? "text-white/40 hover:text-white hover:bg-white/10" : "text-violet-400 hover:text-violet-700 hover:bg-violet-200/50 dark:hover:bg-violet-800/40"
+      }`}>
         <X className="h-4 w-4" />
       </button>
 
@@ -207,19 +213,25 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
           transition={{ duration: 0.2 }}
           className="flex items-start gap-3.5 pr-8"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-200 dark:bg-violet-800/60 shrink-0 mt-0.5 shadow-sm">
-            <Lightbulb className="h-5 w-5 text-violet-700 dark:text-violet-300" />
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 mt-0.5 shadow-sm ${
+            variant === "glass" ? "bg-white/15" : "bg-violet-200 dark:bg-violet-800/60"
+          }`}>
+            <Lightbulb className={`h-5 w-5 ${variant === "glass" ? "text-amber-300" : "text-violet-700 dark:text-violet-300"}`} />
           </div>
           <div className="min-w-0 space-y-2">
-            <p className="text-sm font-bold text-violet-800 dark:text-violet-200">
-              {t("prefix")} <span className="text-foreground">{title}</span>
+            <p className={`text-sm font-bold ${variant === "glass" ? "text-white/80" : "text-violet-800 dark:text-violet-200"}`}>
+              {t("prefix")} <span className={variant === "glass" ? "text-white" : "text-foreground"}>{title}</span>
             </p>
-            <p className="text-[13px] text-foreground/70 dark:text-foreground/60 leading-relaxed">{desc}</p>
+            <p className={`text-[13px] leading-relaxed ${variant === "glass" ? "text-white/60" : "text-foreground/70 dark:text-foreground/60"}`}>{desc}</p>
             {tip.href && (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 px-3 text-xs font-medium border-violet-400 text-violet-700 bg-white hover:bg-violet-50 dark:border-violet-600 dark:text-violet-300 dark:bg-violet-900/30 dark:hover:bg-violet-800/40 shadow-sm"
+                className={`h-7 px-3 text-xs font-medium shadow-sm ${
+                  variant === "glass"
+                    ? "border-white/20 text-white bg-white/10 hover:bg-white/20"
+                    : "border-violet-400 text-violet-700 bg-white hover:bg-violet-50 dark:border-violet-600 dark:text-violet-300 dark:bg-violet-900/30 dark:hover:bg-violet-800/40"
+                }`}
                 onClick={() => router.push(tip.href)}
               >
                 {cta} <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
@@ -231,23 +243,35 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
 
       {/* Navigation: ← counter → */}
       {available.length > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-3 pt-2.5 border-t border-violet-200/40 dark:border-violet-800/30">
+        <div className={`flex items-center justify-center gap-3 mt-3 pt-2.5 border-t ${
+          variant === "glass" ? "border-white/10" : "border-violet-200/40 dark:border-violet-800/30"
+        }`}>
           <button
             onClick={goPrev}
             disabled={safeIdx === 0}
-            className="h-7 w-7 flex items-center justify-center rounded-md border border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50 disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className={`h-7 w-7 flex items-center justify-center rounded-md border disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm ${
+              variant === "glass"
+                ? "border-white/20 bg-white/10 hover:bg-white/20"
+                : "border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50"
+            }`}
           >
-            <ChevronLeft className="h-4 w-4 text-violet-700 dark:text-violet-300" />
+            <ChevronLeft className={`h-4 w-4 ${variant === "glass" ? "text-white/70" : "text-violet-700 dark:text-violet-300"}`} />
           </button>
-          <span className="text-xs font-medium text-violet-600 dark:text-violet-400 min-w-[3rem] text-center">
+          <span className={`text-xs font-medium min-w-[3rem] text-center ${
+            variant === "glass" ? "text-white/50" : "text-violet-600 dark:text-violet-400"
+          }`}>
             {safeIdx + 1} / {available.length}
           </span>
           <button
             onClick={goNext}
             disabled={safeIdx >= available.length - 1}
-            className="h-7 w-7 flex items-center justify-center rounded-md border border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50 disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className={`h-7 w-7 flex items-center justify-center rounded-md border disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm ${
+              variant === "glass"
+                ? "border-white/20 bg-white/10 hover:bg-white/20"
+                : "border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50"
+            }`}
           >
-            <ChevronRight className="h-4 w-4 text-violet-700 dark:text-violet-300" />
+            <ChevronRight className={`h-4 w-4 ${variant === "glass" ? "text-white/70" : "text-violet-700 dark:text-violet-300"}`} />
           </button>
         </div>
       )}
