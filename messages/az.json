@@ -2749,7 +2749,8 @@
     "configured": "Konfiqurasiya edilib",
     "briefingLanguage": "İcmal dili",
     "saved": "Saxlandı!",
-    "resetTours": "Turları sıfırla"
+    "resetTours": "Turları sıfırla",
+    "resetTips": "Məsləhətləri sıfırla"
   },
   "tips": {
     "prefix": "Bilirdinizmi?",

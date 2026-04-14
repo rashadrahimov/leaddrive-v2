@@ -53,6 +53,7 @@ export default function AiAutomationPage() {
   useAutoTour("aiAutomation")
   const orgId = (session?.user as any)?.organizationId
   const [toursReset, setToursReset] = useState(false)
+  const [tipsReset, setTipsReset] = useState(false)
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
   const [shadowTotal, setShadowTotal] = useState(0)
@@ -195,6 +196,9 @@ export default function AiAutomationPage() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => { resetAllTours(); setToursReset(true); setTimeout(() => setToursReset(false), 3000) }}>
             {toursReset ? "✓" : "↺"} {t("resetTours")}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem("leaddrive_dismissed_tips"); setTipsReset(true); setTimeout(() => setTipsReset(false), 3000) }}>
+            {tipsReset ? "✓" : "↺"} {t("resetTips")}
           </Button>
           <Button variant="outline" size="sm" onClick={fetchData}>
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}

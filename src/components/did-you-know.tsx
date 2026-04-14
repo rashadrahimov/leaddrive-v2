@@ -19,8 +19,8 @@ interface Tip {
 
 const TIPS: Record<string, Tip[]> = {
   dashboard: [
-    { id: "ctrl-k", titleKey: "ctrlKTitle", descKey: "ctrlKDesc", ctaKey: "ctrlKCta", href: "" },
-    { id: "wallpaper", titleKey: "wallpaperTitle", descKey: "wallpaperDesc", ctaKey: "wallpaperCta", href: "" },
+    { id: "ctrl-k", titleKey: "ctrlKTitle", descKey: "ctrlKDesc", ctaKey: "ctrlKCta", href: "/settings/dashboard" },
+    { id: "wallpaper", titleKey: "wallpaperTitle", descKey: "wallpaperDesc", ctaKey: "wallpaperCta", href: "/settings/dashboard" },
     { id: "daily-briefing", titleKey: "dailyBriefingTitle", descKey: "dailyBriefingDesc", ctaKey: "dailyBriefingCta", href: "/settings/ai-automation" },
     { id: "anomaly-detect", titleKey: "anomalyTitle", descKey: "anomalyDesc", ctaKey: "anomalyCta", href: "/ai-command-center" },
     { id: "widget-toggle", titleKey: "widgetTitle", descKey: "widgetDesc", ctaKey: "widgetCta", href: "/settings/dashboard" },

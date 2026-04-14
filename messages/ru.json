@@ -2754,7 +2754,8 @@
     "configured": "Настроено",
     "briefingLanguage": "Язык дайджеста",
     "saved": "Сохранено!",
-    "resetTours": "Сбросить туры"
+    "resetTours": "Сбросить туры",
+    "resetTips": "Сбросить подсказки"
   },
   "tips": {
     "prefix": "А знаете ли вы?",
