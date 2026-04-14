@@ -15,6 +15,7 @@ import { Ticket, Plus, Clock, AlertTriangle, CheckCircle, Pencil, Trash2, UserX,
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 import { MotionList, MotionItem } from "@/components/ui/motion"
+import { useAutoTour } from "@/components/tour/tour-provider"
 
 interface TicketData {
   id: string
@@ -70,6 +71,7 @@ export default function TicketsPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const [tickets, setTickets] = useState<TicketData[]>([])
+  useAutoTour("tickets")
   const [view, setView] = useState<ViewMode>("list")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [loading, setLoading] = useState(true)
@@ -275,15 +277,15 @@ export default function TicketsPage() {
             <button onClick={() => setView("list")} className={cn("px-3 py-1.5 text-sm", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("list")}</button>
             <button onClick={() => setView("kanban")} className={cn("px-3 py-1.5 text-sm", view === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}>{t("kanban")}</button>
           </div>
-          <Button onClick={handleAdd}><Plus className="h-4 w-4" /> {t("newTicket")}</Button>
+          <Button data-tour-id="tickets-new" onClick={handleAdd}><Plus className="h-4 w-4" /> {t("newTicket")}</Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 stagger-children">
+      <div data-tour-id="tickets-list" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" hint={t("hintTotalTickets")} />
         <ColorStatCard label={t("statOpen")} value={openCount} icon={<Clock className="h-4 w-4" />} color="amber" hint={t("hintFirstResponseRate")} />
         <ColorStatCard label={t("statUnassigned")} value={unassignedCount} icon={<UserX className="h-4 w-4" />} color="orange" />
-        <ColorStatCard label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintSlaBreached")} />
+        <ColorStatCard data-tour-id="tickets-sla" label={t("statSlaBreach")} value={breachedCount} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintSlaBreached")} />
         <ColorStatCard label={t("statResolved")} value={resolvedCount} icon={<CheckCircle className="h-4 w-4" />} color="green" hint={t("hintAvgResolution")} />
       </div>
 

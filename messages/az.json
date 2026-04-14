@@ -2749,6 +2749,94 @@
     "briefingLanguage": "İcmal dili",
     "saved": "Saxlandı!"
   },
+  "tour": {
+    "dashboard": {
+      "statsTitle": "Əsas göstəricilər",
+      "statsDesc": "Biznesiniz bir baxışda: sövdələr, gəlir, tapşırıqlar, biletlər. Real vaxtda yenilənir.",
+      "pipelineTitle": "Pipeline",
+      "pipelineDesc": "Sövdə hunisi mərhələlər üzrə. Hər addımda nə qədər pul olduğunu görün.",
+      "tasksTitle": "Tapşırıqlar",
+      "tasksDesc": "Yaxınlaşan və vaxtı keçmiş tapşırıqlar. Qırmızı = vaxtı keçib.",
+      "activityTitle": "Aktivlik lenti",
+      "activityDesc": "Komandanın son hərəkətləri: zənglər, e-poçtlar, qeydlər.",
+      "widgetTitle": "Fərdiləşdirmə",
+      "widgetDesc": "İstənilən dashboard blokunu açın/bağlayın. İş sahənizi özünüzə uyğunlaşdırın."
+    },
+    "deals": {
+      "kanbanTitle": "Kanban lövhəsi",
+      "kanbanDesc": "Sövdələriniz mərhələlər üzrə. Kartları sütunlar arasında sürükləyin.",
+      "pipelineTitle": "Pipeline",
+      "pipelineDesc": "Bir neçə satış hunisi varsa aralarında keçid edin.",
+      "summaryTitle": "Pipeline dəyəri",
+      "summaryDesc": "Bütün aktiv sövdələrin ümumi və çəkili dəyəri.",
+      "cardTitle": "Sövdə kartı",
+      "cardDesc": "Təfərrüatları görmək üçün klikləyin: AI proqnoz, təkliflər, tarixçə.",
+      "newTitle": "Yeni sövdə",
+      "newDesc": "Şirkətə, kontakta və pipeline mərhələsinə bağlanır."
+    },
+    "dealDetail": {
+      "stageTitle": "Sövdə mərhələsi",
+      "stageDesc": "Pipeline-da cari mövqe. Mərhələyə klikləyərək sövdəni irəli aparın.",
+      "aiPredTitle": "AI Proqnoz",
+      "aiPredDesc": "AI aktivliyə, tarixçəyə və mərhələyə əsasən qazanma ehtimalını qiymətləndirir.",
+      "aiSugTitle": "AI Təklifləri",
+      "aiSugDesc": "Tövsiyələr: zəng edin, yazın, görüş təyin edin. 'Tapşırıq yarat' düyməsi ilə hərəkətə keçin.",
+      "quickTitle": "Sürətli əməliyyatlar",
+      "quickDesc": "Səhifədən çıxmadan qeyd, tapşırıq və ya e-poçt əlavə edin.",
+      "sidebarTitle": "Təfərrüatlar",
+      "sidebarDesc": "Məbləğ, şirkət, kontakt, ehtimal, gözlənilən bağlanma tarixi.",
+      "timelineTitle": "Tarixçə",
+      "timelineDesc": "Bu sövdə üzrə tam xronologiya: kim, nə vaxt, nə etdi."
+    },
+    "tickets": {
+      "listTitle": "Biletlər",
+      "listDesc": "Müştəri sorğuları. Hər birinin nömrəsi, prioriteti və SLA müddəti var.",
+      "slaTitle": "SLA göstəriciləri",
+      "slaDesc": "Cavab/həll müddətinə qalan vaxt. Sarı = yaxınlaşır, qırmızı = keçib.",
+      "kanbanTitle": "Görünüşlər",
+      "kanbanDesc": "Siyahı və ya Kanban lövhəsi arasında keçid edin.",
+      "autoTitle": "Ağıllı təyinat",
+      "autoDesc": "Biletlər iş yükü, təcrübə və həll sürətinə görə ən yaxşı agentə təyin edilir.",
+      "newTitle": "Yeni bilet",
+      "newDesc": "Mövzu yazanda AI avtomatik kateqoriya və prioritet təklif edir."
+    },
+    "ticketDetail": {
+      "headerTitle": "Bilet və SLA",
+      "headerDesc": "Nömrə, mövzu, SLA geri sayım. Qırmızı taymer = SLA pozulub.",
+      "aiDraftTitle": "AI Qaralama",
+      "aiDraftDesc": "Bilik bazası və oxşar həll edilmiş biletlər əsasında cavab yaradın. Göndərməzdən əvvəl redaktə edin.",
+      "aiSummaryTitle": "AI Xülasə",
+      "aiSummaryDesc": "Bütün yazışmanın 2-3 cümlə ilə xülasəsi.",
+      "aiStepsTitle": "AI Addımlar",
+      "aiStepsDesc": "Biletin həlli üçün tövsiyə olunan addımlar.",
+      "commentsTitle": "Şərhlər",
+      "commentsDesc": "Public müştəriyə görünür. Internal — yalnız komandanıza.",
+      "macrosTitle": "Makrolar",
+      "macrosDesc": "Sürətli əməliyyatlar: status + şərh + təyinat — bir klikdə."
+    },
+    "leads": {
+      "listTitle": "Lidlər",
+      "listDesc": "Kvalifikasiyadan əvvəl potensial müştərilər. Saytdan, reklamdan və ya əl ilə.",
+      "scoreTitle": "AI Qiymət",
+      "scoreDesc": "Hər 6 saatda AI lidləri 8 faktor üzrə qiymətləndirir: e-poçt, vəzifə, mənbə, büdcə, aktivlik. A = isti, F = soyuq.",
+      "statusTitle": "Statuslar",
+      "statusDesc": "new → contacted → qualified → converted (müştəri oldu) və ya lost.",
+      "convertTitle": "Konversiya",
+      "convertDesc": "Convert düyməsi — avtomatik kontakt + şirkət + sövdə yaradır."
+    },
+    "reports": {
+      "kpiTitle": "KPI",
+      "kpiDesc": "Əsas göstəricilər: gəlir, sövdələr, konversiya, tapşırıqlar.",
+      "funnelTitle": "Huni",
+      "funnelDesc": "Hər mərhələdə neçə sövdə və onların dəyəri. Harada ilişib qaldığını görün.",
+      "leadFunnelTitle": "Lid hunisi",
+      "leadFunnelDesc": "New-dan converted-ə. Lidlər harada itirilir.",
+      "forecastTitle": "Proqnoz",
+      "forecastDesc": "12 aylıq görünüş: tarixçə + AI proqnoz.",
+      "aiComTitle": "AI Şərh",
+      "aiComDesc": "Pipeline, qazanclar və riskləri AI ilə analiz edib mətn şərhi alın."
+    }
+  },
   "dashboardSettings": {
     "title": "İdarə paneli parametrləri",
     "subtitle": "Vidcetləri seçin və paneli fərdiləşdirin",

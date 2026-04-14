@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Handshake, Plus, TrendingUp, TrendingDown, BarChart3, Columns3, List, Sparkles, X, Loader2, Search, Pencil, Trash2 } from "lucide-react"
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { DealsAnalytics } from "@/components/deals/deals-analytics"
 import { cn } from "@/lib/utils"
 import { STAGE_COLORS } from "@/lib/constants"
@@ -42,6 +43,7 @@ export default function DealsPage() {
   const router = useRouter()
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
+  useAutoTour("deals")
   const [formOpen, setFormOpen] = useState(false)
   const [editDeal, setEditDeal] = useState<Deal | undefined>()
   const [sortBy, setSortBy] = useState("newest")
@@ -255,7 +257,7 @@ export default function DealsPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Tab switcher */}
-          <div className="flex items-center rounded-lg border bg-muted/50 p-0.5">
+          <div data-tour-id="deals-kanban" className="flex items-center rounded-lg border bg-muted/50 p-0.5">
             <button
               onClick={() => setTab("analytics")}
               className={cn(
@@ -309,7 +311,7 @@ export default function DealsPage() {
               <option value="close_date">{t("expectedClose")} ↑</option>
             </Select>
           )}
-          <Button onClick={() => { setEditDeal(undefined); setFormOpen(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
+          <Button data-tour-id="deals-new" onClick={() => { setEditDeal(undefined); setFormOpen(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
         </div>
       </div>
 

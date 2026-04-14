@@ -22,6 +22,7 @@ import { AiSuggestions } from "@/components/deals/ai-suggestions"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 import { useFieldPermissions } from "@/hooks/use-field-permissions"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { STAGE_COLORS } from "@/lib/constants"
 
 const FALLBACK_STAGE_STYLES = [
@@ -343,6 +344,7 @@ export default function DealDetailPage() {
   const tc = useTranslations("common")
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  useAutoTour("dealDetail")
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId ? String(session.user.organizationId) : undefined
 
@@ -574,17 +576,19 @@ export default function DealDetailPage() {
       </div>
 
       {/* ── Stage Progress Bar (chevrons) ── */}
+      <div data-tour-id="deal-stage-progress">
       <StageProgress
         stages={STAGES}
         currentStage={deal.stage}
         onStageClick={handleStageClick}
       />
+      </div>
 
       {/* ── TWO-COLUMN LAYOUT ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
         {/* LEFT: Data sidebar */}
         <div className="space-y-4">
-          <div className="rounded-xl border bg-card overflow-hidden">
+          <div data-tour-id="deal-sidebar" className="rounded-xl border bg-card overflow-hidden">
             <DealSidebar
               deal={deal}
               orgId={orgId}
@@ -596,10 +600,14 @@ export default function DealDetailPage() {
           </div>
 
           {/* AI Prediction */}
-          <AiPredictionCard dealId={id} />
+          <div data-tour-id="deal-ai-prediction">
+            <AiPredictionCard dealId={id} />
+          </div>
 
           {/* AI Suggestions (Copilot) */}
-          <AiSuggestions dealId={id} />
+          <div data-tour-id="deal-ai-suggestions">
+            <AiSuggestions dealId={id} />
+          </div>
 
           {/* Next Steps */}
           <NextStepsWidget
@@ -613,6 +621,7 @@ export default function DealDetailPage() {
         {/* RIGHT: Timeline feed */}
         <div className="space-y-4">
           {/* Quick Action Bar — always visible at top */}
+          <div data-tour-id="deal-quick-actions">
           <QuickActionBar
             dealId={id}
             orgId={orgId}
@@ -638,9 +647,10 @@ export default function DealDetailPage() {
               send: tc("send"),
             }}
           />
+          </div>
 
           {/* Unified Timeline */}
-          <div className="rounded-xl border bg-card p-4">
+          <div data-tour-id="deal-timeline" className="rounded-xl border bg-card p-4">
             <ActivityTimeline key={timelineKey} dealId={id} orgId={orgId} />
           </div>
         </div>

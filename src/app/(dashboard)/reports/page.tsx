@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
@@ -216,6 +217,7 @@ export default function ReportsPage() {
   const t = useTranslations("reports")
   const [data, setData] = useState<ReportData | null>(null)
   const [loading, setLoading] = useState(true)
+  useAutoTour("reports")
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [drillDownStatus, setDrillDownStatus] = useState<string | null>(null)
   const [drillDownLeads, setDrillDownLeads] = useState<any[]>([])
@@ -349,7 +351,7 @@ export default function ReportsPage() {
       <PageDescription text={t("pageDescription")} />
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div data-tour-id="reports-kpi" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <ColorStatCard label={t("statCompanies")} value={data.overview.companies} icon={<Building2 className="h-4 w-4" />} color="blue" />
         <ColorStatCard label={t("statContacts")} value={data.overview.contacts} icon={<Users className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statDeals")} value={data.overview.deals} icon={<DollarSign className="h-4 w-4" />} color="green" />
@@ -521,7 +523,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Sales Forecast (T45) */}
-        <Card>
+        <Card data-tour-id="reports-forecast">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div>
@@ -574,7 +576,7 @@ export default function ReportsPage() {
               <span className="flex items-center gap-1"><span className="w-3 h-2 bg-primary/70 rounded border-t border-dashed border-primary" /> Forecast</span>
               <span className="ml-auto text-muted-foreground">6m total: {(totalForecast / 1000).toFixed(0)}k ₼</span>
             </div>
-            <ForecastNarrative />
+            <div data-tour-id="reports-ai-commentary"><ForecastNarrative /></div>
           </CardContent>
         </Card>
 

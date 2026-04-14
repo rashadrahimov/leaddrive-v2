@@ -21,6 +21,7 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { MotionList, MotionItem } from "@/components/ui/motion"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { LeadsAnalytics } from "@/components/leads/leads-analytics"
 
 interface Lead {
@@ -77,6 +78,7 @@ export default function LeadsPage() {
   }
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
+  useAutoTour("leads")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [sortBy, setSortBy] = useState("score_desc")
@@ -177,8 +179,8 @@ export default function LeadsPage() {
             <UserPlus className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{t("title")} ({leads.length})</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 data-tour-id="leads-list" className="text-2xl font-bold tracking-tight">{t("title")} ({leads.length})</h1>
+            <p data-tour-id="leads-score" className="text-sm text-muted-foreground">
               {t("avgScore")}: {avgScore}/100 · {t("hotLeads")}: {hotLeads}
             </p>
           </div>

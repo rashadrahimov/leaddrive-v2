@@ -14,6 +14,8 @@ import { TicketBadgeProvider } from "@/contexts/ticket-badge-context"
 import { DashboardWallpaper } from "@/components/dashboard-wallpaper"
 import { TicketNotifier } from "@/components/ticket-notifier"
 import { VoipCallProvider } from "@/components/voip-call-provider"
+import { TourProvider } from "@/components/tour/tour-provider"
+import { TourRenderer } from "@/components/tour/tour-renderer"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <WallpaperProvider>
         <QueryClientProvider client={queryClient}>
           <TicketBadgeProvider>
+          <TourProvider>
           <VoipCallProvider>
           {isDashboard && <DashboardWallpaper />}
           <div className="relative z-[2] flex h-screen">
@@ -55,8 +58,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <AiAssistantPanel />
             </div>
           </div>
+          <TourRenderer />
           <TicketNotifier />
           </VoipCallProvider>
+          </TourProvider>
           </TicketBadgeProvider>
         </QueryClientProvider>
       </WallpaperProvider>

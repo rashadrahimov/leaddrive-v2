@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { KpiCard } from "@/components/dashboard/kpi-card"
 import { MotionList, MotionItem } from "@/components/ui/motion"
+import { useAutoTour } from "@/components/tour/tour-provider"
 import { RisksBanner } from "@/components/dashboard/risks-banner"
 import { SalesPipeline } from "@/components/dashboard/sales-pipeline"
 import { RevenueTrend } from "@/components/dashboard/revenue-trend"
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const tc = useTranslations("common")
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  useAutoTour("dashboard")
   const [widgets, setWidgets] = useState<Record<string, boolean>>({
     risksBanner: true, statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
     recentDeals: true, aiLeadScoring: true, activityFeed: true,
@@ -124,7 +126,7 @@ export default function DashboardPage() {
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (
-        <MotionList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" staggerDelay={0.06}>
+        <MotionList data-tour-id="dashboard-stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3" staggerDelay={0.06}>
           <MotionItem>
             <KpiCard
               title={t("kpiRevenue")}
@@ -187,7 +189,7 @@ export default function DashboardPage() {
 
       {/* ═══ Row 2: Pipeline + Revenue Trend + Lead Sources ═══ */}
       <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
-        {widgets.dealPipeline && <MotionItem><SalesPipeline pipeline={pipeline} /></MotionItem>}
+        {widgets.dealPipeline && <MotionItem><div data-tour-id="dashboard-pipeline"><SalesPipeline pipeline={pipeline} /></div></MotionItem>}
         {widgets.revenueTrend && <MotionItem><RevenueTrend forecast={forecast} /></MotionItem>}
         {widgets.leadSources && <MotionItem><LeadSourcesDonut leadsBySource={leads.bySource} totalLeads={leads.activeCount || leads.total || 0} /></MotionItem>}
       </MotionList>
@@ -196,7 +198,7 @@ export default function DashboardPage() {
       <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
         {widgets.recentDeals && <MotionItem><RecentDeals deals={pipeline.recentDeals} /></MotionItem>}
         {widgets.aiLeadScoring && <MotionItem><AiLeadScoring leads={leads.topScored} /></MotionItem>}
-        {widgets.activityFeed && <MotionItem><ActivityFeed activities={activity.recent} timeAgo={timeAgo} /></MotionItem>}
+        {widgets.activityFeed && <MotionItem><div data-tour-id="dashboard-activity"><ActivityFeed activities={activity.recent} timeAgo={timeAgo} /></div></MotionItem>}
       </MotionList>
 
       {/* ═══ Row 4: Campaigns + Events + Weekly Metrics ═══ */}
