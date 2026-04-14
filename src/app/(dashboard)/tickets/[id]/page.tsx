@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select"
 import { ArrowLeft, ArrowRight, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen, ChevronLeft, ChevronRight, Keyboard, Timer, Play } from "lucide-react"
 import { InfoHint } from "@/components/info-hint"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { useTicketShortcuts, TICKET_SHORTCUTS } from "@/hooks/use-ticket-shortcuts"
 
 interface TicketData {
@@ -497,7 +498,7 @@ export default function TicketDetailPage() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold truncate">{ticket.subject}</h1>
+            <h1 className="text-lg font-bold truncate flex items-center gap-2">{ticket.subject} <TourReplayButton tourId="ticketDetail" /></h1>
             <span data-tour-id="ticket-header-sla" className="text-xs text-muted-foreground font-mono">{ticket.ticketNumber}</span>
             {/* Handle timer */}
             <span className="text-xs text-muted-foreground flex items-center gap-1">

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/ui/dialog"
@@ -343,7 +344,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="reports" /></h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>

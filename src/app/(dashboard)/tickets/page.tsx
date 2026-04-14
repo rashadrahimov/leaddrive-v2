@@ -16,6 +16,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 import { MotionList, MotionItem } from "@/components/ui/motion"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
 interface TicketData {
   id: string
@@ -268,7 +269,7 @@ export default function TicketsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="tickets" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("pageDescription")} />
         </div>

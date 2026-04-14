@@ -22,6 +22,7 @@ import { MotionList, MotionItem } from "@/components/ui/motion"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { LeadsAnalytics } from "@/components/leads/leads-analytics"
 
 interface Lead {
@@ -179,7 +180,7 @@ export default function LeadsPage() {
             <UserPlus className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 data-tour-id="leads-list" className="text-2xl font-bold tracking-tight">{t("title")} ({leads.length})</h1>
+            <h1 data-tour-id="leads-list" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} ({leads.length}) <TourReplayButton tourId="leads" /></h1>
             <p data-tour-id="leads-score" className="text-sm text-muted-foreground">
               {t("avgScore")}: {avgScore}/100 · {t("hotLeads")}: {hotLeads}
             </p>

@@ -9,6 +9,7 @@ import {
 import { KpiCard } from "@/components/dashboard/kpi-card"
 import { MotionList, MotionItem } from "@/components/ui/motion"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { RisksBanner } from "@/components/dashboard/risks-banner"
 import { SalesPipeline } from "@/components/dashboard/sales-pipeline"
 import { RevenueTrend } from "@/components/dashboard/revenue-trend"
@@ -115,7 +116,7 @@ export default function DashboardPage() {
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="dashboard" /></h1>
           <p className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric", weekday: "long" })}
             {` · ${t("lastUpdated")}: `}

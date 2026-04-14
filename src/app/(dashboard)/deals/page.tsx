@@ -14,6 +14,7 @@ import { Handshake, Plus, TrendingUp, TrendingDown, BarChart3, Columns3, List, S
 import { DealForm } from "@/components/deal-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { DealsAnalytics } from "@/components/deals/deals-analytics"
 import { cn } from "@/lib/utils"
 import { STAGE_COLORS } from "@/lib/constants"
@@ -252,7 +253,7 @@ export default function DealsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="deals" /></h1>
           <p className="text-sm text-muted-foreground">{t("totalDeals", { count: deals.length })}</p>
         </div>
         <div className="flex items-center gap-2">

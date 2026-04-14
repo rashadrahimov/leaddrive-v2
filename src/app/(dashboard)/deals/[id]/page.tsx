@@ -23,6 +23,7 @@ import { StageValidationDialog } from "@/components/deals/stage-validation-dialo
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 import { useFieldPermissions } from "@/hooks/use-field-permissions"
 import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { STAGE_COLORS } from "@/lib/constants"
 
 const FALLBACK_STAGE_STYLES = [
@@ -550,7 +551,7 @@ export default function DealDetailPage() {
         </Button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold tracking-tight truncate">{deal.name}</h1>
+            <h1 className="text-lg font-bold tracking-tight truncate flex items-center gap-2">{deal.name} <TourReplayButton tourId="dealDetail" /></h1>
             <Badge className="text-white text-[11px]" style={{ backgroundColor: stageInfo?.color }}>
               {stageInfo?.label ?? deal.stage}
             </Badge>
