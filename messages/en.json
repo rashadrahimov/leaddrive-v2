@@ -2757,152 +2757,146 @@
   },
   "tour": {
     "dashboard": {
-      "statsTitle": "Key Metrics",
-      "statsDesc": "Your business at a glance: deals, revenue, tasks, tickets. Updates in real-time.",
-      "pipelineTitle": "Pipeline",
-      "pipelineDesc": "Your deals funnel by stage. See how much money is at each step.",
-      "tasksTitle": "Tasks",
-      "tasksDesc": "Upcoming and overdue tasks. Red = overdue — needs immediate attention.",
-      "activityTitle": "Activity Feed",
-      "activityDesc": "Recent team actions: calls, emails, notes. Stay up-to-date with everything happening.",
-      "widgetTitle": "Customize",
-      "widgetDesc": "Toggle any dashboard block on/off. Arrange your workspace how you like."
+      "statsTitle": "Your Morning Check",
+      "statsDesc": "Start here every day. If revenue is down — check deals. If tickets spike — check SLA. Click any card to jump to that section.",
+      "pipelineTitle": "Where's the Money?",
+      "pipelineDesc": "Click any stage to see stuck deals. If a stage is growing but deals aren't moving — your team needs to follow up.",
+      "activityTitle": "Team Pulse",
+      "activityDesc": "See what your team did today. No calls logged? Someone might need a nudge. Click any item to open the related deal or contact."
     },
     "deals": {
-      "kanbanTitle": "Kanban Board",
-      "kanbanDesc": "Your deals organized by stage. Drag cards between columns to move them through the pipeline.",
-      "pipelineTitle": "Pipeline",
-      "pipelineDesc": "Switch between pipelines if you have multiple sales funnels (sales, partnerships, etc.)",
-      "summaryTitle": "Pipeline Value",
-      "summaryDesc": "Total and weighted value of all active deals. Weighted = adjusted by win probability.",
-      "cardTitle": "Deal Card",
-      "cardDesc": "Click any deal to see details: AI prediction, suggestions, timeline, and more.",
-      "newTitle": "Create Deal",
-      "newDesc": "New deal links to a company, contact, and pipeline stage."
+      "kanbanTitle": "Drag to Progress",
+      "kanbanDesc": "Drag a deal card to the next column — this changes its stage and recalculates win probability. Deals stuck >7 days get flagged by AI.",
+      "pipelineTitle": "Multiple Funnels",
+      "pipelineDesc": "Use separate pipelines for different sales processes (outbound, inbound, partnerships). Each has its own stages and probabilities.",
+      "summaryTitle": "Real vs Optimistic",
+      "summaryDesc": "\"Weighted\" is your realistic forecast — each deal multiplied by win probability. If weighted is much lower than total, too many low-probability deals.",
+      "cardTitle": "Deep Dive",
+      "cardDesc": "Click to open: AI will show win probability, suggest next actions, and you can create tasks without leaving the page.",
+      "newTitle": "Start Tracking",
+      "newDesc": "Always link deals to a company and contact — this builds history that AI uses for better predictions."
     },
     "dealDetail": {
-      "stageTitle": "Deal Stage",
-      "stageDesc": "Current position in the pipeline. Click on a stage to advance the deal.",
-      "aiPredTitle": "AI Prediction",
-      "aiPredDesc": "AI estimates win probability based on activity, history, and stage. Updated automatically.",
-      "aiSugTitle": "AI Suggestions",
-      "aiSugDesc": "Actionable recommendations: call, email, schedule meeting. Click 'Create Task' to act on them.",
-      "quickTitle": "Quick Actions",
-      "quickDesc": "Add a note, task, or email directly from the deal card without leaving the page.",
-      "sidebarTitle": "Deal Details",
-      "sidebarDesc": "Value, company, contact, probability, expected close date. Click the pencil to edit.",
-      "timelineTitle": "Timeline",
-      "timelineDesc": "Complete history of this deal: who did what and when."
+      "stageTitle": "Move the Deal Forward",
+      "stageDesc": "Click a stage to advance. This recalculates probability. If stuck >7 days, AI will create a follow-up task for you.",
+      "aiPredTitle": "Should You Invest Time?",
+      "aiPredDesc": "AI scores 0-100% based on activity, deal age, and history. Below 30%? Consider a different approach. Updated automatically.",
+      "aiSugTitle": "Your Next Move",
+      "aiSugDesc": "AI analyzed this deal and suggests specific actions. Hit 'Create Task' to commit — the task links to this deal and assigns to you.",
+      "quickTitle": "Log Everything",
+      "quickDesc": "Every call, email, and note you log feeds the AI prediction. More activity = more accurate forecast. Takes 10 seconds.",
+      "sidebarTitle": "Key Numbers",
+      "sidebarDesc": "Watch the expected close date — if past due, AI lowers probability. Update it to keep forecasts accurate.",
+      "timelineTitle": "The Full Story",
+      "timelineDesc": "Before a call, scroll here to remember what was discussed. AI uses this same history for its suggestions."
     },
     "tickets": {
-      "listTitle": "Tickets",
-      "listDesc": "Customer support requests. Each has a number, priority, and SLA deadline.",
-      "slaTitle": "SLA Indicators",
-      "slaDesc": "Time until response/resolution deadline. Yellow = approaching, red = breached.",
-      "kanbanTitle": "Views",
-      "kanbanDesc": "Switch between list and Kanban view. Kanban shows tickets by status columns.",
-      "autoTitle": "Smart Assignment",
-      "autoDesc": "Tickets are auto-assigned to the best agent based on workload, expertise, and resolution speed.",
-      "newTitle": "Create Ticket",
-      "newDesc": "When you type the subject, AI automatically suggests category and priority."
+      "listTitle": "Priority Dashboard",
+      "listDesc": "Focus on red SLA badges first — those are breached. Then yellow. AI auto-assigns new tickets to the best available agent.",
+      "slaTitle": "Don't Let It Go Red",
+      "slaDesc": "Yellow = approaching deadline. Red = breached, auto-escalates to management. AI sends auto-acknowledgment at 50% SLA time if nobody responds.",
+      "kanbanTitle": "Your Workflow",
+      "kanbanDesc": "Kanban groups tickets by status. Too many in 'waiting'? Follow up with customers. Drag to change status.",
+      "newTitle": "AI Helps You Start",
+      "newDesc": "Type a subject like 'payment not working' — AI sets category to 'billing' and priority to 'high'. It's right 90% of the time."
     },
     "ticketDetail": {
-      "headerTitle": "Ticket & SLA",
-      "headerDesc": "Ticket number, subject, and SLA countdown. Red timer = SLA breach.",
-      "aiDraftTitle": "AI Draft",
-      "aiDraftDesc": "Click to generate a reply based on knowledge base and similar resolved tickets. Edit before sending.",
-      "aiSummaryTitle": "AI Summary",
-      "aiSummaryDesc": "Get a 2-3 sentence summary of the entire conversation thread.",
-      "aiStepsTitle": "AI Steps",
-      "aiStepsDesc": "Recommended steps to resolve this ticket, generated by AI.",
-      "commentsTitle": "Comments",
-      "commentsDesc": "Public comments are visible to the customer. Internal — only to your team.",
-      "macrosTitle": "Macros",
-      "macrosDesc": "Quick actions: change status + add comment + assign — all in one click."
+      "headerTitle": "Time is Ticking",
+      "headerDesc": "SLA timer counts down to your deadline. If it goes red, the ticket auto-escalates to management. Respond now to reset the clock.",
+      "aiDraftTitle": "Don't Start from Scratch",
+      "aiDraftDesc": "AI writes a reply using your knowledge base AND similar tickets your team solved. Edit the draft, add personal touch, then send. Saves 5-10 min per ticket.",
+      "aiSummaryTitle": "Catch Up in Seconds",
+      "aiSummaryDesc": "Long conversation? Click for a 2-sentence summary instead of reading 20 messages. Perfect when picking up someone else's ticket.",
+      "aiStepsTitle": "Resolution Roadmap",
+      "aiStepsDesc": "AI suggests concrete steps: check settings, verify config, test from different browser. Follow the list to resolve systematically.",
+      "commentsTitle": "Public vs Private",
+      "commentsDesc": "IMPORTANT: Public comments go to the customer! Use Internal for team discussions. Wrong choice = customer sees internal notes.",
+      "macrosTitle": "One Click, Five Actions",
+      "macrosDesc": "Set up macros for repetitive tasks. Example: 'Escalate to L2' = change priority + reassign + add internal note. Configure in Settings > Macros."
     },
     "leads": {
-      "listTitle": "Leads",
-      "listDesc": "Potential customers before qualification. From website, ads, or manual entry.",
-      "scoreTitle": "AI Score",
-      "scoreDesc": "Every 6 hours AI scores each lead on 8 factors: email quality, title, source, budget, activity. A = hot, F = cold.",
-      "statusTitle": "Statuses",
-      "statusDesc": "new → contacted → qualified → converted (became customer) or lost.",
-      "convertTitle": "Convert",
-      "convertDesc": "When qualified, click Convert — creates a contact + company + deal automatically."
+      "listTitle": "Focus on What Converts",
+      "listDesc": "Sort by AI Score to see hottest leads on top. Grade A leads convert 5x more — call them within 24 hours.",
+      "scoreTitle": "AI Knows Who's Ready",
+      "scoreDesc": "Score updates every 6 hours. Corporate email (+10), C-level title (+20), budget keywords (+10). Low score? Nurture via Journey instead of calling.",
+      "statusTitle": "The Qualification Funnel",
+      "statusDesc": "Move leads: new → contacted → qualified. Pro tip: A/B-graded qualified leads should be converted immediately before they go cold.",
+      "convertTitle": "One Click, Three Results",
+      "convertDesc": "Convert creates Contact + Company + Deal in one action. All data carries over. Don't create them manually — you'll lose the lead history."
     },
     "reports": {
-      "kpiTitle": "KPI Cards",
-      "kpiDesc": "Key metrics: revenue, deals, conversion rate, tasks. Your business health at a glance.",
-      "funnelTitle": "Pipeline Funnel",
-      "funnelDesc": "How many deals at each stage and their total value. See where deals get stuck.",
-      "leadFunnelTitle": "Lead Funnel",
-      "leadFunnelDesc": "From new to converted. Identify where leads drop off in your pipeline.",
-      "forecastTitle": "Sales Forecast",
-      "forecastDesc": "12-month view: historical revenue + AI-powered forecast.",
-      "aiComTitle": "AI Commentary",
-      "aiComDesc": "Click to get an AI analysis of your pipeline, wins, and risks as a text narrative."
+      "kpiTitle": "Health Check",
+      "kpiDesc": "Red numbers need attention. Compare this week vs last. If conversion drops but deals increase — you're adding low-quality leads.",
+      "funnelTitle": "Find Your Bottleneck",
+      "funnelDesc": "Click any stage to drill down. If Proposal has 20 deals but Negotiation has 3 — your proposals aren't converting. Review pricing or follow-up speed.",
+      "leadFunnelTitle": "Where Do You Lose People?",
+      "leadFunnelDesc": "Big drop from contacted to qualified? Qualification criteria might be too strict — or follow-up too slow. Adjust in Workflows.",
+      "forecastTitle": "Can You Hit the Target?",
+      "forecastDesc": "Dashed bars = AI forecast based on pipeline probability. If forecast is below target, you need more deals or higher win rates.",
+      "aiComTitle": "AI Reads the Numbers",
+      "aiComDesc": "Click 'AI Commentary' — AI analyzes pipeline, wins/losses, and churn risks, then writes a 2-paragraph executive summary. Share with your team."
     },
     "inbox": {
-      "channelsTitle": "Channels",
-      "channelsDesc": "All messages in one place: email, WhatsApp, Telegram, Facebook, Instagram.",
-      "statsTitle": "Statistics",
-      "statsDesc": "Conversations, unread messages, average response time at a glance.",
-      "convTitle": "Conversations",
-      "convDesc": "Grouped by contact. See the last message and which channel it came from.",
-      "threadTitle": "Message Thread",
-      "threadDesc": "Full history with the contact across all channels."
+      "channelsTitle": "One Inbox, All Channels",
+      "channelsDesc": "Filter by channel to focus: WhatsApp for quick replies, email for formal. Customer messages auto-create tickets and match to CRM contacts.",
+      "statsTitle": "Response Speed Matters",
+      "statsDesc": "Track average response time. Below 1 hour = great. Above 4 hours = customers go to competitors. This feeds your SLA compliance.",
+      "convTitle": "Context at a Glance",
+      "convDesc": "Unread count shows what needs attention. Click to see full history — including messages from other channels with the same contact.",
+      "threadTitle": "Cross-Channel History",
+      "threadDesc": "Customer wrote on WhatsApp yesterday and emailed today — you see both here. Reply in the same channel they used last."
     },
     "campaigns": {
-      "statsTitle": "Campaign Stats",
-      "statsDesc": "Overview: draft, scheduled, sent, open rate. Track performance of each campaign.",
-      "newTitle": "Create Campaign",
-      "newDesc": "Choose type (email/SMS), select recipients, write content, schedule send time.",
-      "listTitle": "Campaign List",
-      "listDesc": "All campaigns with status, recipients, and A/B test results."
+      "statsTitle": "Track What Works",
+      "statsDesc": "Compare open rates across campaigns. Below 15%? Subject line needs work. Below 2% click rate? Content isn't compelling.",
+      "newTitle": "A/B Test Everything",
+      "newDesc": "Create two variants and let AI pick the winner. Set test percentage (10-50%) and duration. Winner auto-sends to the rest.",
+      "listTitle": "Campaign History",
+      "listDesc": "Click any sent campaign to see opens, clicks, unsubscribes per contact. Use this data to refine your segments."
     },
     "journeys": {
-      "headerTitle": "Journeys",
-      "headerDesc": "Automated action chains. Trigger → series of steps → goal. Automate follow-ups, onboarding, reminders.",
-      "listTitle": "Journey List",
-      "listDesc": "Your active and draft journeys. Click to edit the flow or view enrollment stats.",
-      "newTitle": "Create Journey",
-      "newDesc": "Build a visual chain: email → wait → condition → task → SMS. Drag and drop blocks."
+      "headerTitle": "Autopilot for Follow-ups",
+      "headerDesc": "Stop manually sending follow-up emails. Build a chain once: trigger → email → wait 3 days → task. It runs for every new lead automatically.",
+      "listTitle": "Active Chains",
+      "listDesc": "Green = running and enrolling contacts. Click to see how many people are at each step and where they drop off.",
+      "newTitle": "Build Your First Chain",
+      "newDesc": "Start simple: new lead → wait 1 day → welcome email → wait 3 days → follow-up task. Add complexity later."
     },
     "segments": {
-      "filtersTitle": "Segment Types",
-      "filtersDesc": "Filter by All, Dynamic (auto-updating) or Static (fixed list). Dynamic segments recalculate automatically.",
-      "newTitle": "Create Segment",
-      "newDesc": "Define conditions like 'engagement > 50 AND industry = IT'. Use in campaigns and journeys.",
-      "listTitle": "Segment List",
-      "listDesc": "Your segments with contact count. Click to view members or edit conditions."
+      "filtersTitle": "Dynamic = Always Fresh",
+      "filtersDesc": "Dynamic segments auto-update as contacts change. Use for campaigns: 'engagement > 50 AND active last 30 days' = your best audience.",
+      "newTitle": "Target the Right People",
+      "newDesc": "Combine conditions: industry, engagement score, deal stage. Better targeting = higher open rates, fewer unsubscribes.",
+      "listTitle": "Your Audiences",
+      "listDesc": "Contact count updates in real-time for dynamic segments. Shrinking? Engagement is dropping — time for a re-engagement campaign."
     },
     "invoices": {
-      "statsTitle": "Invoice Overview",
-      "statsDesc": "Total invoiced, paid, overdue, and outstanding amounts. Track your cash flow.",
-      "newTitle": "Create Invoice",
-      "newDesc": "Add line items, taxes, discounts. Link to a deal or company. Set payment terms.",
-      "listTitle": "Invoice List",
-      "listDesc": "All invoices with status: draft → sent → viewed → paid / overdue."
+      "statsTitle": "Cash Flow at a Glance",
+      "statsDesc": "Watch 'Overdue' — that's money you should have. Click it to filter overdue invoices and send payment reminders.",
+      "newTitle": "Link to Deals",
+      "newDesc": "Always link invoices to deals — tracks revenue per deal and feeds profitability reports. Set net30/net60 to auto-calculate due dates.",
+      "listTitle": "Follow the Money",
+      "listDesc": "Red rows = overdue. Click to send reminders or record payments. AI auto-enrolls overdue invoices in payment reminder journeys."
     },
     "finance": {
-      "tabsTitle": "Finance Modules",
-      "tabsDesc": "Overview, Receivables (AR), Payables (AP), Funds, and Payment Orders — all in one place."
+      "tabsTitle": "Your Financial Hub",
+      "tabsDesc": "Overview for KPIs, Receivables to chase payments, Payables to track debts, Funds for bank balances, Payments for approval workflows."
     },
     "budgeting": {
-      "headerTitle": "Budgeting",
-      "headerDesc": "Create budget plans, track variance (plan vs actual), and get AI analysis of deviations."
+      "headerTitle": "Plan vs Reality",
+      "headerDesc": "Create budget plans, then track actual spending. AI highlights deviations and suggests where to cut. Click 'AI Narrative' on any variance chart."
     },
     "profitability": {
-      "kpiTitle": "Key Metrics",
-      "kpiDesc": "Revenue, costs, margins, EBITDA — your profitability at a glance.",
-      "tabsTitle": "Analysis Tabs",
-      "tabsDesc": "Services, Clients, Overhead, Employees, Parameters — drill down into each cost area.",
-      "chartsTitle": "Charts",
-      "chartsDesc": "Visual breakdown of costs and revenue. Identify where money goes."
+      "kpiTitle": "Are You Making Money?",
+      "kpiDesc": "Gross margin below 40%? Costs too high. Net margin below 10%? Overhead eating profits. Click any metric to drill into details.",
+      "tabsTitle": "Where Does Money Go?",
+      "tabsDesc": "Services tab shows margin per service. Clients tab shows who's profitable. Employees tab shows cost per person. Find your loss-makers.",
+      "chartsTitle": "Visual Cost Breakdown",
+      "chartsDesc": "Pie chart = cost composition. If salaries >70%, optimize utilization. AI analysis button gives detailed recommendations."
     },
     "pricing": {
-      "headerTitle": "Pricing",
-      "headerDesc": "Manage pricing profiles, rate cards, and service costs. Link to deals for accurate quoting."
+      "headerTitle": "Price for Profit",
+      "headerDesc": "Set rates based on cost model + desired margin. Link pricing profiles to deals for accurate quoting. Adjust sliders to simulate scenarios."
     }
   },
   "dashboardSettings": {

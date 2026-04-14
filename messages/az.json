@@ -2752,152 +2752,146 @@
   },
   "tour": {
     "dashboard": {
-      "statsTitle": "Əsas göstəricilər",
-      "statsDesc": "Biznesiniz bir baxışda: sövdələr, gəlir, tapşırıqlar, biletlər. Real vaxtda yenilənir.",
-      "pipelineTitle": "Pipeline",
-      "pipelineDesc": "Sövdə hunisi mərhələlər üzrə. Hər addımda nə qədər pul olduğunu görün.",
-      "tasksTitle": "Tapşırıqlar",
-      "tasksDesc": "Yaxınlaşan və vaxtı keçmiş tapşırıqlar. Qırmızı = vaxtı keçib.",
-      "activityTitle": "Aktivlik lenti",
-      "activityDesc": "Komandanın son hərəkətləri: zənglər, e-poçtlar, qeydlər.",
-      "widgetTitle": "Fərdiləşdirmə",
-      "widgetDesc": "İstənilən dashboard blokunu açın/bağlayın. İş sahənizi özünüzə uyğunlaşdırın."
+      "statsTitle": "Səhər yoxlaması",
+      "statsDesc": "Hər gün buradan başlayın. Gəlir düşüb — sövdələri yoxlayın. Biletlər artıb — SLA-nı yoxlayın. Hər karta klikləyib bölməyə keçin.",
+      "pipelineTitle": "Pul haradadır?",
+      "pipelineDesc": "İlişib qalmış sövdələri görmək üçün mərhələyə klikləyin. Böyüyür ama irəliləmir — komanda follow-up etməlidir.",
+      "activityTitle": "Komanda pulsu",
+      "activityDesc": "Komanda bu gün nə etdi. Zəng yoxdur? Kiməsə təkan lazımdır. Hər yazıya klikləyib sövdəyə və ya kontakta keçin."
     },
     "deals": {
-      "kanbanTitle": "Kanban lövhəsi",
-      "kanbanDesc": "Sövdələriniz mərhələlər üzrə. Kartları sütunlar arasında sürükləyin.",
-      "pipelineTitle": "Pipeline",
-      "pipelineDesc": "Bir neçə satış hunisi varsa aralarında keçid edin.",
-      "summaryTitle": "Pipeline dəyəri",
-      "summaryDesc": "Bütün aktiv sövdələrin ümumi və çəkili dəyəri.",
-      "cardTitle": "Sövdə kartı",
-      "cardDesc": "Təfərrüatları görmək üçün klikləyin: AI proqnoz, təkliflər, tarixçə.",
-      "newTitle": "Yeni sövdə",
-      "newDesc": "Şirkətə, kontakta və pipeline mərhələsinə bağlanır."
+      "kanbanTitle": "Sürükləyib irəlilədin",
+      "kanbanDesc": "Kartı növbəti sütuna sürükləyin — mərhələ dəyişir, ehtimal yenidən hesablanır. >7 gün ilişən sövdələri AI avtomatik qeyd edir.",
+      "pipelineTitle": "Fərqli hunilər",
+      "pipelineDesc": "Fərqli satış prosesləri üçün ayrı pipeline istifadə edin (daxil olan, çıxan, tərəfdaşlıq). Hər birinin öz mərhələləri var.",
+      "summaryTitle": "Reallıq vs optimizm",
+      "summaryDesc": "\"Çəkili\" realist proqnozdur — hər sövdə ehtimala vurulur. Çox aşağıdırsa — zəif sövdələr çoxdur.",
+      "cardTitle": "Dərin baxış",
+      "cardDesc": "Klikləyin: AI qazanma ehtimalını göstərəcək, növbəti addımları təklif edəcək, səhifədən çıxmadan tapşırıq yarada bilərsiniz.",
+      "newTitle": "İzləməyə başlayın",
+      "newDesc": "Sövdələri həmişə şirkət və kontakta bağlayın — bu AI proqnozları üçün tarixçə yaradır."
     },
     "dealDetail": {
-      "stageTitle": "Sövdə mərhələsi",
-      "stageDesc": "Pipeline-da cari mövqe. Mərhələyə klikləyərək sövdəni irəli aparın.",
-      "aiPredTitle": "AI Proqnoz",
-      "aiPredDesc": "AI aktivliyə, tarixçəyə və mərhələyə əsasən qazanma ehtimalını qiymətləndirir.",
-      "aiSugTitle": "AI Təklifləri",
-      "aiSugDesc": "Tövsiyələr: zəng edin, yazın, görüş təyin edin. 'Tapşırıq yarat' düyməsi ilə hərəkətə keçin.",
-      "quickTitle": "Sürətli əməliyyatlar",
-      "quickDesc": "Səhifədən çıxmadan qeyd, tapşırıq və ya e-poçt əlavə edin.",
-      "sidebarTitle": "Təfərrüatlar",
-      "sidebarDesc": "Məbləğ, şirkət, kontakt, ehtimal, gözlənilən bağlanma tarixi.",
-      "timelineTitle": "Tarixçə",
-      "timelineDesc": "Bu sövdə üzrə tam xronologiya: kim, nə vaxt, nə etdi."
+      "stageTitle": "Sövdəni irəli aparın",
+      "stageDesc": "Mərhələyə klikləyin. Bu ehtimalı yenidən hesablayır. >7 gün ilişəndə AI follow-up tapşırıq yaradır.",
+      "aiPredTitle": "Vaxt ayırmağa dəyərmi?",
+      "aiPredDesc": "AI aktivliyə, yaşa və tarixçəyə görə 0-100% qiymətləndirir. 30%-dən aşağı? Fərqli yanaşma düşünün.",
+      "aiSugTitle": "Növbəti addımınız",
+      "aiSugDesc": "AI konteksti analiz edib konkret hərəkətlər təklif edir. 'Tapşırıq yarat' sövdəyə bağlı tapşırıq yaradır.",
+      "quickTitle": "Hər şeyi qeyd edin",
+      "quickDesc": "Hər zəng, e-poçt və qeyd AI proqnozu qidalandırır. Daha çox aktivlik = daha dəqiq proqnoz. 10 saniyə çəkir.",
+      "sidebarTitle": "Əsas rəqəmlər",
+      "sidebarDesc": "Bağlanma tarixinə diqqət — vaxtı keçibsə AI ehtimalı azaldır. Proqnozların dəqiq olması üçün yeniləyin.",
+      "timelineTitle": "Tam mənzərə",
+      "timelineDesc": "Zəng etməzdən əvvəl nə müzakirə edildiyini xatırlamaq üçün buraya baxın. AI eyni tarixçəni təklifləri üçün istifadə edir."
     },
     "tickets": {
-      "listTitle": "Biletlər",
-      "listDesc": "Müştəri sorğuları. Hər birinin nömrəsi, prioriteti və SLA müddəti var.",
-      "slaTitle": "SLA göstəriciləri",
-      "slaDesc": "Cavab/həll müddətinə qalan vaxt. Sarı = yaxınlaşır, qırmızı = keçib.",
-      "kanbanTitle": "Görünüşlər",
-      "kanbanDesc": "Siyahı və ya Kanban lövhəsi arasında keçid edin.",
-      "autoTitle": "Ağıllı təyinat",
-      "autoDesc": "Biletlər iş yükü, təcrübə və həll sürətinə görə ən yaxşı agentə təyin edilir.",
-      "newTitle": "Yeni bilet",
-      "newDesc": "Mövzu yazanda AI avtomatik kateqoriya və prioritet təklif edir."
+      "listTitle": "Prioritet paneli",
+      "listDesc": "Əvvəlcə qırmızı SLA — onlar pozulub. Sonra sarı. AI yeni biletləri ən yaxşı agentə avtomatik təyin edir.",
+      "slaTitle": "Qırmızıya keçməsin",
+      "slaDesc": "Sarı = son tarix yaxınlaşır. Qırmızı = pozulub, rəhbərliyə eskalasiya. AI SLA-nın 50%-ində avtocavab göndərir.",
+      "kanbanTitle": "İş prosesiniz",
+      "kanbanDesc": "Kanban biletləri statusa görə qruplayır. 'Waiting'-də çoxdur? Müştərilərlə əlaqə saxlayın. Status dəyişdirmək üçün sürükləyin.",
+      "newTitle": "AI kömək edir",
+      "newDesc": "Mövzu yazın: 'ödəniş keçmir' — AI kateqoriyanı 'billing', prioriteti 'high' təyin edir. 90% hallarda düzgün təxmin edir."
     },
     "ticketDetail": {
-      "headerTitle": "Bilet və SLA",
-      "headerDesc": "Nömrə, mövzu, SLA geri sayım. Qırmızı taymer = SLA pozulub.",
-      "aiDraftTitle": "AI Qaralama",
-      "aiDraftDesc": "Bilik bazası və oxşar həll edilmiş biletlər əsasında cavab yaradın. Göndərməzdən əvvəl redaktə edin.",
-      "aiSummaryTitle": "AI Xülasə",
-      "aiSummaryDesc": "Bütün yazışmanın 2-3 cümlə ilə xülasəsi.",
-      "aiStepsTitle": "AI Addımlar",
-      "aiStepsDesc": "Biletin həlli üçün tövsiyə olunan addımlar.",
-      "commentsTitle": "Şərhlər",
-      "commentsDesc": "Public müştəriyə görünür. Internal — yalnız komandanıza.",
-      "macrosTitle": "Makrolar",
-      "macrosDesc": "Sürətli əməliyyatlar: status + şərh + təyinat — bir klikdə."
+      "headerTitle": "Vaxt tükənir",
+      "headerDesc": "SLA taymeri son tarixə geri sayır. Qırmızı olsa — bilet rəhbərliyə eskalasiya olunur. İndi cavab verin.",
+      "aiDraftTitle": "Sıfırdan yazmayın",
+      "aiDraftDesc": "AI bilik bazası VƏ komandanızın həll etdiyi oxşar biletlər əsasında cavab yazır. Redaktə edin, şəxsi toxunuş əlavə edin. 5-10 dəq qənaət.",
+      "aiSummaryTitle": "Saniyələrdə anlayın",
+      "aiSummaryDesc": "Uzun yazışma? 20 mesaj oxumaq əvəzinə 2 cümlə xülasə alın. Başqasının biletini götürəndə ideal.",
+      "aiStepsTitle": "Həll yol xəritəsi",
+      "aiStepsDesc": "AI konkret addımlar təklif edir: parametrləri yoxlayın, konfiqurasiyanı təsdiqləyin, fərqli brauzerdən test edin.",
+      "commentsTitle": "Açıq vs gizli",
+      "commentsDesc": "VACİB: Public şərhlər müştəriyə gedir! Internal yalnız komanda üçündür. Səhv = müştəri daxili qeydləri görər.",
+      "macrosTitle": "Bir klik — beş hərəkət",
+      "macrosDesc": "Təkrarlanan tapşırıqlar üçün makrolar qurun. Məsələn: 'L2 eskalasiya' = prioritet + yenidən təyinat + qeyd. Settings > Macros-da konfiqurasiya edin."
     },
     "leads": {
-      "listTitle": "Lidlər",
-      "listDesc": "Kvalifikasiyadan əvvəl potensial müştərilər. Saytdan, reklamdan və ya əl ilə.",
-      "scoreTitle": "AI Qiymət",
-      "scoreDesc": "Hər 6 saatda AI lidləri 8 faktor üzrə qiymətləndirir: e-poçt, vəzifə, mənbə, büdcə, aktivlik. A = isti, F = soyuq.",
-      "statusTitle": "Statuslar",
-      "statusDesc": "new → contacted → qualified → converted (müştəri oldu) və ya lost.",
-      "convertTitle": "Konversiya",
-      "convertDesc": "Convert düyməsi — avtomatik kontakt + şirkət + sövdə yaradır."
+      "listTitle": "Konversiyaya fokuslanın",
+      "listDesc": "AI Score-a görə sıralayın — ən isti lidlər yuxarıda. A dərəcəsi 5x daha çox konversiya edir — 24 saat ərzində zəng edin.",
+      "scoreTitle": "AI kimin hazır olduğunu bilir",
+      "scoreDesc": "Score hər 6 saatda yenilənir. Korporativ email (+10), C-level (+20), büdcə sözləri (+10). Aşağı score? Zəng əvəzinə Journey ilə nurture edin.",
+      "statusTitle": "Kvalifikasiya hunisi",
+      "statusDesc": "Lidləri hərəkət etdirin: new → contacted → qualified. Məsləhət: A/B dərəcəli qualified lidləri dərhal konvert edin.",
+      "convertTitle": "Bir klik — üç nəticə",
+      "convertDesc": "Convert bir hərəkətlə Kontakt + Şirkət + Sövdə yaradır. Bütün məlumatlar keçir. Əl ilə yaratmayın — lid tarixçəsini itirərsiniz."
     },
     "reports": {
-      "kpiTitle": "KPI",
-      "kpiDesc": "Əsas göstəricilər: gəlir, sövdələr, konversiya, tapşırıqlar.",
-      "funnelTitle": "Huni",
-      "funnelDesc": "Hər mərhələdə neçə sövdə və onların dəyəri. Harada ilişib qaldığını görün.",
-      "leadFunnelTitle": "Lid hunisi",
-      "leadFunnelDesc": "New-dan converted-ə. Lidlər harada itirilir.",
-      "forecastTitle": "Proqnoz",
-      "forecastDesc": "12 aylıq görünüş: tarixçə + AI proqnoz.",
-      "aiComTitle": "AI Şərh",
-      "aiComDesc": "Pipeline, qazanclar və riskləri AI ilə analiz edib mətn şərhi alın."
+      "kpiTitle": "Sağlamlıq yoxlaması",
+      "kpiDesc": "Qırmızı rəqəmlər diqqət tələb edir. Keçən həftə ilə müqayisə edin. Konversiya düşür ama sövdələr artır — keyfiyyətsiz lidlər əlavə edirsiniz.",
+      "funnelTitle": "Darboğazı tapın",
+      "funnelDesc": "Mərhələyə klikləyin. Proposal-da 20 sövdə ama Negotiation-da 3? Təklifləriniz konvert olunmur. Qiymətləri və ya follow-up sürətini nəzərdən keçirin.",
+      "leadFunnelTitle": "İnsanları harada itirirsiniz?",
+      "leadFunnelDesc": "Contacted-dən qualified-ə böyük düşmə? Kvalifikasiya kriteriyaları çox sərtdir — və ya follow-up çox yavaşdır.",
+      "forecastTitle": "Hədəfə çatacaqsınız?",
+      "forecastDesc": "Nöqtəli sütunlar = pipeline ehtimalına əsasən AI proqnoz. Plandan aşağıdırsa — daha çox sövdə və ya daha yüksək qazanma nisbəti lazımdır.",
+      "aiComTitle": "AI rəqəmləri oxuyur",
+      "aiComDesc": "'AI Şərh' klikləyin — AI pipeline, qazanc/itki və churn risklərini analiz edib 2 abzas xülasə yazır. Komandanızla paylaşın."
     },
     "inbox": {
-      "channelsTitle": "Kanallar",
-      "channelsDesc": "Bütün mesajlar bir yerdə: email, WhatsApp, Telegram, Facebook, Instagram.",
-      "statsTitle": "Statistika",
-      "statsDesc": "Söhbətlər, oxunmamışlar, orta cavab müddəti — bir baxışda.",
-      "convTitle": "Söhbətlər",
-      "convDesc": "Kontakta görə qruplanıb. Son mesaj və kanalı görünür.",
-      "threadTitle": "Yazışma",
-      "threadDesc": "Kontaktla bütün kanallar üzrə tam tarixçə."
+      "channelsTitle": "Bütün kanallar — bir inbox",
+      "channelsDesc": "Kanala görə filtrləyin: WhatsApp sürətli cavablar, email formal üçün. Müştəri mesajları avtomatik bilet yaradır və kontaktlara bağlanır.",
+      "statsTitle": "Cavab sürəti həlledicidir",
+      "statsDesc": "Orta cavab müddəti: <1 saat = əla. >4 saat = müştərilər rəqiblərə gedir. SLA uyğunluğuna təsir edir.",
+      "convTitle": "Bir baxışda kontekst",
+      "convDesc": "Oxunmamışlar diqqət tələb edəni göstərir. Tam tarixçə üçün klikləyin — eyni kontaktın digər kanallardan mesajları da daxil.",
+      "threadTitle": "Kros-kanal tarixçə",
+      "threadDesc": "Müştəri dünən WhatsApp-da yazıb, bu gün email göndərib — hər ikisini burada görürsünüz. Son istifadə etdiyi kanalda cavab verin."
     },
     "campaigns": {
-      "statsTitle": "Kampaniya statistikası",
-      "statsDesc": "İcmal: qaralamalar, planlanmış, göndərilmiş, açılma faizi.",
-      "newTitle": "Yeni kampaniya",
-      "newDesc": "Növ (email/SMS), alıcılar, məzmun, göndərmə cədvəli.",
-      "listTitle": "Kampaniya siyahısı",
-      "listDesc": "Bütün kampaniyalar statuslar, alıcılar və A/B testlərlə."
+      "statsTitle": "Nəyin işlədiyini izləyin",
+      "statsDesc": "Kampaniyalar arasında open rate müqayisə edin. 15%-dən aşağı? Mövzu sətri zəifdir. 2%-dən aşağı klik? Məzmun cəlb etmir.",
+      "newTitle": "Hər şeyi A/B test edin",
+      "newDesc": "2 variant yaradın — AI qalib seçəcək. Test faizini (10-50%) və müddəti təyin edin. Qalib qalanlarına avtomatik göndəriləcək.",
+      "listTitle": "Kampaniya tarixçəsi",
+      "listDesc": "Göndərilmiş kampaniyaya klikləyin — kontakt üzrə açılma, klik, abonelikdən çıxma görün. Seqmentləri təkmilləşdirmək üçün istifadə edin."
     },
     "journeys": {
-      "headerTitle": "Zəncirlər",
-      "headerDesc": "Avtomatik hərəkət zəncirləri. Tətik → addımlar → hədəf.",
-      "listTitle": "Zəncir siyahısı",
-      "listDesc": "Aktiv və qaralama zəncirlər. Redaktə və ya statistika üçün klikləyin.",
-      "newTitle": "Zəncir yarat",
-      "newDesc": "Vizual konstruktor: email → gözləmə → şərt → tapşırıq → SMS."
+      "headerTitle": "Follow-up üçün avtopilot",
+      "headerDesc": "Follow-up emailləri əl ilə göndərməyi dayandırın. Zənciri bir dəfə qurun: tətik → email → 3 gün → tapşırıq. Hər yeni lid üçün avtomatik işləyir.",
+      "listTitle": "Aktiv zəncirlər",
+      "listDesc": "Yaşıl = işləyir və kontaktları qeydiyyata alır. Hər addımda neçə nəfər olduğunu və harada ayrıldığını görmək üçün klikləyin.",
+      "newTitle": "İlk zəncirinizi qurun",
+      "newDesc": "Sadə başlayın: yeni lid → 1 gün → salamlama emaili → 3 gün → follow-up tapşırıq. Sonra mürəkkəbləşdirin."
     },
     "segments": {
-      "filtersTitle": "Seqment növləri",
-      "filtersDesc": "Hamısı, dinamik (avto-yenilənmə) və ya statik (sabit siyahı).",
-      "newTitle": "Yeni seqment",
-      "newDesc": "Şərtlər: 'aktivlik > 50 VƏ sahə = IT'. Kampaniya və zəncirlərdə istifadə edin.",
-      "listTitle": "Seqment siyahısı",
-      "listDesc": "Seqmentlər kontakt sayı ilə. Baxmaq üçün klikləyin."
+      "filtersTitle": "Dinamik = həmişə təzə",
+      "filtersDesc": "Dinamik seqmentlər kontaktlar dəyişəndə avto-yenilənir. Kampaniyalar üçün: 'aktivlik > 50 VƏ son 30 gündə aktiv' = ən yaxşı auditoriyanız.",
+      "newTitle": "Düzgün insanları hədəfləyin",
+      "newDesc": "Şərtləri birləşdirin: sahə, aktivlik, sövdə mərhələsi. Daha yaxşı hədəfləmə = daha yüksək açılma, daha az abonelikdən çıxma.",
+      "listTitle": "Auditoriyalarınız",
+      "listDesc": "Dinamik seqmentlər üçün kontakt sayı real vaxtda yenilənir. Azalır? Aktivlik düşür — re-engagement kampaniyası vaxtıdır."
     },
     "invoices": {
-      "statsTitle": "Faktura icmalı",
-      "statsDesc": "Cəmi, ödənilmiş, vaxtı keçmiş, qalıq. Pul axınını izləyin.",
-      "newTitle": "Yeni faktura",
-      "newDesc": "Maddələr, vergilər, endirimlər. Sövdə və ya şirkətə bağlayın.",
-      "listTitle": "Faktura siyahısı",
-      "listDesc": "Bütün fakturalar statuslarla: qaralama → göndərilmiş → baxılmış → ödənilmiş / vaxtı keçmiş."
+      "statsTitle": "Pul axını bir baxışda",
+      "statsDesc": "'Vaxtı keçmiş'-ə baxın — bu sizə borclu olan pullardır. Filtrləmək və xatırlatma göndərmək üçün klikləyin.",
+      "newTitle": "Sövdələrə bağlayın",
+      "newDesc": "Fakturaları həmişə sövdələrə bağlayın — sövdə üzrə gəliri izləyir və rentabellik hesabatlarını qidalandırır.",
+      "listTitle": "Pulu izləyin",
+      "listDesc": "Qırmızı sətirlər = vaxtı keçib. Xatırlatma göndərmək və ya ödəniş qeyd etmək üçün klikləyin. AI vaxtı keçmiş fakturaları xatırlatma zəncirinə avtomatik qeydiyyat edir."
     },
     "finance": {
-      "tabsTitle": "Maliyyə modulları",
-      "tabsDesc": "İcmal, debitor, kreditor, fondlar və ödəniş tapşırıqları — bir yerdə."
+      "tabsTitle": "Maliyyə mərkəziniz",
+      "tabsDesc": "İcmal KPI üçün, Debitor ödəniş izləmək üçün, Kreditor borcları izləmək üçün, Fondlar bank balansları, Ödənişlər təsdiq iş axını üçün."
     },
     "budgeting": {
-      "headerTitle": "Büdcələşdirmə",
-      "headerDesc": "Büdcə planları, fərq (plan vs fakt), AI sapma analizi."
+      "headerTitle": "Plan vs reallıq",
+      "headerDesc": "Büdcə planı yaradın, faktiki xərcləri izləyin. AI sapmaları vurğulayır və harada kəsməyi təklif edir. Variance qrafikində 'AI Narrative' klikləyin."
     },
     "profitability": {
-      "kpiTitle": "Əsas göstəricilər",
-      "kpiDesc": "Gəlir, xərclər, marja, EBITDA — rentabellik bir baxışda.",
-      "tabsTitle": "Analiz tabları",
-      "tabsDesc": "Xidmətlər, müştərilər, overhead, işçilər, parametrlər — hər sahəni araşdırın.",
-      "chartsTitle": "Qrafiklər",
-      "chartsDesc": "Xərc və gəlir vizuallaşdırması. Pul hara gedir."
+      "kpiTitle": "Pul qazanırsınız?",
+      "kpiDesc": "Gross margin 40%-dən aşağı? Xərclər çox yüksəkdir. Net margin 10%-dən aşağı? Overhead mənfəəti yeyir. Təfərrüat üçün metrikaya klikləyin.",
+      "tabsTitle": "Pul hara gedir?",
+      "tabsDesc": "Xidmətlər — xidmət üzrə marja. Müştərilər — kim mənfəətlidir. İşçilər — adam başına xərc. Zərərli sahələri tapın.",
+      "chartsTitle": "Xərc vizuallaşdırması",
+      "chartsDesc": "Dairə diaqramı = xərc strukturu. Maaşlar >70%-dirsə — utilizasiyanı optimallaşdırın. AI analiz düyməsi ətraflı tövsiyələr verir."
     },
     "pricing": {
-      "headerTitle": "Qiymətləndirmə",
-      "headerDesc": "Qiymət profilləri, tarif kartları, xidmət dəyərləri. Sövdələrə bağlayın."
+      "headerTitle": "Mənfəət üçün qiymət",
+      "headerDesc": "Maya dəyəri + istənilən marja əsasında tariflər təyin edin. Dəqiq qiymət təklifi üçün profilləri sövdələrə bağlayın. Ssenariləri simulyasiya etmək üçün sürgüləri hərəkət etdirin."
     }
   },
   "dashboardSettings": {
