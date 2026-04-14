@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,26 +31,21 @@ interface AiFeature {
   enabled: boolean
 }
 
-const AI_FEATURES: Omit<AiFeature, "enabled">[] = [
-  { key: "ai_daily_briefing", label: "Daily Briefing", description: "Morning digest with stale deals, SLA risks, overdue invoices", category: "analytics" },
-  { key: "ai_anomaly_detection", label: "Anomaly Detection", description: "Detect ticket spikes, large invoices, engagement drops", category: "analytics" },
-  { key: "ai_lead_scoring", label: "Lead Scoring", description: "Enhanced scoring: email quality, title, source history, engagement", category: "analytics" },
-  { key: "ai_auto_acknowledge_shadow", label: "Auto-Acknowledge (Shadow)", description: "Auto-respond to tickets approaching SLA — shadow mode", category: "autopilot" },
-  { key: "ai_auto_followup_shadow", label: "Auto Follow-Up (Shadow)", description: "Create tasks for stale deals (>7 days no activity) — shadow mode", category: "autopilot" },
-  { key: "ai_auto_payment_reminder_shadow", label: "Payment Reminders (Shadow)", description: "Enroll overdue invoices in reminder journey — shadow mode", category: "autopilot" },
-  { key: "ai_auto_acknowledge", label: "Auto-Acknowledge (Live)", description: "Auto-respond to tickets — LIVE mode, sends real messages", category: "autopilot" },
-  { key: "ai_auto_followup", label: "Auto Follow-Up (Live)", description: "Create tasks for stale deals — LIVE mode", category: "autopilot" },
-  { key: "ai_auto_payment_reminder", label: "Payment Reminders (Live)", description: "Enroll overdue invoices — LIVE mode, sends real emails", category: "autopilot" },
+const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; category: "analytics" | "copilot" | "autopilot" }[] = [
+  { key: "ai_daily_briefing", labelKey: "dailyBriefing", descKey: "dailyBriefingDesc", category: "analytics" },
+  { key: "ai_anomaly_detection", labelKey: "anomalyDetection", descKey: "anomalyDetectionDesc", category: "analytics" },
+  { key: "ai_lead_scoring", labelKey: "leadScoring", descKey: "leadScoringDesc", category: "analytics" },
+  { key: "ai_auto_acknowledge_shadow", labelKey: "autoAcknowledgeShadow", descKey: "autoAcknowledgeShadowDesc", category: "autopilot" },
+  { key: "ai_auto_followup_shadow", labelKey: "autoFollowupShadow", descKey: "autoFollowupShadowDesc", category: "autopilot" },
+  { key: "ai_auto_payment_reminder_shadow", labelKey: "paymentReminderShadow", descKey: "paymentReminderShadowDesc", category: "autopilot" },
+  { key: "ai_auto_acknowledge", labelKey: "autoAcknowledgeLive", descKey: "autoAcknowledgeLiveDesc", category: "autopilot" },
+  { key: "ai_auto_followup", labelKey: "autoFollowupLive", descKey: "autoFollowupLiveDesc", category: "autopilot" },
+  { key: "ai_auto_payment_reminder", labelKey: "paymentReminderLive", descKey: "paymentReminderLiveDesc", category: "autopilot" },
 ]
-
-const CATEGORY_LABELS = {
-  analytics: { label: "Analytics", icon: Eye, color: "text-blue-600" },
-  copilot: { label: "Copilot", icon: Sparkles, color: "text-violet-600" },
-  autopilot: { label: "Autopilot", icon: Bot, color: "text-amber-600" },
-}
 
 export default function AiAutomationPage() {
   const { data: session } = useSession()
+  const t = useTranslations("aiSettings")
   const orgId = (session?.user as any)?.organizationId
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
@@ -74,7 +70,13 @@ export default function AiAutomationPage() {
       ])
 
       const orgFeatures: string[] = Array.isArray(featuresRes?.data?.features) ? featuresRes.data.features : []
-      setFeatures(AI_FEATURES.map(f => ({ ...f, enabled: orgFeatures.includes(f.key) })))
+      setFeatures(AI_FEATURE_KEYS.map(f => ({
+        key: f.key,
+        label: t(f.labelKey),
+        description: t(f.descKey),
+        category: f.category,
+        enabled: orgFeatures.includes(f.key),
+      })))
 
       if (shadowRes?.data) {
         setShadowActions(shadowRes.data)
@@ -155,14 +157,14 @@ export default function AiAutomationPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bot className="h-6 w-6" /> AI Automation
+            <Bot className="h-6 w-6" /> {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage AI features, review shadow actions, control automation behavior
+            {t("subtitle")}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}
         </Button>
       </div>
 
@@ -172,7 +174,7 @@ export default function AiAutomationPage() {
           <CardContent className="pt-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-violet-500" /> AI Budget (Today)
+                <Sparkles className="h-4 w-4 text-violet-500" /> {t("budgetTitle")}
               </h3>
               <Badge variant={budget.spent >= budget.limit ? "destructive" : budget.spent >= budget.limit * 0.8 ? "secondary" : "outline"} className="text-xs">
                 ${budget.spent.toFixed(3)} / ${budget.limit.toFixed(2)}
@@ -188,7 +190,7 @@ export default function AiAutomationPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs text-muted-foreground whitespace-nowrap">Daily limit: $</label>
+              <label className="text-xs text-muted-foreground whitespace-nowrap">{t("dailyLimit")}: $</label>
               <input
                 type="number"
                 step="0.5"
@@ -198,9 +200,9 @@ export default function AiAutomationPage() {
                 className="h-7 w-20 text-xs border rounded px-2 bg-background"
               />
               <Button size="sm" variant="outline" className="h-7 text-xs" onClick={saveBudgetLimit} disabled={savingBudget}>
-                {savingBudget ? "..." : "Save"}
+                {savingBudget ? "..." : t("save")}
               </Button>
-              <span className="text-[10px] text-muted-foreground ml-auto">Remaining: ${budget.remaining.toFixed(3)}</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">{t("budgetRemaining")}: ${budget.remaining.toFixed(3)}</span>
             </div>
           </CardContent>
         </Card>
@@ -208,9 +210,15 @@ export default function AiAutomationPage() {
 
       {/* Feature Toggles */}
       <div className="space-y-6 mb-8">
-        {(Object.entries(grouped) as [keyof typeof CATEGORY_LABELS, AiFeature[]][]).map(([cat, items]) => {
+        {(Object.entries(grouped) as [string, AiFeature[]][]).map(([cat, items]) => {
           if (items.length === 0) return null
-          const { label, icon: Icon, color } = CATEGORY_LABELS[cat]
+          const catConfig: Record<string, { icon: any; color: string }> = {
+            analytics: { icon: Eye, color: "text-blue-600" },
+            copilot: { icon: Sparkles, color: "text-violet-600" },
+            autopilot: { icon: Bot, color: "text-amber-600" },
+          }
+          const { icon: Icon, color } = catConfig[cat] || catConfig.analytics
+          const label = t(cat as any)
           return (
             <div key={cat}>
               <h2 className={`text-sm font-semibold flex items-center gap-1.5 mb-3 ${color}`}>
@@ -254,19 +262,19 @@ export default function AiAutomationPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Shield className="h-4 w-4" /> Shadow Actions
+              <Shield className="h-4 w-4" /> {t("shadowActions")}
               {shadowTotal > 0 && (
-                <Badge variant="secondary" className="text-xs">{shadowTotal} pending</Badge>
+                <Badge variant="secondary" className="text-xs">{shadowTotal} {t("pending")}</Badge>
               )}
             </CardTitle>
           </div>
           <p className="text-xs text-muted-foreground">
-            Actions AI would take — review and approve before enabling live mode
+            {t("shadowActionsDesc")}
           </p>
         </CardHeader>
         <CardContent>
           {shadowActions.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No pending shadow actions</p>
+            <p className="text-sm text-muted-foreground py-4 text-center">{t("noPendingShadow")}</p>
           ) : (
             <div className="space-y-2">
               {shadowActions.map(action => (

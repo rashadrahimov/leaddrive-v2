@@ -30,7 +30,7 @@ const PRIORITY_STYLES: Record<string, string> = {
 }
 
 export function AiSuggestions({ dealId }: { dealId: string }) {
-  const t = useTranslations("deals")
+  const t = useTranslations("aiSettings")
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
@@ -94,7 +94,7 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
       >
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-violet-500" />
-          <span className="text-sm font-medium">AI Suggestions</span>
+          <span className="text-sm font-medium">{t("aiSuggestions")}</span>
           {visibleSuggestions.length > 0 && (
             <span className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 px-1.5 py-0.5 rounded-full">
               {visibleSuggestions.length}
@@ -119,12 +119,12 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
           {loading && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground py-3">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Analyzing deal context...
+              {t("analyzingDeal")}
             </div>
           )}
 
           {error && (
-            <p className="text-xs text-muted-foreground py-2">Could not load suggestions</p>
+            <p className="text-xs text-muted-foreground py-2">{t("loadFailed")}</p>
           )}
 
           {!loading && visibleSuggestions.map((s, idx) => {
@@ -144,14 +144,14 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
                 <p className="text-xs text-muted-foreground pl-5.5 leading-relaxed">{s.reason}</p>
                 <div className="flex gap-2 pl-5.5 pt-1">
                   {applied.has(originalIdx) ? (
-                    <span className="text-[10px] text-green-600">Task created</span>
+                    <span className="text-[10px] text-green-600">{t("taskCreated")}</span>
                   ) : (
                     <button
                       onClick={() => applyAction(s, originalIdx)}
                       disabled={applying === originalIdx}
                       className="text-[10px] text-primary hover:text-primary/80 font-medium transition-colors"
                     >
-                      {applying === originalIdx ? "Creating..." : "Create Task"}
+                      {applying === originalIdx ? t("creating") : t("createTask")}
                     </button>
                   )}
                   <span className="text-[10px] text-muted-foreground">·</span>
@@ -159,7 +159,7 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
                     onClick={() => setDismissed(prev => new Set(prev).add(originalIdx))}
                     className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Dismiss
+                    {t("dismiss")}
                   </button>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
           })}
 
           {!loading && visibleSuggestions.length === 0 && suggestions.length > 0 && (
-            <p className="text-xs text-muted-foreground py-2">All suggestions dismissed</p>
+            <p className="text-xs text-muted-foreground py-2">{t("allDismissed")}</p>
           )}
         </div>
       )}

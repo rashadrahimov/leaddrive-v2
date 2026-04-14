@@ -71,6 +71,7 @@ interface ReportData {
 
 // -- AI Forecast Narrative --
 function ForecastNarrative() {
+  const ta = useTranslations("aiSettings")
   const [narrative, setNarrative] = useState("")
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
@@ -89,7 +90,7 @@ function ForecastNarrative() {
   if (!loaded && !loading) {
     return (
       <button onClick={load} className="flex items-center gap-1.5 mt-3 text-[11px] text-violet-600 hover:text-violet-800 transition-colors">
-        <Sparkles className="h-3 w-3" /> AI Commentary
+        <Sparkles className="h-3 w-3" /> {ta("aiCommentary")}
       </button>
     )
   }
@@ -97,7 +98,7 @@ function ForecastNarrative() {
   if (loading) {
     return (
       <div className="flex items-center gap-1.5 mt-3 text-[11px] text-muted-foreground animate-pulse">
-        <Sparkles className="h-3 w-3" /> Generating insight...
+        <Sparkles className="h-3 w-3" /> {ta("generatingInsight")}
       </div>
     )
   }
@@ -105,7 +106,7 @@ function ForecastNarrative() {
   if (error) {
     return (
       <button onClick={load} className="flex items-center gap-1.5 mt-3 text-[11px] text-red-500 hover:text-red-600 transition-colors">
-        <Sparkles className="h-3 w-3" /> Failed to load — click to retry
+        <Sparkles className="h-3 w-3" /> {ta("failedRetry")}
       </button>
     )
   }

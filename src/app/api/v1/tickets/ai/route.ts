@@ -61,7 +61,7 @@ async function findSimilarResolvedTickets(orgId: string, subject: string, catego
         where: { isInternal: false },
         orderBy: { createdAt: "desc" as const },
         take: 1,
-        select: { content: true },
+        select: { comment: true },
       },
     },
     orderBy: { updatedAt: "desc" },
@@ -72,7 +72,7 @@ async function findSimilarResolvedTickets(orgId: string, subject: string, catego
 
   return "\n\n--- SIMILAR RESOLVED TICKETS ---\n" +
     similar.map((t: any, i: number) => {
-      const resolution = t.comments[0]?.content?.substring(0, 300) || "No resolution comment"
+      const resolution = (t.comments[0] as any)?.comment?.substring(0, 300) || "No resolution comment"
       return `[Resolved #${i + 1}] ${t.subject}\nResolution: ${resolution}`
     }).join("\n\n")
 }

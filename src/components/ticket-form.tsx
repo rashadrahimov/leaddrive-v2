@@ -25,6 +25,7 @@ interface OptionItem {
 export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: TicketFormProps) {
   const t = useTranslations("forms")
   const tc = useTranslations("common")
+  const ta = useTranslations("aiSettings")
   const isEdit = !!initialData?.id
   const [form, setForm] = useState({
     subject: initialData?.subject || "",
@@ -153,7 +154,7 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
-            <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} onBlur={tryAiCategorize} required />{aiCategorizing && <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">AI classifying...</p>}</div>
+            <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} onBlur={tryAiCategorize} required />{aiCategorizing && <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{ta("aiClassifying")}</p>}</div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></Select></div>
               <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option></Select></div>
