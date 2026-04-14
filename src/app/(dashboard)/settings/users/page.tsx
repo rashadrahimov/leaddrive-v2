@@ -521,7 +521,7 @@ export default function UsersSettingsPage() {
         <StatCard title="Администраторы" value={adminCount} icon={<Shield className="h-4 w-4" />} />
       </div>
 
-      <DataTable data-tour-id="users-list" data={users as any} columns={columns as any} searchKey="name" searchPlaceholder="Поиск пользователей..." />
+      <div data-tour-id="users-list"><DataTable data={users as any} columns={columns as any} searchKey="name" searchPlaceholder="Поиск пользователей..." /></div>
 
       <UserFormDialog
         open={showForm}
