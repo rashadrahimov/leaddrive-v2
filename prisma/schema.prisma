@@ -101,6 +101,8 @@ model Organization {
   landingPages           LandingPage[]
   customDomains          CustomDomain[]
   callLogs               CallLog[]
+  taskChecklists         TaskChecklist[]
+  taskComments           TaskComment[]
 
   @@map("organizations")
 }
@@ -154,6 +156,9 @@ model User {
   mtmAgents           MtmAgent[]
   accounts            Account[]
   quotas              SalesQuota[]
+  assignedTasks       Task[]          @relation("TaskAssignee")
+  createdTasks        Task[]          @relation("TaskCreator")
+  taskComments        TaskComment[]   @relation("TaskComments")
 
   @@unique([organizationId, email])
   @@map("users")
@@ -469,16 +474,51 @@ model Task {
   priority       String    @default("medium")
   dueDate        DateTime?
   assignedTo     String?
+  assignee       User?     @relation("TaskAssignee", fields: [assignedTo], references: [id], onDelete: SetNull)
   relatedType    String?   // deal, contact, company, lead, ticket
   relatedId      String?
   completedAt    DateTime?
   createdBy      String?
+  creator        User?     @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  checklist      TaskChecklist[]
+  comments       TaskComment[]
 
   @@index([organizationId])
   @@index([organizationId, assignedTo])
   @@map("tasks")
+}
+
+model TaskChecklist {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  taskId         String
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title          String
+  completed      Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_checklists")
+}
+
+model TaskComment {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  taskId         String
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId         String?
+  user           User?    @relation("TaskComments", fields: [userId], references: [id], onDelete: SetNull)
+  content        String
+  isSystem       Boolean  @default(false) // system-generated activity log entries
+  createdAt      DateTime @default(now())
+
+  @@index([taskId])
+  @@map("task_comments")
 }
 
 model Contract {

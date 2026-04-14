@@ -1200,7 +1200,19 @@
     "hintColDueDate": "Tapşırığın tamamlanma son tarixi",
     "hintColAssigned": "Bu tapşırığa məsul olan komanda üzvü",
     "hintColRelated": "Əlaqəli obyekt: sövdələşmə, əlaqə, şirkət və ya bilet",
-    "sortCreatedAsc": "Əvvəlcə köhnə"
+    "sortCreatedAsc": "Əvvəlcə köhnə",
+    "myTasks": "Tapşırıqlarım",
+    "selected": "seçilib",
+    "markComplete": "Tamamla",
+    "checklist": "Çek-list",
+    "addChecklistItem": "Bənd əlavə et...",
+    "comments": "Şərhlər",
+    "addComment": "Şərh əlavə et...",
+    "postComment": "Göndər",
+    "noComments": "Hələ şərh yoxdur",
+    "subtasksProgress": "{done} / {total}",
+    "taskInfo": "Məlumat",
+    "activityLog": "Fəaliyyət"
   },
   "tickets": {
     "title": "Service Desk",

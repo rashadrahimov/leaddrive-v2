@@ -47,6 +47,11 @@ export async function GET(req: NextRequest) {
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { dueDate: "asc" },
+        include: {
+          assignee: { select: { id: true, name: true, avatar: true } },
+          creator: { select: { id: true, name: true } },
+          _count: { select: { checklist: true, comments: true } },
+        },
       }),
       prisma.task.count({ where }),
     ])
@@ -55,8 +60,9 @@ export async function GET(req: NextRequest) {
     const filteredTasks = tasks.map((t: any) => filterEntityFields(t, fieldPerms, role))
 
     return NextResponse.json({ success: true, data: { tasks: filteredTasks, total, page, limit } })
-  } catch {
-    return NextResponse.json({ success: true, data: { tasks: [], total: 0, page, limit } })
+  } catch (e) {
+    console.error("[Tasks GET]", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 

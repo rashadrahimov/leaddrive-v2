@@ -12,7 +12,7 @@ import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { TaskForm } from "@/components/task-form"
 import { Select } from "@/components/ui/select"
-import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3 } from "lucide-react"
+import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3, User2, CheckCircle2, X } from "lucide-react"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { cn } from "@/lib/utils"
 import { MotionList, MotionItem } from "@/components/ui/motion"
@@ -24,9 +24,12 @@ interface Task {
   priority: string
   dueDate: string
   assignedTo: string
+  assignee?: { id: string; name: string; avatar?: string | null } | null
+  creator?: { id: string; name: string } | null
   relatedType: string | null
   completedAt: string | null
   createdAt: string
+  _count?: { checklist: number; comments: number }
 }
 
 type ViewMode = "list" | "kanban" | "calendar"
@@ -219,14 +222,6 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
 
   const dayNames = [t("dayMon"), t("dayTue"), t("dayWed"), t("dayThu"), t("dayFri"), t("daySat"), t("daySun")]
 
-  const statusLabels: Record<string, string> = {
-    pending: t("statusTodo"),
-    todo: t("statusTodo"),
-    in_progress: t("statusInProgress"),
-    completed: t("statusCompleted"),
-    cancelled: t("statusCancelled"),
-  }
-
   const priorityLabels: Record<string, string> = {
     urgent: t("priorityUrgent"),
     high: t("priorityHigh"),
@@ -256,7 +251,6 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
     else setCalMonth(m => m + 1)
   }
 
-  // Group tasks by day
   const tasksByDay: Record<number, Task[]> = {}
   for (const task of calTasks) {
     if (!task.dueDate) continue
@@ -266,9 +260,8 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
     tasksByDay[day].push(task)
   }
 
-  // Build calendar grid
   const firstDay = new Date(calYear, calMonth, 1)
-  let startDow = firstDay.getDay() - 1 // Monday = 0
+  let startDow = firstDay.getDay() - 1
   if (startDow < 0) startDow = 6
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate()
 
@@ -346,6 +339,34 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
   )
 }
 
+// ─── Bulk Actions Bar ───────────────────────────────────────────
+function BulkActionsBar({ selectedIds, onAction, onClear }: {
+  selectedIds: Set<string>
+  onAction: (action: string, value?: string) => void
+  onClear: () => void
+}) {
+  const t = useTranslations("tasks")
+  const tc = useTranslations("common")
+  if (selectedIds.size === 0) return null
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-lg">
+      <span className="text-sm font-medium">{selectedIds.size} {t("selected")}</span>
+      <div className="flex items-center gap-1.5">
+        <Button size="sm" variant="outline" onClick={() => onAction("complete")}>
+          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> {t("markComplete")}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onAction("delete")} className="text-red-600 hover:text-red-700">
+          <Trash2 className="h-3.5 w-3.5 mr-1" /> {tc("delete")}
+        </Button>
+      </div>
+      <button onClick={onClear} className="ml-auto p-1 rounded hover:bg-muted">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  )
+}
+
 // ─── Main Page ──────────────────────────────────────────────────
 export default function TasksPage() {
   const t = useTranslations("tasks")
@@ -362,7 +383,11 @@ export default function TasksPage() {
   const [activeFilter, setActiveFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState("date_asc")
   const [calModalOpen, setCalModalOpen] = useState(false)
+  const [myTasksOnly, setMyTasksOnly] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [dragTask, setDragTask] = useState<string | null>(null)
   const orgId = session?.user?.organizationId
+  const currentUserId = session?.user?.id
 
   const statusLabels: Record<string, string> = {
     pending: t("statusTodo"),
@@ -400,7 +425,7 @@ export default function TasksPage() {
   }, [session])
 
   async function toggleComplete(task: Task) {
-    const newStatus = task.status === "completed" ? "todo" : "completed"
+    const newStatus = task.status === "completed" ? "pending" : "completed"
     try {
       await fetch(`/api/v1/tasks/${task.id}`, {
         method: "PATCH",
@@ -439,12 +464,74 @@ export default function TasksPage() {
     fetchTasks()
   }
 
-  // Filter — "todo" and "pending" are treated the same
-  const filtered = tasks.filter(t => {
+  // Selection helpers
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filtered.map(t => t.id)))
+    }
+  }
+
+  async function handleBulkAction(action: string, value?: string) {
+    if (selectedIds.size === 0) return
+    try {
+      const res = await fetch("/api/v1/tasks/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+        },
+        body: JSON.stringify({ ids: Array.from(selectedIds), action, value }),
+      })
+      if (res.ok) {
+        setSelectedIds(new Set())
+        fetchTasks()
+      }
+    } catch (err) { console.error(err) }
+  }
+
+  // Kanban drag handlers
+  async function handleKanbanDrop(taskId: string, newStatus: string) {
+    try {
+      await fetch(`/api/v1/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      // Optimistic update
+      setTasks(prev => prev.map(t =>
+        t.id === taskId ? { ...t, status: newStatus, completedAt: newStatus === "completed" ? new Date().toISOString() : t.completedAt } : t
+      ))
+    } catch (err) { console.error(err) }
+    setDragTask(null)
+  }
+
+  // Filter + sort
+  let filtered = tasks.filter(t => {
     if (activeFilter === "all") return true
     if (activeFilter === "pending") return t.status === "pending" || t.status === "todo"
     return t.status === activeFilter
-  }).sort((a, b) => {
+  })
+
+  // My Tasks filter
+  if (myTasksOnly && currentUserId) {
+    filtered = filtered.filter(t => t.assignedTo === currentUserId)
+  }
+
+  filtered = filtered.sort((a, b) => {
     switch (sortBy) {
       case "date_asc": return new Date(a.dueDate || "9999").getTime() - new Date(b.dueDate || "9999").getTime()
       case "date_desc": return new Date(b.dueDate || "0").getTime() - new Date(a.dueDate || "0").getTime()
@@ -462,7 +549,6 @@ export default function TasksPage() {
   const completed = tasks.filter(t => t.status === "completed").length
   const todayCount = tasks.filter(t => isToday(t.dueDate) && t.status !== "completed").length
   const weekCount = tasks.filter(t => isThisWeek(t.dueDate) && t.status !== "completed").length
-  const completionPercentage = tasks.length > 0 ? Math.round(completed / tasks.length * 100) : 0
 
   const statusCounts: Record<string, number> = {}
   for (const t of tasks) {
@@ -471,6 +557,27 @@ export default function TasksPage() {
   }
 
   const columns = [
+    {
+      key: "_select",
+      label: (
+        <input
+          type="checkbox"
+          checked={selectedIds.size > 0 && selectedIds.size === filtered.length}
+          onChange={toggleSelectAll}
+          className="h-4 w-4 rounded border-muted-foreground/30"
+        />
+      ),
+      className: "w-10",
+      render: (item: any) => (
+        <input
+          type="checkbox"
+          checked={selectedIds.has(item.id)}
+          onChange={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
+          onClick={(e) => e.stopPropagation()}
+          className="h-4 w-4 rounded border-muted-foreground/30"
+        />
+      ),
+    },
     {
       key: "title",
       label: t("colTask"),
@@ -529,14 +636,25 @@ export default function TasksPage() {
       ),
     },
     {
-      key: "createdAt",
-      label: t("createdAt"),
+      key: "assignedTo",
+      label: t("colAssignee"),
+      hint: t("hintColAssigned"),
       sortable: true,
       render: (item: any) => (
-        <span className="text-sm text-muted-foreground">{formatDate(item.createdAt)}</span>
+        <div className="flex items-center gap-1.5">
+          {item.assignee ? (
+            <>
+              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary flex-shrink-0">
+                {item.assignee.name?.charAt(0)?.toUpperCase() || "?"}
+              </div>
+              <span className="text-sm truncate max-w-[120px]">{item.assignee.name}</span>
+            </>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          )}
+        </div>
       ),
     },
-    { key: "assignedTo", label: t("colAssignee"), hint: t("hintColAssigned"), sortable: true },
     {
       key: "status",
       label: t("colStatus"),
@@ -588,6 +706,15 @@ export default function TasksPage() {
           <PageDescription text={t("pageDescription")} />
         </div>
         <div className="flex items-center gap-2">
+          {/* My Tasks toggle */}
+          <Button
+            variant={myTasksOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMyTasksOnly(!myTasksOnly)}
+          >
+            <User2 className="h-3.5 w-3.5 mr-1" /> {t("myTasks") || "My Tasks"}
+          </Button>
+
           <div className="flex rounded-lg border">
             <button
               onClick={() => setView("list")}
@@ -625,6 +752,9 @@ export default function TasksPage() {
         <ColorStatCard label={t("statToday")} value={todayCount} icon={<CalendarDays className="h-4 w-4" />} color="violet" />
         <ColorStatCard label={t("statThisWeek")} value={weekCount} icon={<CalendarDays className="h-4 w-4" />} color="indigo" />
       </div>
+
+      {/* Bulk actions bar */}
+      <BulkActionsBar selectedIds={selectedIds} onAction={handleBulkAction} onClear={() => setSelectedIds(new Set())} />
 
       {/* Status filter tabs */}
       <div className="flex flex-wrap gap-2">
@@ -672,43 +802,74 @@ export default function TasksPage() {
 
       {view === "kanban" && (
         <MotionList className="flex gap-4 overflow-x-auto pb-4" staggerDelay={0.08}>
-          {(["pending", "in_progress", "completed"] as const).map((status) => (
-            <MotionItem key={status} className="min-w-[280px] flex-shrink-0">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-sm font-semibold">{statusLabels[status]}</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).length}</span>
-              </div>
-              <div className="space-y-2 min-h-[200px] rounded-lg border-2 border-dashed border-transparent p-2 hover:border-muted-foreground/20">
-                {filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status).map(task => (
-                  <div key={task.id} className="rounded-lg border bg-card p-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200" onClick={() => router.push(`/tasks/${task.id}`)}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}
-                        className={cn(
-                          "h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0",
-                          task.status === "completed" ? "border-green-500 bg-green-500" : "border-muted-foreground/30 hover:border-primary"
-                        )}
-                      >
-                        {task.status === "completed" && <CheckSquare className="h-3 w-3 text-white" />}
-                      </button>
-                      <span className={cn("text-sm font-medium", task.status === "completed" && "line-through text-muted-foreground")}>{task.title}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Badge variant={priorityColors[task.priority] || "secondary"} className="text-[10px]">
-                          {priorityLabels[task.priority] || task.priority}
-                        </Badge>
-                        <span>{categoryIcons[task.relatedType || ""] || "📋"}</span>
+          {(["pending", "in_progress", "completed"] as const).map((status) => {
+            const columnTasks = filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status)
+            return (
+              <MotionItem key={status} className="min-w-[300px] flex-shrink-0">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-sm font-semibold">{statusLabels[status]}</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{columnTasks.length}</span>
+                </div>
+                <div
+                  className={cn(
+                    "space-y-2 min-h-[200px] rounded-lg border-2 border-dashed p-2 transition-colors",
+                    dragTask ? "border-primary/30 bg-primary/5" : "border-transparent hover:border-muted-foreground/20"
+                  )}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move" }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    const taskId = e.dataTransfer.getData("text/plain")
+                    if (taskId) handleKanbanDrop(taskId, status)
+                  }}
+                >
+                  {columnTasks.map(task => (
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", task.id); setDragTask(task.id) }}
+                      onDragEnd={() => setDragTask(null)}
+                      className={cn(
+                        "rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200",
+                        dragTask === task.id && "opacity-50"
+                      )}
+                      onClick={() => router.push(`/tasks/${task.id}`)}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}
+                          className={cn(
+                            "h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0",
+                            task.status === "completed" ? "border-green-500 bg-green-500" : "border-muted-foreground/30 hover:border-primary"
+                          )}
+                        >
+                          {task.status === "completed" && <CheckSquare className="h-3 w-3 text-white" />}
+                        </button>
+                        <span className={cn("text-sm font-medium truncate", task.status === "completed" && "line-through text-muted-foreground")}>{task.title}</span>
                       </div>
-                      <span className={cn(isOverdue(task.dueDate) && task.status !== "completed" && "text-red-500 font-medium")}>
-                        {formatDate(task.dueDate)}
-                      </span>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mt-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant={priorityColors[task.priority] || "secondary"} className="text-[10px]">
+                            {priorityLabels[task.priority] || task.priority}
+                          </Badge>
+                          <span>{categoryIcons[task.relatedType || ""] || "📋"}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {task.assignee && (
+                            <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-medium text-primary" title={task.assignee.name}>
+                              {task.assignee.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
+                          <span className={cn(isOverdue(task.dueDate) && task.status !== "completed" && "text-red-500 font-medium")}>
+                            {formatDate(task.dueDate)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </MotionItem>
-          ))}
+                  ))}
+                </div>
+              </MotionItem>
+            )
+          })}
         </MotionList>
       )}
 

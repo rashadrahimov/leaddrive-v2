@@ -1202,7 +1202,19 @@
     "hintColDueDate": "Deadline for completing this task",
     "hintColAssigned": "Team member responsible for this task",
     "hintColRelated": "Linked entity: deal, contact, company, or ticket",
-    "sortCreatedAsc": "Oldest first"
+    "sortCreatedAsc": "Oldest first",
+    "myTasks": "My Tasks",
+    "selected": "selected",
+    "markComplete": "Complete",
+    "checklist": "Checklist",
+    "addChecklistItem": "Add item...",
+    "comments": "Comments",
+    "addComment": "Add a comment...",
+    "postComment": "Post",
+    "noComments": "No comments yet",
+    "subtasksProgress": "{done} of {total}",
+    "taskInfo": "Task Info",
+    "activityLog": "Activity"
   },
   "tickets": {
     "title": "Tickets",

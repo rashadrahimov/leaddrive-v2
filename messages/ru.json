@@ -1202,7 +1202,19 @@
     "hintColDueDate": "Крайний срок выполнения задачи",
     "hintColAssigned": "Ответственный сотрудник за эту задачу",
     "hintColRelated": "Связанная сущность: сделка, контакт, компания или тикет",
-    "sortCreatedAsc": "Сначала старые"
+    "sortCreatedAsc": "Сначала старые",
+    "myTasks": "Мои задачи",
+    "selected": "выбрано",
+    "markComplete": "Завершить",
+    "checklist": "Чеклист",
+    "addChecklistItem": "Добавить пункт...",
+    "comments": "Комментарии",
+    "addComment": "Добавить комментарий...",
+    "postComment": "Отправить",
+    "noComments": "Пока нет комментариев",
+    "subtasksProgress": "{done} из {total}",
+    "taskInfo": "Информация",
+    "activityLog": "Активность"
   },
   "tickets": {
     "title": "Тикеты",

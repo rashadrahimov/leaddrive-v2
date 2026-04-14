@@ -13,9 +13,25 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import {
   ArrowLeft, Clock, CalendarDays, AlertTriangle, User, Calendar,
   Pencil, Trash2, Loader2, CheckCircle2, FileText, ExternalLink,
+  Plus, Send, CheckSquare, Square, GripVertical, MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
+
+interface ChecklistItem {
+  id: string
+  title: string
+  completed: boolean
+  sortOrder: number
+}
+
+interface TaskComment {
+  id: string
+  content: string
+  isSystem: boolean
+  createdAt: string
+  user?: { id: string; name: string; avatar?: string | null } | null
+}
 
 interface TaskData {
   id: string
@@ -25,12 +41,16 @@ interface TaskData {
   priority: string
   dueDate: string | null
   assignedTo: string | null
+  assignee?: { id: string; name: string; avatar?: string | null } | null
+  creator?: { id: string; name: string } | null
   relatedType: string | null
   relatedId: string | null
   completedAt: string | null
   createdBy: string | null
   createdAt: string
   updatedAt: string
+  checklist?: ChecklistItem[]
+  comments?: TaskComment[]
 }
 
 const STATUS_PIPELINE = ["pending", "in_progress", "completed", "cancelled"]
@@ -74,6 +94,18 @@ function formatDateShort(d: string | null) {
   return new Date(d).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
 }
 
+function formatTimeAgo(d: string): string {
+  const diff = Date.now() - new Date(d).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return formatDateShort(d)
+}
+
 function getDaysOpen(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
 }
@@ -92,6 +124,193 @@ function getDueDateCountdown(dueDate: string | null): { text: string; overdue: b
   return { text: `${days}d left`, overdue: false, urgent: false }
 }
 
+// ─── Checklist Component ────────────────────────────────────────
+function TaskChecklistSection({ taskId, orgId, items, onRefresh }: {
+  taskId: string; orgId?: string; items: ChecklistItem[]; onRefresh: () => void
+}) {
+  const t = useTranslations("tasks")
+  const [newItem, setNewItem] = useState("")
+  const [adding, setAdding] = useState(false)
+
+  async function addItem() {
+    if (!newItem.trim()) return
+    setAdding(true)
+    try {
+      await fetch(`/api/v1/tasks/${taskId}/checklist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        body: JSON.stringify({ title: newItem.trim() }),
+      })
+      setNewItem("")
+      onRefresh()
+    } catch (err) { console.error(err) }
+    finally { setAdding(false) }
+  }
+
+  async function toggleItem(item: ChecklistItem) {
+    await fetch(`/api/v1/tasks/${taskId}/checklist`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+      body: JSON.stringify({ id: item.id, completed: !item.completed }),
+    })
+    onRefresh()
+  }
+
+  async function deleteItem(itemId: string) {
+    await fetch(`/api/v1/tasks/${taskId}/checklist?itemId=${itemId}`, {
+      method: "DELETE",
+      headers: orgId ? { "x-organization-id": String(orgId) } : {},
+    })
+    onRefresh()
+  }
+
+  const completedCount = items.filter(i => i.completed).length
+  const progressPct = items.length > 0 ? Math.round((completedCount / items.length) * 100) : 0
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4" />
+            {t("checklist")}
+            {items.length > 0 && (
+              <span className="text-xs text-muted-foreground font-normal">
+                {completedCount}/{items.length}
+              </span>
+            )}
+          </div>
+        </CardTitle>
+        {items.length > 0 && (
+          <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+            <div
+              className="bg-green-500 h-1.5 rounded-full transition-all duration-300"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-1">
+        {items.map((item) => (
+          <div key={item.id} className="flex items-center gap-2 group py-1 px-1 rounded hover:bg-muted/50">
+            <button onClick={() => toggleItem(item)} className="flex-shrink-0">
+              {item.completed ? (
+                <CheckSquare className="h-4 w-4 text-green-500" />
+              ) : (
+                <Square className="h-4 w-4 text-muted-foreground/50 hover:text-primary" />
+              )}
+            </button>
+            <span className={cn("text-sm flex-1", item.completed && "line-through text-muted-foreground")}>{item.title}</span>
+            <button
+              onClick={() => deleteItem(item.id)}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-opacity"
+            >
+              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
+            </button>
+          </div>
+        ))}
+
+        {/* Add new item */}
+        <div className="flex items-center gap-2 pt-1">
+          <Plus className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
+          <input
+            type="text"
+            value={newItem}
+            onChange={(e) => setNewItem(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") addItem() }}
+            placeholder={t("addChecklistItem")}
+            className="flex-1 text-sm bg-transparent border-none outline-none placeholder:text-muted-foreground/50"
+            disabled={adding}
+          />
+          {newItem.trim() && (
+            <Button size="sm" variant="ghost" onClick={addItem} disabled={adding} className="h-6 px-2">
+              <Plus className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Comments Component ─────────────────────────────────────────
+function TaskCommentsSection({ taskId, orgId, comments, onRefresh }: {
+  taskId: string; orgId?: string; comments: TaskComment[]; onRefresh: () => void
+}) {
+  const t = useTranslations("tasks")
+  const [newComment, setNewComment] = useState("")
+  const [posting, setPosting] = useState(false)
+
+  async function postComment() {
+    if (!newComment.trim()) return
+    setPosting(true)
+    try {
+      await fetch(`/api/v1/tasks/${taskId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {}) },
+        body: JSON.stringify({ content: newComment.trim() }),
+      })
+      setNewComment("")
+      onRefresh()
+    } catch (err) { console.error(err) }
+    finally { setPosting(false) }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <MessageSquare className="h-4 w-4" />
+          {t("comments")}
+          {comments.length > 0 && (
+            <span className="text-xs text-muted-foreground font-normal">{comments.length}</span>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Comment input */}
+        <div className="flex gap-2">
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) postComment() }}
+            placeholder={t("addComment")}
+            rows={2}
+            className="flex-1 text-sm rounded-md border px-3 py-2 resize-none bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+            disabled={posting}
+          />
+          <Button size="sm" onClick={postComment} disabled={!newComment.trim() || posting} className="self-end">
+            <Send className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
+        {/* Comments list */}
+        {comments.length === 0 ? (
+          <p className="text-xs text-muted-foreground text-center py-2">{t("noComments")}</p>
+        ) : (
+          <div className="space-y-3">
+            {comments.map((comment) => (
+              <div key={comment.id} className={cn("flex gap-2.5", comment.isSystem && "opacity-60")}>
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary flex-shrink-0 mt-0.5">
+                  {comment.user?.name?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{comment.user?.name || "System"}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
+                  </div>
+                  <p className="text-sm text-foreground/80 whitespace-pre-wrap mt-0.5">{comment.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ─── Main Page ──────────────────────────────────────────────────
 export default function TaskDetailPage() {
   const t = useTranslations("tasks")
   const tc = useTranslations("common")
@@ -243,7 +462,7 @@ export default function TaskDetailPage() {
                   const json = await res.json()
                   if (json.success) alert("Synced to Google Calendar!")
                   else if (res.status === 403 || json.error?.includes("not connected")) {
-                    if (confirm("Google Calendar not connected. Go to Settings → Integrations to connect?")) {
+                    if (confirm("Google Calendar not connected. Go to Settings?")) {
                       window.location.href = "/settings/integrations"
                     }
                   } else alert(json.error || "Failed to sync")
@@ -284,111 +503,142 @@ export default function TaskDetailPage() {
         })}
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-blue-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("daysOpen")}</span>
-            <Clock className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-2xl font-bold">{daysOpen}</span>
-        </div>
-        <div className={`${dueDateInfo.overdue ? "bg-red-500" : dueDateInfo.urgent ? "bg-amber-500" : "bg-green-500"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("colDueDate")}</span>
-            <CalendarDays className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-lg font-bold leading-tight">{dueDateInfo.text}</span>
-          {task.dueDate && <span className="text-[10px] opacity-70">{formatDateShort(task.dueDate)}</span>}
-        </div>
-        <div className={`${task.priority === "urgent" ? "bg-red-500" : task.priority === "high" ? "bg-orange-500" : "bg-muted-foreground/50"} text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm`}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("colPriority")}</span>
-            <AlertTriangle className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-xl font-bold capitalize">{PRIORITY_LABELS[task.priority] || task.priority}</span>
-        </div>
-        <div className="bg-indigo-500 text-white rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium opacity-80">{t("colAssignee")}</span>
-            <User className="h-4 w-4 opacity-80" />
-          </div>
-          <span className="text-lg font-bold leading-tight truncate">{task.assignedTo || "\u2014"}</span>
-        </div>
-      </div>
+      {/* Two-column layout: main + sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Description */}
+          {task.description && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> {t("description")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm whitespace-pre-wrap">{task.description}</p>
+              </CardContent>
+            </Card>
+          )}
 
-      {/* Task Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FileText className="h-4 w-4" /> {t("taskDetails")} <InfoHint text={t("hintColTitle")} size={12} />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("colTask")}</label>
-              <p className="text-sm font-medium mt-0.5">{task.title}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colStatus")} <InfoHint text={t("hintColStatus")} size={12} /></label>
-              <div className="mt-0.5">
-                <Badge className={statusStyle.className}>{STATUS_LABELS[task.status] || task.status}</Badge>
+          {/* Checklist */}
+          <TaskChecklistSection
+            taskId={task.id}
+            orgId={orgId ? String(orgId) : undefined}
+            items={task.checklist || []}
+            onRefresh={fetchTask}
+          />
+
+          {/* Comments */}
+          <TaskCommentsSection
+            taskId={task.id}
+            orgId={orgId ? String(orgId) : undefined}
+            comments={task.comments || []}
+            onRefresh={fetchTask}
+          />
+        </div>
+
+        {/* Right: Sidebar metadata */}
+        <div className="space-y-4">
+          {/* KPI cards - stacked */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-blue-500 text-white rounded-xl p-3 flex flex-col gap-1 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium opacity-80">{t("daysOpen")}</span>
+                <Clock className="h-3.5 w-3.5 opacity-80" />
               </div>
+              <span className="text-xl font-bold">{daysOpen}</span>
             </div>
-            <div className="sm:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">{t("description")}</label>
-              <p className="text-sm mt-0.5 whitespace-pre-wrap">{task.description || "\u2014"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colAssignee")} <InfoHint text={t("hintColAssigned")} size={12} /></label>
-              <p className="text-sm mt-0.5">{task.assignedTo || "\u2014"}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colPriority")} <InfoHint text={t("hintColPriority")} size={12} /></label>
-              <div className="mt-0.5">
-                <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
+            <div className={cn(
+              "text-white rounded-xl p-3 flex flex-col gap-1 shadow-sm",
+              dueDateInfo.overdue ? "bg-red-500" : dueDateInfo.urgent ? "bg-amber-500" : "bg-green-500"
+            )}>
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-medium opacity-80">{t("colDueDate")}</span>
+                <CalendarDays className="h-3.5 w-3.5 opacity-80" />
               </div>
+              <span className="text-sm font-bold leading-tight">{dueDateInfo.text}</span>
             </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">{t("colDueDate")} <InfoHint text={t("hintColDueDate")} size={12} /></label>
-              <p className="text-sm mt-0.5">{formatDate(task.dueDate)}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("completedAt")}</label>
-              <p className="text-sm mt-0.5">
-                {task.completedAt ? (
-                  <span className="flex items-center gap-1 text-green-600">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> {formatDate(task.completedAt)}
-                  </span>
-                ) : "\u2014"}
-              </p>
-            </div>
-            {task.relatedType && task.relatedId && (
+          </div>
+
+          {/* Info card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("taskInfo")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">{t("relatedEntity")}</label>
-                <div className="mt-0.5">
-                  <Link
-                    href={`${RELATED_TYPE_ROUTES[task.relatedType] || "/"}/${task.relatedId}`}
-                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-3 w-3" />
-                    {task.relatedType} / {task.relatedId.slice(0, 8)}...
-                  </Link>
+                <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("colAssignee")}</label>
+                <div className="flex items-center gap-2 mt-1">
+                  {task.assignee ? (
+                    <>
+                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                        {task.assignee.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <span className="text-sm font-medium">{task.assignee.name}</span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{"\u2014"}</span>
+                  )}
                 </div>
               </div>
-            )}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("createdAt")}</label>
-              <p className="text-sm mt-0.5">{formatDate(task.createdAt)}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">{t("updatedAt")}</label>
-              <p className="text-sm mt-0.5">{formatDate(task.updatedAt)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("colPriority")}</label>
+                <div className="mt-1">
+                  <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("colDueDate")}</label>
+                <p className="text-sm mt-0.5">{formatDateShort(task.dueDate)}</p>
+              </div>
+
+              {task.completedAt && (
+                <div>
+                  <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("completedAt")}</label>
+                  <p className="text-sm mt-0.5 flex items-center gap-1 text-green-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> {formatDate(task.completedAt)}
+                  </p>
+                </div>
+              )}
+
+              {task.relatedType && task.relatedId && (
+                <div>
+                  <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("relatedEntity")}</label>
+                  <div className="mt-0.5">
+                    <Link
+                      href={`${RELATED_TYPE_ROUTES[task.relatedType] || "/"}/${task.relatedId}`}
+                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      {task.relatedType} / {task.relatedId.slice(0, 8)}...
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-t pt-3 mt-3 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{t("createdAt")}</span>
+                  <span>{formatDateShort(task.createdAt)}</span>
+                </div>
+                {task.creator && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Created by</span>
+                    <span>{task.creator.name}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{t("updatedAt")}</span>
+                  <span>{formatDateShort(task.updatedAt)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Edit Form */}
       <TaskForm

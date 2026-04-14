@@ -24,7 +24,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const role = session?.role || "admin"
   const { id } = await params
 
-  const task = await prisma.task.findFirst({ where: { id, organizationId: orgId } })
+  const task = await prisma.task.findFirst({
+    where: { id, organizationId: orgId },
+    include: {
+      assignee: { select: { id: true, name: true, avatar: true } },
+      creator: { select: { id: true, name: true } },
+      checklist: { orderBy: { sortOrder: "asc" } },
+      comments: {
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true, avatar: true } } },
+      },
+    },
+  })
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   const fieldPerms = await getFieldPermissions(orgId, role, "task")
