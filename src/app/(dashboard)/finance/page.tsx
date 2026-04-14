@@ -10,6 +10,7 @@ import { APDashboard } from "@/components/finance/ap-dashboard"
 import { FundManager } from "@/components/finance/fund-manager"
 import { PaymentsDashboard } from "@/components/finance/payments-dashboard"
 import { LayoutDashboard, FileText, CreditCard, PiggyBank, Banknote } from "lucide-react"
+import { DidYouKnow } from "@/components/did-you-know"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
@@ -34,6 +35,7 @@ export default function FinancePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{tn("finance")} <TourReplayButton tourId="finance" /></h1>
       </div>
+      <DidYouKnow page="finance" className="mb-4" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList data-tour-id="finance-tabs">

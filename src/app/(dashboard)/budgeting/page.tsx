@@ -30,6 +30,7 @@ import { BudgetChartTooltip } from "@/components/budget-chart-tooltip"
 import { BudgetBarLabel } from "@/components/budget-bar-label"
 import { BudgetChartLegend } from "@/components/budget-chart-legend"
 import { AnimatedNumber, fmtManat } from "@/components/animated-number"
+import { DidYouKnow } from "@/components/did-you-know"
 import {
   useBudgetPlans,
   useCreateBudgetPlan,
@@ -4129,6 +4130,7 @@ export default function BudgetingPage() {
           </Button>
         </div>
       </div>
+      <DidYouKnow page="budgeting" className="mb-4" />
 
       {/* Empty state */}
       {!plansLoading && plans.length === 0 && (

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
 import { MotionPage } from "@/components/ui/motion"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ProjectForm } from "@/components/projects/project-form"
 import { ProjectStats } from "@/components/projects/project-stats"
@@ -317,6 +318,7 @@ export default function ProjectsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="projects" className="mb-4" />
 
       <ProjectStats
         total={total} activeCount={activeCount} completedCount={completedCount} overdueCount={overdueCount}

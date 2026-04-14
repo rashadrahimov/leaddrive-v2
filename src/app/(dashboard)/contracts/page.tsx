@@ -12,6 +12,7 @@ import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { Select } from "@/components/ui/select"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { FileText, Plus, Pencil, Trash2, AlertTriangle, Clock, TrendingUp, Building2, History, X, Upload, Download, File, Loader2, Handshake, User, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -396,6 +397,7 @@ export default function ContractsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="contracts" className="mb-4" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" data-tour-id="contracts-stats">

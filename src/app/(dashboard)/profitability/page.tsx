@@ -13,6 +13,7 @@ import {
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { useCostModelAnalytics } from "@/lib/cost-model/hooks"
 import { SERVICE_LABELS, SERVICE_TYPES } from "@/lib/cost-model/types"
 import type { ServiceType } from "@/lib/cost-model/types"
@@ -262,6 +263,7 @@ export default function ProfitabilityPage() {
         </div>
       </div>
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="profitability" className="mb-4" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList data-tour-id="profitability-tabs">

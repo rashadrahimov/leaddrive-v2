@@ -7,6 +7,7 @@ import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lo
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 
@@ -42,6 +43,7 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">{t("subtitle")}</p>
         <PageDescription text={t("pageDescription")} />
       </div>
+      <DidYouKnow page="settings" className="mb-4" />
 
       <div data-tour-id="settings-grid" className="grid gap-4 md:grid-cols-2">
         {SETTINGS_SECTIONS.map((section) => {

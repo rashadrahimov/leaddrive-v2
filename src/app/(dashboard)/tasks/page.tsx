@@ -10,6 +10,7 @@ import { DataTable } from "@/components/data-table"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { TaskForm } from "@/components/task-form"
 import { Select } from "@/components/ui/select"
 import { CheckSquare, Plus, Clock, AlertTriangle, Pencil, Trash2, CalendarDays, ListChecks, ChevronLeft, ChevronRight, Link2, Copy, Check, ExternalLink, Columns3, User2, CheckCircle2, X } from "lucide-react"
@@ -719,6 +720,7 @@ export default function TasksPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* My Tasks toggle */}
+
           <Button
             variant={myTasksOnly ? "default" : "outline"}
             size="sm"
@@ -755,6 +757,7 @@ export default function TasksPage() {
           </Button>
         </div>
       </div>
+      <DidYouKnow page="tasks" className="mb-4" />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children" data-tour-id="tasks-stats">
         <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalTasks")} />

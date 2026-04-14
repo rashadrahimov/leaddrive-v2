@@ -11,6 +11,7 @@ import { OfferForm } from "@/components/offer-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { ColorStatCard } from "@/components/color-stat-card"
 import {
   FileSpreadsheet, Plus, Pencil, Trash2, FileCheck, DollarSign,
@@ -214,6 +215,7 @@ export default function OffersPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="offers" className="mb-4" />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-tour-id="offers-stats">

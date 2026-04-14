@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface Contact {
   id: string
@@ -211,6 +212,7 @@ export default function ContactsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="contacts" className="mb-4" />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children" data-tour-id="contacts-stats">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintTotalContacts")} />

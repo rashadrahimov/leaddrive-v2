@@ -12,6 +12,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { BookOpen, Plus, Search, Eye, Pencil, Trash2, ChevronDown, ChevronRight, FileText, FolderOpen, Settings2 } from "lucide-react"
 import Link from "next/link"
 import { useTranslations } from "next-intl"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface KbArticle {
   id: string
@@ -202,6 +203,8 @@ export default function KnowledgeBasePage() {
           </Button>
         </div>
       </div>
+
+      <DidYouKnow page="knowledge-base" className="mb-4" />
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">

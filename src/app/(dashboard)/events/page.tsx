@@ -16,6 +16,7 @@ import { EventForm } from "@/components/event-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { EventsAnalytics } from "@/components/events/events-analytics"
 import { cn } from "@/lib/utils"
 
@@ -134,6 +135,8 @@ export default function EventsPage() {
           </Button>
         </div>
       </div>
+
+      <DidYouKnow page="events" className="mb-4" />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

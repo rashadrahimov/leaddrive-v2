@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import dynamic from "next/dynamic"
 
 const JourneyFlowEditor = dynamic(() => import("@/components/journey-flow-editor").then(m => ({ default: m.JourneyFlowEditor })), { ssr: false })
@@ -427,6 +428,7 @@ export default function JourneysPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="journeys" className="mb-4" />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

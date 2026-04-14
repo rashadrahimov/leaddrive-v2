@@ -11,6 +11,7 @@ import { CompanyForm } from "@/components/company-form"
 import { LeadDetailModal } from "@/components/lead-detail-modal"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { Select } from "@/components/ui/select"
 import { Building2, Plus, Search, Users, FileText, TrendingUp, ArrowUpDown, Pencil, Trash2 } from "lucide-react"
 import { MotionList, MotionItem } from "@/components/ui/motion"
@@ -147,6 +148,7 @@ export default function CompaniesPage() {
         </Button>
       </div>
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="companies" className="mb-4" />
 
       <div data-tour-id="companies-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" hint={t("hintCompaniesCount")} />

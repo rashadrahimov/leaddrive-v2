@@ -12,6 +12,7 @@ import { Plus, Search, Users, Filter, Zap, Pencil, Trash2, Archive, MoreHorizont
 import { cn } from "@/lib/utils"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface Segment {
   id: string
@@ -143,6 +144,7 @@ export default function SegmentsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="segments" className="mb-4" />
 
       {/* Stats row */}
       <div data-tour-id="segments-filters" className="grid grid-cols-1 md:grid-cols-3 gap-3">

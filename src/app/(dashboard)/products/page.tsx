@@ -16,6 +16,7 @@ import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { Package, Plus, Pencil, Trash2, DollarSign, Tag, Layers, CheckCircle, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -214,6 +215,7 @@ export default function ProductsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+      <DidYouKnow page="products" className="mb-4" />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <ColorStatCard label={t("statTotal")} value={products.length} icon={<Package className="h-4 w-4" />} color="blue" hint={t("hintTotalProducts")} />

@@ -14,6 +14,7 @@ import { Plus, Mail, Users, Send, Pencil, Trash2, Search, Megaphone, BarChart3, 
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { CampaignsAnalytics } from "@/components/campaigns/campaigns-analytics"
 
 interface Campaign {
@@ -192,6 +193,8 @@ export default function CampaignsPage() {
           </Button>
         </div>
       </div>
+
+      <DidYouKnow page="campaigns" className="mb-4" />
 
       {/* Stats — 5 status cards */}
       <div data-tour-id="campaigns-stats" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
