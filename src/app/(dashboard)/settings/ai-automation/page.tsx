@@ -392,6 +392,18 @@ export default function AiAutomationPage() {
                 <Badge variant="secondary" className="text-xs">{shadowTotal} {t("pending")}</Badge>
               )}
             </CardTitle>
+            {shadowActions.length > 1 && (
+              <div className="flex gap-1.5">
+                <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-green-600 border-green-300 hover:bg-green-50"
+                  onClick={() => { for (const a of shadowActions) reviewAction(a.id, "approve") }}>
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> {t("approveAll") || "Approve all"}
+                </Button>
+                <Button size="sm" variant="outline" className="h-7 px-2.5 text-xs text-red-500 border-red-300 hover:bg-red-50"
+                  onClick={() => { for (const a of shadowActions) reviewAction(a.id, "reject") }}>
+                  <XCircle className="h-3 w-3 mr-1" /> {t("rejectAll") || "Reject all"}
+                </Button>
+              </div>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
             {t("shadowActionsDesc")}
@@ -402,44 +414,42 @@ export default function AiAutomationPage() {
             <p className="text-sm text-muted-foreground py-4 text-center">{t("noPendingShadow")}</p>
           ) : (
             <div className="space-y-2">
-              {shadowActions.map(action => (
-                <div key={action.id} className="flex items-start justify-between p-3 rounded-lg border bg-card">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">{action.featureName.replace("ai_auto_", "")}</Badge>
-                      <Badge variant="secondary" className="text-[10px]">{action.actionType}</Badge>
-                      <span className="text-[10px] text-muted-foreground">{action.entityType}</span>
+              {shadowActions.map(action => {
+                const info = getShadowInfo(action)
+                return (
+                  <div key={action.id} className={`flex items-start justify-between p-3.5 rounded-lg border-l-[3px] bg-card border border-border ${info.borderColor}`}>
+                    <div className="min-w-0 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${info.badgeBg}`}>{info.label}</span>
+                        <span className="text-[10px] text-muted-foreground">{info.entityLabel}</span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground">{info.title}</p>
+                      {info.reason && <p className="text-xs text-muted-foreground">{info.reason}</p>}
+                      <p className="text-[10px] text-muted-foreground">{timeAgo(action.createdAt)}</p>
                     </div>
-                    <p className="text-xs text-foreground/80">
-                      {formatPayload(action.payload)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-2.5 w-2.5" />
-                      {new Date(action.createdAt).toLocaleString()}
-                    </p>
+                    <div className="flex items-center gap-2 shrink-0 ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-3 text-xs font-medium text-green-700 border-green-300 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400"
+                        onClick={() => reviewAction(action.id, "approve")}
+                        disabled={reviewing === action.id}
+                      >
+                        {reviewing === action.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> {t("approve") || "Approve"}</>}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 px-2 text-red-400 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => reviewAction(action.id, "reject")}
+                        disabled={reviewing === action.id}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0 ml-3">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-                      onClick={() => reviewAction(action.id, "approve")}
-                      disabled={reviewing === action.id}
-                    >
-                      {reviewing === action.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-red-500 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => reviewAction(action.id, "reject")}
-                      disabled={reviewing === action.id}
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </CardContent>
@@ -448,10 +458,50 @@ export default function AiAutomationPage() {
   )
 }
 
-function formatPayload(payload: any): string {
-  if (!payload) return "—"
-  if (payload.title) return payload.title
-  if (payload.message) return payload.message.slice(0, 80) + (payload.message.length > 80 ? "..." : "")
-  if (payload.invoiceNumber) return `Invoice ${payload.invoiceNumber} — $${payload.amount || 0} (${payload.daysOverdue || 0}d overdue)`
-  return JSON.stringify(payload).slice(0, 80)
+function getShadowInfo(action: ShadowAction): { label: string; badgeBg: string; borderColor: string; entityLabel: string; title: string; reason: string } {
+  const p = action.payload as any || {}
+  const feature = action.featureName.replace("ai_auto_", "")
+
+  if (feature === "payment_reminder") {
+    return {
+      label: "💰 Payment",
+      badgeBg: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      borderColor: "border-l-red-500",
+      entityLabel: `Invoice`,
+      title: `${p.invoiceNumber || "Invoice"} — $${(p.amount || 0).toLocaleString()}`,
+      reason: `${p.daysOverdue || 0} days overdue${p.companyName ? ` · ${p.companyName}` : ""}. Will enroll in payment reminder journey.`,
+    }
+  }
+
+  if (feature === "acknowledge") {
+    return {
+      label: "⚡ SLA Response",
+      badgeBg: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+      borderColor: "border-l-amber-500",
+      entityLabel: `Ticket`,
+      title: p.ticketNumber || "Ticket",
+      reason: `SLA ${p.percentElapsed || 0}% elapsed, no response yet. Will send auto-acknowledgment to customer.`,
+    }
+  }
+
+  // followup
+  return {
+    label: "📋 Follow-up",
+    badgeBg: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+    borderColor: "border-l-blue-500",
+    entityLabel: `Deal`,
+    title: p.title || action.entityId,
+    reason: `${p.daysSinceActivity || 0} days without activity. Will create a follow-up task.`,
+  }
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "Just now"
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
 }
