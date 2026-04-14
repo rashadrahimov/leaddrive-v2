@@ -192,10 +192,10 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
   catch { title = tip.titleKey; desc = tip.descKey; cta = tip.ctaKey }
 
   return (
-    <div className={`relative rounded-xl border border-violet-200/50 dark:border-violet-800/30 bg-gradient-to-r from-violet-50/80 to-indigo-50/80 dark:from-violet-950/20 dark:to-indigo-950/20 p-4 ${className}`}>
+    <div className={`relative rounded-xl border border-violet-300 dark:border-violet-700 bg-gradient-to-r from-violet-100/90 to-indigo-100/90 dark:from-violet-950/40 dark:to-indigo-950/40 p-5 shadow-sm ${className}`}>
       {/* Dismiss current tip */}
-      <button onClick={handleDismiss} className="absolute top-2.5 right-2.5 text-muted-foreground hover:text-foreground transition-colors z-10">
-        <X className="h-3.5 w-3.5" />
+      <button onClick={handleDismiss} className="absolute top-3 right-3 p-1 rounded-md text-violet-400 hover:text-violet-700 hover:bg-violet-200/50 dark:hover:bg-violet-800/40 transition-colors z-10">
+        <X className="h-4 w-4" />
       </button>
 
       <AnimatePresence mode="wait" initial={false}>
@@ -205,24 +205,24 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: direction > 0 ? -40 : 40 }}
           transition={{ duration: 0.2 }}
-          className="flex items-start gap-3 pr-6"
+          className="flex items-start gap-3.5 pr-8"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/40 shrink-0 mt-0.5">
-            <Lightbulb className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-200 dark:bg-violet-800/60 shrink-0 mt-0.5 shadow-sm">
+            <Lightbulb className="h-5 w-5 text-violet-700 dark:text-violet-300" />
           </div>
-          <div className="min-w-0 space-y-1.5">
-            <p className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+          <div className="min-w-0 space-y-2">
+            <p className="text-sm font-bold text-violet-800 dark:text-violet-200">
               {t("prefix")} <span className="text-foreground">{title}</span>
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+            <p className="text-[13px] text-foreground/70 dark:text-foreground/60 leading-relaxed">{desc}</p>
             {tip.href && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-6 px-2 text-[11px] text-violet-600 hover:text-violet-800 hover:bg-violet-100 dark:text-violet-400 dark:hover:bg-violet-900/30 -ml-2"
+                className="h-7 px-3 text-xs font-medium border-violet-400 text-violet-700 bg-white hover:bg-violet-50 dark:border-violet-600 dark:text-violet-300 dark:bg-violet-900/30 dark:hover:bg-violet-800/40 shadow-sm"
                 onClick={() => router.push(tip.href)}
               >
-                {cta} <ArrowRight className="h-3 w-3 ml-1" />
+                {cta} <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             )}
           </div>
