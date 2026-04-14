@@ -36,9 +36,12 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
     priority: initialData?.priority || "medium",
     status: initialData?.status || "pending",
     dueDate: initialData?.dueDate?.slice?.(0, 10) || initialData?.dueDate || "",
+    assignedTo: initialData?.assignedTo || "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
 
   // Entity linking state
   const [relatedType, setRelatedType] = useState<string>(initialData?.relatedType || "")
@@ -59,7 +62,17 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
         priority: initialData?.priority || "medium",
         status: initialData?.status || "pending",
         dueDate: initialData?.dueDate?.slice?.(0, 10) || initialData?.dueDate || "",
+        assignedTo: initialData?.assignedTo || "",
       })
+      // Load users for assignee dropdown
+      if (users.length === 0) {
+        setUsersLoading(true)
+        fetch("/api/v1/users", { headers: orgId ? { "x-organization-id": orgId } : {} as Record<string, string> })
+          .then(r => r.json())
+          .then(j => { if (j.success) setUsers((j.data?.users || j.data || []).map((u: any) => ({ id: u.id, name: u.name || u.email }))) })
+          .catch(() => {})
+          .finally(() => setUsersLoading(false))
+      }
       setRelatedType(initialData?.relatedType || "")
       setRelatedId(initialData?.relatedId || "")
       setRelatedName(initialData?.relatedName || "")
@@ -114,7 +127,7 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
     setError("")
     try {
       const url = isEdit ? `/api/v1/tasks/${initialData!.id}` : "/api/v1/tasks"
-      const body: Record<string, any> = { ...form, dueDate: form.dueDate || undefined }
+      const body: Record<string, any> = { ...form, dueDate: form.dueDate || undefined, assignedTo: form.assignedTo || undefined }
       if (relatedType && relatedId) {
         body.relatedType = relatedType
         body.relatedId = relatedId
@@ -167,9 +180,18 @@ export function TaskForm({ open, onOpenChange, onSaved, initialData, orgId }: Ta
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">{tc("low")}</option><option value="medium">{tc("medium")}</option><option value="high">{tc("high")}</option><option value="urgent">{tc("urgent")}</option></Select></div>
               <div><Label>{tc("dueDate")}</Label><Input type="date" value={form.dueDate} onChange={e => u("dueDate", e.target.value)} /></div>
             </div>
-            {isEdit && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{tc("assignee")}</Label>
+                <Select value={form.assignedTo} onChange={e => u("assignedTo", e.target.value)}>
+                  <option value="">{tc("unassigned") || "— Unassigned —"}</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </Select>
+              </div>
               <div><Label>{tc("status")}</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="pending">{tc("pending")}</option><option value="in_progress">{tc("inProgress")}</option><option value="completed">{tc("completed")}</option><option value="cancelled">{tc("cancelled")}</option></Select></div>
-            )}
+            </div>
 
             {/* Entity linking */}
             <div>

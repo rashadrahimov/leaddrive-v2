@@ -86,7 +86,7 @@ const RELATED_TYPE_ROUTES: Record<string, string> = {
 
 function formatDate(d: string | null) {
   if (!d) return "\u2014"
-  return new Date(d).toLocaleString(undefined, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+  return new Date(d).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" }) + ", " + new Date(d).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
 }
 
 function formatDateShort(d: string | null) {
@@ -328,6 +328,28 @@ export default function TaskDetailPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([])
+  const [assigneeOpen, setAssigneeOpen] = useState(false)
+  const [priorityOpen, setPriorityOpen] = useState(false)
+
+  // Load users for inline assignee edit
+  useEffect(() => {
+    fetch("/api/v1/users", { headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string> })
+      .then(r => r.json())
+      .then(j => { if (j.success) setUsers((j.data?.users || j.data || []).map((u: any) => ({ id: u.id, name: u.name || u.email }))) })
+      .catch(() => {})
+  }, [orgId])
+
+  const handleInlineUpdate = async (field: string, value: string) => {
+    try {
+      await fetch(`/api/v1/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+        body: JSON.stringify({ [field]: value }),
+      })
+      fetchTask()
+    } catch (err) { console.error(err) }
+  }
 
   const STATUS_LABELS: Record<string, string> = {
     pending: t("statusTodo"),
@@ -419,11 +441,13 @@ export default function TaskDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Breadcrumbs + Header */}
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-1">
+        <Link href="/tasks" className="hover:text-foreground transition-colors">{t("title")}</Link>
+        <span>/</span>
+        <span className="text-foreground font-medium truncate max-w-[400px]">{task.title}</span>
+      </div>
       <div className="flex items-center gap-3 flex-wrap">
-        <Link href="/tasks">
-          <Button variant="ghost" size="icon" className="h-8 w-8"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1 min-w-0">
           <h1 className="text-lg font-bold truncate">{task.title}</h1>
           <div className="flex items-center gap-2 mt-1">
@@ -567,9 +591,12 @@ export default function TaskDetailPage() {
               <CardTitle className="text-sm">{t("taskInfo")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div>
+              <div className="relative">
                 <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("colAssignee")}</label>
-                <div className="flex items-center gap-2 mt-1">
+                <button
+                  onClick={() => setAssigneeOpen(!assigneeOpen)}
+                  className="flex items-center gap-2 mt-1 w-full p-1.5 -ml-1.5 rounded-md hover:bg-muted/50 transition-colors cursor-pointer"
+                >
                   {task.assignee ? (
                     <>
                       <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
@@ -578,16 +605,55 @@ export default function TaskDetailPage() {
                       <span className="text-sm font-medium">{task.assignee.name}</span>
                     </>
                   ) : (
-                    <span className="text-sm text-muted-foreground">{"\u2014"}</span>
+                    <span className="text-sm text-muted-foreground">{tc("unassigned") || "Unassigned"}</span>
                   )}
-                </div>
+                  <Pencil className="h-3 w-3 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100" />
+                </button>
+                {assigneeOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-popover border rounded-md shadow-lg max-h-48 overflow-auto">
+                    <button
+                      onClick={() => { handleInlineUpdate("assignedTo", ""); setAssigneeOpen(false) }}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors text-muted-foreground"
+                    >
+                      {tc("unassigned") || "Unassigned"}
+                    </button>
+                    {users.map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => { handleInlineUpdate("assignedTo", u.id); setAssigneeOpen(false) }}
+                        className={cn("w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2", task.assignedTo === u.id && "bg-primary/5 font-medium")}
+                      >
+                        <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-medium text-primary">
+                          {u.name?.charAt(0)?.toUpperCase() || "?"}
+                        </div>
+                        {u.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="text-[10px] uppercase text-muted-foreground font-medium">{t("colPriority")}</label>
-                <div className="mt-1">
-                  <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
-                </div>
+                <button
+                  onClick={() => setPriorityOpen(!priorityOpen)}
+                  className="mt-1 block cursor-pointer"
+                >
+                  <Badge className={cn(priorityStyle.className, "hover:opacity-80 transition-opacity")}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
+                </button>
+                {priorityOpen && (
+                  <div className="absolute z-50 mt-1 bg-popover border rounded-md shadow-lg overflow-hidden">
+                    {(["urgent", "high", "medium", "low"] as const).map(p => (
+                      <button
+                        key={p}
+                        onClick={() => { handleInlineUpdate("priority", p); setPriorityOpen(false) }}
+                        className={cn("w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2", task.priority === p && "bg-primary/5 font-medium")}
+                      >
+                        <Badge className={PRIORITY_STYLES[p]?.className}>{PRIORITY_LABELS[p]}</Badge>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

@@ -27,6 +27,7 @@ interface Task {
   assignee?: { id: string; name: string; avatar?: string | null } | null
   creator?: { id: string; name: string } | null
   relatedType: string | null
+  relatedName?: string | null
   completedAt: string | null
   createdAt: string
   _count?: { checklist: number; comments: number }
@@ -208,7 +209,7 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
 }
 
 // ─── Calendar Grid Component ────────────────────────────────────
-function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
+function TaskCalendar({ tasks, orgId, onTaskClick }: { tasks: Task[]; orgId?: string; onTaskClick?: (id: string) => void }) {
   const t = useTranslations("tasks")
   const now = new Date()
   const [calMonth, setCalMonth] = useState(now.getMonth())
@@ -276,9 +277,14 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
         <Button variant="outline" size="sm" onClick={prevMonth}>
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h3 className="font-semibold text-lg">
-          {monthNames[calMonth]} {calYear}
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="font-semibold text-lg">
+            {monthNames[calMonth]} {calYear}
+          </h3>
+          <Button variant="outline" size="sm" onClick={() => { setCalMonth(now.getMonth()); setCalYear(now.getFullYear()) }}>
+            {t("today") || "Today"}
+          </Button>
+        </div>
         <Button variant="outline" size="sm" onClick={nextMonth}>
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -311,8 +317,9 @@ function TaskCalendar({ tasks, orgId }: { tasks: Task[]; orgId?: string }) {
                   {(tasksByDay[day] || []).slice(0, 3).map(task => (
                     <div
                       key={task.id}
+                      onClick={() => onTaskClick?.(task.id)}
                       className={cn(
-                        "text-[10px] leading-tight px-1 py-0.5 rounded truncate cursor-default",
+                        "text-[10px] leading-tight px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity",
                         task.status === "completed"
                           ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                           : task.priority === "high" || task.priority === "urgent"
@@ -444,8 +451,8 @@ export default function TasksPage() {
     setFormOpen(true)
   }
 
-  function handleAdd() {
-    setEditData(undefined)
+  function handleAdd(presetStatus?: string) {
+    setEditData(presetStatus ? { status: presetStatus } : undefined)
     setFormOpen(true)
   }
 
@@ -603,8 +610,8 @@ export default function TasksPage() {
       label: t("colCategory"),
       hint: t("hintColRelated"),
       render: (item: any) => (
-        <span className="text-base" title={item.relatedType || t("generalCategory")}>
-          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedType || t("generalCategory")}</span>
+        <span className="text-base" title={item.relatedName || item.relatedType || t("generalCategory")}>
+          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedName ? `${item.relatedName}` : (item.relatedType || t("generalCategory"))}</span>
         </span>
       ),
     },
@@ -797,18 +804,67 @@ export default function TasksPage() {
           searchPlaceholder={t("searchPlaceholder")}
           searchKey="title"
           onRowClick={(item: any) => router.push(`/tasks/${item.id}`)}
+          rowClassName={(item: any) =>
+            isOverdue(item.dueDate) && item.status !== "completed" && item.status !== "cancelled"
+              ? "bg-red-50/50 dark:bg-red-950/20 border-l-2 border-l-red-400"
+              : ""
+          }
         />
       )}
 
       {view === "kanban" && (
+        <KanbanView
+          filtered={filtered}
+          statusLabels={statusLabels}
+          priorityLabels={priorityLabels}
+          priorityColors={priorityColors}
+          dragTask={dragTask}
+          setDragTask={setDragTask}
+          handleKanbanDrop={handleKanbanDrop}
+          toggleComplete={toggleComplete}
+          handleAdd={handleAdd}
+          router={router}
+          formatDate={formatDate}
+          isOverdue={isOverdue}
+        />
+      )}
+
+      {view === "calendar" && (
+        <TaskCalendar tasks={tasks} orgId={orgId ? String(orgId) : undefined} onTaskClick={(id) => router.push(`/tasks/${id}`)} />
+      )}
+
+      <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} initialData={editData} orgId={orgId} />
+      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteTask")} itemName={deleteItem?.title} />
+      <CalendarIntegrationModal open={calModalOpen} onClose={() => setCalModalOpen(false)} />
+    </div>
+  )
+}
+
+// ─── Kanban View with collapse ─────────────────────────────────
+function KanbanView({ filtered, statusLabels, priorityLabels, priorityColors, dragTask, setDragTask, handleKanbanDrop, toggleComplete, handleAdd, router, formatDate, isOverdue }: any) {
+  const t = useTranslations("tasks")
+  const [expandedCols, setExpandedCols] = useState<Record<string, boolean>>({})
+  const COLLAPSE_LIMIT = 10
+
+  return (
         <MotionList className="flex gap-4 overflow-x-auto pb-4" staggerDelay={0.08}>
           {(["pending", "in_progress", "completed"] as const).map((status) => {
-            const columnTasks = filtered.filter(t => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status)
+            const columnTasks = filtered.filter((t: any) => status === "pending" ? (t.status === "pending" || t.status === "todo") : t.status === status)
+            const isExpanded = expandedCols[status] || false
+            const visibleTasks = columnTasks.length > COLLAPSE_LIMIT && !isExpanded ? columnTasks.slice(0, COLLAPSE_LIMIT) : columnTasks
+            const hiddenCount = columnTasks.length - COLLAPSE_LIMIT
             return (
               <MotionItem key={status} className="min-w-[300px] flex-shrink-0">
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-sm font-semibold">{statusLabels[status]}</span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{columnTasks.length}</span>
+                  <button
+                    onClick={() => handleAdd(status)}
+                    className="ml-auto p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    title={t("newTask")}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
                 </div>
                 <div
                   className={cn(
@@ -822,11 +878,11 @@ export default function TasksPage() {
                     if (taskId) handleKanbanDrop(taskId, status)
                   }}
                 >
-                  {columnTasks.map(task => (
+                  {visibleTasks.map((task: any) => (
                     <div
                       key={task.id}
                       draggable
-                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", task.id); setDragTask(task.id) }}
+                      onDragStart={(e: any) => { e.dataTransfer.setData("text/plain", task.id); setDragTask(task.id) }}
                       onDragEnd={() => setDragTask(null)}
                       className={cn(
                         "rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md hover:-translate-y-0.5 transition-[shadow,transform] duration-200",
@@ -836,7 +892,7 @@ export default function TasksPage() {
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <button
-                          onClick={(e) => { e.stopPropagation(); toggleComplete(task) }}
+                          onClick={(e: any) => { e.stopPropagation(); toggleComplete(task) }}
                           className={cn(
                             "h-4 w-4 rounded border-2 flex items-center justify-center flex-shrink-0",
                             task.status === "completed" ? "border-green-500 bg-green-500" : "border-muted-foreground/30 hover:border-primary"
@@ -866,20 +922,26 @@ export default function TasksPage() {
                       </div>
                     </div>
                   ))}
+                  {columnTasks.length > COLLAPSE_LIMIT && !isExpanded && (
+                    <button
+                      onClick={() => setExpandedCols(prev => ({ ...prev, [status]: true }))}
+                      className="w-full text-center py-2 text-xs text-primary hover:underline"
+                    >
+                      Show {hiddenCount} more...
+                    </button>
+                  )}
+                  {isExpanded && columnTasks.length > COLLAPSE_LIMIT && (
+                    <button
+                      onClick={() => setExpandedCols(prev => ({ ...prev, [status]: false }))}
+                      className="w-full text-center py-2 text-xs text-muted-foreground hover:underline"
+                    >
+                      Show less
+                    </button>
+                  )}
                 </div>
               </MotionItem>
             )
           })}
         </MotionList>
-      )}
-
-      {view === "calendar" && (
-        <TaskCalendar tasks={tasks} orgId={orgId ? String(orgId) : undefined} />
-      )}
-
-      <TaskForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchTasks} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteTask")} itemName={deleteItem?.title} />
-      <CalendarIntegrationModal open={calModalOpen} onClose={() => setCalModalOpen(false)} />
-    </div>
   )
 }

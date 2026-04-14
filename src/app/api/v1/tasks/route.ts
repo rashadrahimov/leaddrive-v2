@@ -56,8 +56,24 @@ export async function GET(req: NextRequest) {
       prisma.task.count({ where }),
     ])
 
+    // Resolve related entity names
+    const tasksWithNames = await Promise.all(tasks.map(async (t: any) => {
+      if (!t.relatedType || !t.relatedId) return t
+      try {
+        let relatedName = ""
+        switch (t.relatedType) {
+          case "company": { const e = await prisma.company.findUnique({ where: { id: t.relatedId }, select: { name: true } }); relatedName = e?.name || ""; break }
+          case "contact": { const e = await prisma.contact.findUnique({ where: { id: t.relatedId }, select: { fullName: true, name: true } }); relatedName = e?.fullName || e?.name || ""; break }
+          case "deal": { const e = await prisma.deal.findUnique({ where: { id: t.relatedId }, select: { title: true } }); relatedName = e?.title || ""; break }
+          case "lead": { const e = await prisma.lead.findUnique({ where: { id: t.relatedId }, select: { contactName: true, companyName: true } }); relatedName = e?.contactName || e?.companyName || ""; break }
+          case "ticket": { const e = await prisma.ticket.findUnique({ where: { id: t.relatedId }, select: { subject: true } }); relatedName = e?.subject || ""; break }
+        }
+        return { ...t, relatedName }
+      } catch { return t }
+    }))
+
     const fieldPerms = await getFieldPermissions(orgId, role, "task")
-    const filteredTasks = tasks.map((t: any) => filterEntityFields(t, fieldPerms, role))
+    const filteredTasks = tasksWithNames.map((t: any) => filterEntityFields(t, fieldPerms, role))
 
     return NextResponse.json({ success: true, data: { tasks: filteredTasks, total, page, limit } })
   } catch (e) {
