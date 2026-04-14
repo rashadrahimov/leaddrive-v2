@@ -45,11 +45,11 @@ export default function FinancePage() {
           ))}
         </TabsList>
 
-        <TabsContent value="overview">
+        <TabsContent value="overview" data-tour-id="finance-overview">
           <FinanceDashboard />
         </TabsContent>
 
-        <TabsContent value="receivables">
+        <TabsContent value="receivables" data-tour-id="finance-ar">
           <ARDashboard />
         </TabsContent>
 

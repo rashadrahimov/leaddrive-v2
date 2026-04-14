@@ -291,16 +291,17 @@ export default function DealsPage() {
             </button>
           </div>
           {pipelines.length > 1 && (
-            <Select
-              data-tour-id="deals-pipeline-select"
-              value={selectedPipelineId}
-              onChange={e => setSelectedPipelineId(e.target.value)}
-              className="w-[180px]"
-            >
-              {pipelines.map(p => (
-                <option key={p.id} value={p.id}>{p.name}{p.isDefault ? " ★" : ""}</option>
-              ))}
-            </Select>
+            <div data-tour-id="deals-pipeline-select">
+              <Select
+                value={selectedPipelineId}
+                onChange={e => setSelectedPipelineId(e.target.value)}
+                className="w-[180px]"
+              >
+                {pipelines.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}{p.isDefault ? " ★" : ""}</option>
+                ))}
+              </Select>
+            </div>
           )}
           {(tab === "kanban" || tab === "list") && (
             <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">

@@ -395,7 +395,7 @@ export default function PricingPage() {
           <h1 data-tour-id="pricing-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{tp("title")} <TourReplayButton tourId="pricing" /></h1>
           <PageDescription text={tp("pageDescription")} />
         </div>
-        <div className="flex gap-2">
+        <div data-tour-id="pricing-tabs" className="flex gap-2">
           <Button
             variant={activeTab === "model" ? "default" : "outline"}
             onClick={() => setActiveTab("model")}

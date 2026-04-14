@@ -4124,7 +4124,7 @@ export default function BudgetingPage() {
               ))}
             </select>
           ) : null}
-          <Button size="sm" onClick={() => setShowCreate(true)}>
+          <Button data-tour-id="budgeting-new" size="sm" onClick={() => setShowCreate(true)}>
             <Plus className="h-4 w-4 mr-1" /> {t("createPlan")}
           </Button>
         </div>
@@ -4154,7 +4154,7 @@ export default function BudgetingPage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="mb-4 overflow-x-auto scrollbar-thin">
-              <TabsList className="inline-flex w-max">
+              <TabsList data-tour-id="budgeting-tabs" className="inline-flex w-max">
                 <TabsTrigger value="workspace" className="gap-1 text-xs px-2.5">{t("tabWorkspace")}</TabsTrigger>
                 <TabsTrigger value="pl" className="gap-1 text-xs px-2.5">{t("tabPL")}</TabsTrigger>
                 <TabsTrigger value="forecast" className="gap-1 text-xs px-2.5">{t("tabForecast")}</TabsTrigger>

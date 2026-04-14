@@ -2770,7 +2770,7 @@
       "pipelineTitle": "Multiple Funnels",
       "pipelineDesc": "Use separate pipelines for different sales processes (outbound, inbound, partnerships). Each has its own stages and probabilities.",
       "summaryTitle": "Real vs Optimistic",
-      "summaryDesc": "\"Weighted\" is your realistic forecast — each deal multiplied by win probability. If weighted is much lower than total, too many low-probability deals.",
+      "summaryDesc": "\"Weighted\" = each deal × win probability. Much lower than total? Too many weak deals in your pipeline.",
       "cardTitle": "Deep Dive",
       "cardDesc": "Click to open: AI will show win probability, suggest next actions, and you can create tasks without leaving the page.",
       "newTitle": "Start Tracking",
@@ -2794,7 +2794,7 @@
       "listTitle": "Priority Dashboard",
       "listDesc": "Focus on red SLA badges first — those are breached. Then yellow. AI auto-assigns new tickets to the best available agent.",
       "slaTitle": "Don't Let It Go Red",
-      "slaDesc": "Yellow = approaching deadline. Red = breached, auto-escalates to management. AI sends auto-acknowledgment at 50% SLA time if nobody responds.",
+      "slaDesc": "Yellow = approaching. Red = breached, escalates to management. AI auto-responds at 50% SLA if nobody has.",
       "kanbanTitle": "Your Workflow",
       "kanbanDesc": "Kanban groups tickets by status. Too many in 'waiting'? Follow up with customers. Drag to change status.",
       "newTitle": "AI Helps You Start",
@@ -2804,7 +2804,7 @@
       "headerTitle": "Time is Ticking",
       "headerDesc": "SLA timer counts down to your deadline. If it goes red, the ticket auto-escalates to management. Respond now to reset the clock.",
       "aiDraftTitle": "Don't Start from Scratch",
-      "aiDraftDesc": "AI writes a reply using your knowledge base AND similar tickets your team solved. Edit the draft, add personal touch, then send. Saves 5-10 min per ticket.",
+      "aiDraftDesc": "AI drafts a reply from your KB + similar resolved tickets. Edit, personalize, send. Saves 5-10 min per ticket.",
       "aiSummaryTitle": "Catch Up in Seconds",
       "aiSummaryDesc": "Long conversation? Click for a 2-sentence summary instead of reading 20 messages. Perfect when picking up someone else's ticket.",
       "aiStepsTitle": "Resolution Roadmap",
@@ -2812,7 +2812,7 @@
       "commentsTitle": "Public vs Private",
       "commentsDesc": "IMPORTANT: Public comments go to the customer! Use Internal for team discussions. Wrong choice = customer sees internal notes.",
       "macrosTitle": "One Click, Five Actions",
-      "macrosDesc": "Set up macros for repetitive tasks. Example: 'Escalate to L2' = change priority + reassign + add internal note. Configure in Settings > Macros."
+      "macrosDesc": "'Escalate L2' = priority + reassign + note in one click. Set up yours in Settings > Macros."
     },
     "leads": {
       "listTitle": "Focus on What Converts",
@@ -2880,11 +2880,19 @@
     },
     "finance": {
       "tabsTitle": "Your Financial Hub",
-      "tabsDesc": "Overview for KPIs, Receivables to chase payments, Payables to track debts, Funds for bank balances, Payments for approval workflows."
+      "tabsDesc": "Five modules in one place. Start with Overview for the big picture, then drill into specifics.",
+      "overviewTitle": "The Big Picture",
+      "overviewDesc": "KPIs, cash flow trend, top debtors. If cash flow is negative — check Receivables tab for overdue invoices.",
+      "arTitle": "Chase Your Money",
+      "arDesc": "Aging report: current, 30d, 60d, 90+ days overdue. Focus on 90+ first — those are at risk of write-off."
     },
     "budgeting": {
       "headerTitle": "Plan vs Reality",
-      "headerDesc": "Create budget plans, then track actual spending. AI highlights deviations and suggests where to cut. Click 'AI Narrative' on any variance chart."
+      "headerDesc": "Budget plans track planned vs actual spending. AI highlights deviations automatically.",
+      "newTitle": "Create a Plan",
+      "newDesc": "Start with annual or quarterly. Add sections (salaries, marketing, infra) and line items. Template button pre-fills common categories.",
+      "tabsTitle": "Deep Analysis",
+      "tabsDesc": "Workspace for editing, P&L for profit/loss view, Forecast for projections, Comparison to benchmark periods."
     },
     "profitability": {
       "kpiTitle": "Are You Making Money?",
@@ -2896,7 +2904,9 @@
     },
     "pricing": {
       "headerTitle": "Price for Profit",
-      "headerDesc": "Set rates based on cost model + desired margin. Link pricing profiles to deals for accurate quoting. Adjust sliders to simulate scenarios."
+      "headerDesc": "Rates based on your cost model + desired margin. Sliders simulate 'what if' scenarios.",
+      "tabsTitle": "Three Views",
+      "tabsDesc": "Model — current pricing logic. Edit — adjust rates per service. Sales — see how pricing affects deal profitability."
     }
   },
   "dashboardSettings": {

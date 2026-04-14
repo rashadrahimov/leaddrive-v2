@@ -134,12 +134,16 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
   finance: {
     steps: [
       { targetId: "finance-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
+      { targetId: "finance-overview", titleKey: "overviewTitle", descKey: "overviewDesc" },
+      { targetId: "finance-ar", titleKey: "arTitle", descKey: "arDesc" },
     ],
   },
 
   budgeting: {
     steps: [
       { targetId: "budgeting-header", titleKey: "headerTitle", descKey: "headerDesc" },
+      { targetId: "budgeting-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "budgeting-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
     ],
   },
 
@@ -154,6 +158,7 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
   pricing: {
     steps: [
       { targetId: "pricing-header", titleKey: "headerTitle", descKey: "headerDesc" },
+      { targetId: "pricing-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
     ],
   },
 

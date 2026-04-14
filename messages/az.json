@@ -2875,11 +2875,19 @@
     },
     "finance": {
       "tabsTitle": "Maliyyə mərkəziniz",
-      "tabsDesc": "İcmal KPI üçün, Debitor ödəniş izləmək üçün, Kreditor borcları izləmək üçün, Fondlar bank balansları, Ödənişlər təsdiq iş axını üçün."
+      "tabsDesc": "Beş modul bir yerdə. Ümumi mənzərə üçün İcmaldan başlayın, sonra detalları araşdırın.",
+      "overviewTitle": "Ümumi mənzərə",
+      "overviewDesc": "KPI, pul axını trendi, ən böyük borclular. Pul axını mənfi? Debitor tabında vaxtı keçmiş fakturaları yoxlayın.",
+      "arTitle": "Pulunuzu izləyin",
+      "arDesc": "Yaşlanma: cari, 30g, 60g, 90+ gün. Əvvəlcə 90+-a fokuslanın — silinmə riski altındadır."
     },
     "budgeting": {
       "headerTitle": "Plan vs reallıq",
-      "headerDesc": "Büdcə planı yaradın, faktiki xərcləri izləyin. AI sapmaları vurğulayır və harada kəsməyi təklif edir. Variance qrafikində 'AI Narrative' klikləyin."
+      "headerDesc": "Büdcə planları: plan vs fakt. AI sapmaları avtomatik vurğulayır.",
+      "newTitle": "Plan yaradın",
+      "newDesc": "İllik və ya rüblük. Bölmələr (maaşlar, marketinq, infra) və sətirlər əlavə edin. Şablon düyməsi standart kateqoriyaları doldurur.",
+      "tabsTitle": "Dərin analiz",
+      "tabsDesc": "Workspace redaktə üçün, P&L mənfəət/zərər, Proqnoz gələcək üçün, Müqayisə dövrlər arasında."
     },
     "profitability": {
       "kpiTitle": "Pul qazanırsınız?",
@@ -2891,7 +2899,9 @@
     },
     "pricing": {
       "headerTitle": "Mənfəət üçün qiymət",
-      "headerDesc": "Maya dəyəri + istənilən marja əsasında tariflər təyin edin. Dəqiq qiymət təklifi üçün profilləri sövdələrə bağlayın. Ssenariləri simulyasiya etmək üçün sürgüləri hərəkət etdirin."
+      "headerDesc": "Tariflər = maya dəyəri + marja. Sürgülər 'nə olardı' ssenariləri simulyasiya edir.",
+      "tabsTitle": "Üç görünüş",
+      "tabsDesc": "Model — cari qiymət məntiqi. Redaktə — xidmət üzrə tariflər. Satış — qiymətlərin sövdə rentabelliyinə təsiri."
     }
   },
   "dashboardSettings": {
