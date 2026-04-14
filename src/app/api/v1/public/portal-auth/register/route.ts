@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
   const genericResponse = { success: true, message: "Если указанный email связан с аккаунтом, на него будет отправлена ссылка для подтверждения." }
 
   // Resolve organization from slug or explicit ID
+  // Priority: body.organizationId > body.slug > x-tenant-slug header > email lookup
   let orgId: string | null = null
   if (organizationId) {
     const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { id: true } })
@@ -26,6 +27,19 @@ export async function POST(req: NextRequest) {
   } else if (slug) {
     const org = await prisma.organization.findFirst({ where: { slug }, select: { id: true } })
     orgId = org?.id ?? null
+  } else {
+    const tenantSlug = req.headers.get("x-tenant-slug")
+    if (tenantSlug) {
+      const org = await prisma.organization.findFirst({ where: { slug: tenantSlug }, select: { id: true } })
+      orgId = org?.id ?? null
+    }
+    if (!orgId) {
+      const contact = await prisma.contact.findFirst({
+        where: { email: email.toLowerCase().trim(), portalAccessEnabled: true },
+        select: { organizationId: true },
+      })
+      orgId = contact?.organizationId ?? null
+    }
   }
 
   // If no org resolved, return generic response (prevents org enumeration)

@@ -38,8 +38,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   })
   if (!task) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
+  // Resolve related entity name
+  let relatedName = ""
+  if (task.relatedType && task.relatedId) {
+    try {
+      switch (task.relatedType) {
+        case "company": { const e = await prisma.company.findUnique({ where: { id: task.relatedId }, select: { name: true } }); relatedName = e?.name || ""; break }
+        case "contact": { const e = await prisma.contact.findUnique({ where: { id: task.relatedId }, select: { fullName: true, name: true } }); relatedName = (e as any)?.fullName || e?.name || ""; break }
+        case "deal": { const e = await prisma.deal.findUnique({ where: { id: task.relatedId }, select: { title: true } }); relatedName = e?.title || ""; break }
+        case "lead": { const e = await prisma.lead.findUnique({ where: { id: task.relatedId }, select: { contactName: true, companyName: true } }); relatedName = e?.contactName || e?.companyName || ""; break }
+        case "ticket": { const e = await prisma.ticket.findUnique({ where: { id: task.relatedId }, select: { subject: true } }); relatedName = e?.subject || ""; break }
+      }
+    } catch {}
+  }
+
   const fieldPerms = await getFieldPermissions(orgId, role, "task")
-  const filteredTask = filterEntityFields(task, fieldPerms, role)
+  const filteredTask = filterEntityFields({ ...task, relatedName }, fieldPerms, role)
   return NextResponse.json({ success: true, data: filteredTask })
 }
 

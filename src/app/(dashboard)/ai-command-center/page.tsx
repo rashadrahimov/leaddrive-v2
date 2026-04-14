@@ -119,9 +119,9 @@ interface Guardrail {
 type TabId = "dashboard" | "constructor"
 
 function getModelLabel(model: string): { name: string; speedKey: string; color: string } {
-  if (model.includes("opus")) return { name: "Claude Opus 4.6", speedKey: "modelPowerful", color: "text-purple-600" }
-  if (model.includes("sonnet")) return { name: "Claude Sonnet 4.6", speedKey: "modelBalanced", color: "text-blue-600" }
-  return { name: "Claude Haiku 4.5", speedKey: "modelFast", color: "text-emerald-600" }
+  if (model.includes("opus")) return { name: "Da Vinci Ultra", speedKey: "modelPowerful", color: "text-purple-600" }
+  if (model.includes("sonnet")) return { name: "Da Vinci Pro", speedKey: "modelBalanced", color: "text-blue-600" }
+  return { name: "Da Vinci Lite", speedKey: "modelFast", color: "text-emerald-600" }
 }
 
 const TOOL_COLORS: Record<string, string> = {

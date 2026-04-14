@@ -211,6 +211,7 @@ function CalendarIntegrationModal({ open, onClose }: { open: boolean; onClose: (
 // ─── Calendar Grid Component ────────────────────────────────────
 function TaskCalendar({ tasks, orgId, onTaskClick }: { tasks: Task[]; orgId?: string; onTaskClick?: (id: string) => void }) {
   const t = useTranslations("tasks")
+  const tc = useTranslations("common")
   const now = new Date()
   const [calMonth, setCalMonth] = useState(now.getMonth())
   const [calYear, setCalYear] = useState(now.getFullYear())
@@ -282,7 +283,7 @@ function TaskCalendar({ tasks, orgId, onTaskClick }: { tasks: Task[]; orgId?: st
             {monthNames[calMonth]} {calYear}
           </h3>
           <Button variant="outline" size="sm" onClick={() => { setCalMonth(now.getMonth()); setCalYear(now.getFullYear()) }}>
-            {t("today") || "Today"}
+            {tc("today") || "Today"}
           </Button>
         </div>
         <Button variant="outline" size="sm" onClick={nextMonth}>
@@ -610,8 +611,8 @@ export default function TasksPage() {
       label: t("colCategory"),
       hint: t("hintColRelated"),
       render: (item: any) => (
-        <span className="text-base" title={item.relatedName || item.relatedType || t("generalCategory")}>
-          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedName ? `${item.relatedName}` : (item.relatedType || t("generalCategory"))}</span>
+        <span className="text-base" title={item.relatedName ? `${tc(item.relatedType || "")}: ${item.relatedName}` : (item.relatedType ? tc(item.relatedType) : t("generalCategory"))}>
+          {categoryIcons[item.relatedType || ""] || "📋"} <span className="text-xs text-muted-foreground">{item.relatedName ? `${tc(item.relatedType || "")}: ${item.relatedName}` : (item.relatedType ? tc(item.relatedType) : t("generalCategory"))}</span>
         </span>
       ),
     },
@@ -806,7 +807,7 @@ export default function TasksPage() {
           onRowClick={(item: any) => router.push(`/tasks/${item.id}`)}
           rowClassName={(item: any) =>
             isOverdue(item.dueDate) && item.status !== "completed" && item.status !== "cancelled"
-              ? "bg-red-50/50 dark:bg-red-950/20 border-l-2 border-l-red-400"
+              ? "!bg-red-50 dark:!bg-red-950/30"
               : ""
           }
         />
@@ -927,7 +928,7 @@ function KanbanView({ filtered, statusLabels, priorityLabels, priorityColors, dr
                       onClick={() => setExpandedCols(prev => ({ ...prev, [status]: true }))}
                       className="w-full text-center py-2 text-xs text-primary hover:underline"
                     >
-                      Show {hiddenCount} more...
+                      {t("showMore", { count: hiddenCount }) || `Show ${hiddenCount} more...`}
                     </button>
                   )}
                   {isExpanded && columnTasks.length > COLLAPSE_LIMIT && (
@@ -935,7 +936,7 @@ function KanbanView({ filtered, statusLabels, priorityLabels, priorityColors, dr
                       onClick={() => setExpandedCols(prev => ({ ...prev, [status]: false }))}
                       className="w-full text-center py-2 text-xs text-muted-foreground hover:underline"
                     >
-                      Show less
+                      {t("showLess") || "Show less"}
                     </button>
                   )}
                 </div>

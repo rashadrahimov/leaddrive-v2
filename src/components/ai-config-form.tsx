@@ -61,7 +61,7 @@ interface AiConfigFormProps {
 const MODEL_OPTIONS = [
   {
     id: "claude-haiku-4-5-20251001",
-    name: "Claude Haiku 4.5",
+    name: "Da Vinci Lite",
     descKey: "modelHaikuDesc",
     price: "$0.8 / $4 per 1M tokens",
     icon: Zap,
@@ -70,7 +70,7 @@ const MODEL_OPTIONS = [
   },
   {
     id: "claude-sonnet-4-6-20250514",
-    name: "Claude Sonnet 4.6",
+    name: "Da Vinci Pro",
     descKey: "modelSonnetDesc",
     price: "$3 / $15 per 1M tokens",
     icon: BrainCircuit,
@@ -79,7 +79,7 @@ const MODEL_OPTIONS = [
   },
   {
     id: "claude-opus-4-6-20250514",
-    name: "Claude Opus 4.6",
+    name: "Da Vinci Ultra",
     descKey: "modelOpusDesc",
     price: "$15 / $75 per 1M tokens",
     icon: Sparkles,

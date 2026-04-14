@@ -45,6 +45,7 @@ interface TaskData {
   creator?: { id: string; name: string } | null
   relatedType: string | null
   relatedId: string | null
+  relatedName?: string | null
   completedAt: string | null
   createdBy: string | null
   createdAt: string
@@ -453,7 +454,7 @@ export default function TaskDetailPage() {
           <div className="flex items-center gap-2 mt-1">
             <Badge className={statusStyle.className}>{STATUS_LABELS[task.status] || task.status}</Badge>
             <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
-            {task.relatedType && <Badge variant="outline" className="text-xs">{task.relatedType}</Badge>}
+            {task.relatedType && <Badge variant="outline" className="text-xs">{tc(task.relatedType)}</Badge>}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -679,7 +680,7 @@ export default function TaskDetailPage() {
                       className="text-sm text-primary hover:underline inline-flex items-center gap-1"
                     >
                       <ExternalLink className="h-3 w-3" />
-                      {task.relatedType} / {task.relatedId.slice(0, 8)}...
+                      {task.relatedName ? `${tc(task.relatedType || "")} — ${task.relatedName}` : `${tc(task.relatedType || "")} — ${task.relatedId.slice(0, 8)}...`}
                     </Link>
                   </div>
                 </div>

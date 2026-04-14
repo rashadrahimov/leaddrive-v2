@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
   if (!password) return NextResponse.json({ error: "Пароль обязателен" }, { status: 400 })
 
   // Resolve organization from slug or explicit ID
+  // Priority: body.organizationId > body.slug > x-tenant-slug header (set by middleware for subdomain routing)
   let orgId: string | null = null
   if (organizationId) {
     const org = await prisma.organization.findUnique({ where: { id: organizationId }, select: { id: true } })
@@ -23,6 +24,21 @@ export async function POST(req: NextRequest) {
   } else if (slug) {
     const org = await prisma.organization.findFirst({ where: { slug }, select: { id: true } })
     orgId = org?.id ?? null
+  } else {
+    // Fallback: check x-tenant-slug header injected by middleware (subdomain routing)
+    const tenantSlug = req.headers.get("x-tenant-slug")
+    if (tenantSlug) {
+      const org = await prisma.organization.findFirst({ where: { slug: tenantSlug }, select: { id: true } })
+      orgId = org?.id ?? null
+    }
+    // Final fallback: if single org in system, use it; otherwise resolve by contact email
+    if (!orgId) {
+      const contact = await prisma.contact.findFirst({
+        where: { email: email.toLowerCase().trim(), portalAccessEnabled: true },
+        select: { organizationId: true },
+      })
+      orgId = contact?.organizationId ?? null
+    }
   }
 
   if (!orgId) {
