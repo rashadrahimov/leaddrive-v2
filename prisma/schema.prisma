@@ -1267,6 +1267,7 @@ model AiAlert {
   createdAt      DateTime @default(now())
 
   @@index([organizationId])
+  @@index([organizationId, type, createdAt])
   @@map("ai_alerts")
 }
 

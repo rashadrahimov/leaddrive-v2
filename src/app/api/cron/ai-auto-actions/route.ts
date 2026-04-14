@@ -479,8 +479,27 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
         }
       }
 
-      // Delete executed action (no longer needed)
+      // Delete executed action and notify
       await prisma.aiShadowAction.delete({ where: { id: action.id } })
+
+      // Notify admins/managers that the approved action was executed
+      const recipients = await prisma.user.findMany({
+        where: { organizationId: action.organizationId, role: { in: ["admin", "manager"] }, isActive: true },
+        select: { id: true },
+        take: 3,
+      })
+      for (const user of recipients) {
+        await createNotification({
+          organizationId: action.organizationId,
+          userId: user.id,
+          type: "success",
+          title: `AI action executed: ${action.actionType}`,
+          message: `Approved shadow action (${action.featureName}) for ${action.entityType} has been executed`,
+          entityType: action.entityType,
+          entityId: action.entityId,
+        })
+      }
+
       executed++
     } catch (err) {
       console.error(`Failed to execute shadow action ${action.id}:`, err)

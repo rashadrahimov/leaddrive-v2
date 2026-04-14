@@ -25,18 +25,9 @@ export async function POST(req: NextRequest) {
     })
 
     for (const org of orgs) {
-      // Feature flag check — defaults to enabled (scoring is non-destructive)
+      // Skip if org has features configured but ai_lead_scoring is not among them
       const enabled = await isAiFeatureEnabled(org.id, "ai_lead_scoring")
-      // If feature not explicitly in the list, still run (it's a safe operation)
-      // Only skip if explicitly disabled by NOT being in features when org has features set
-      const orgData = await prisma.organization.findUnique({
-        where: { id: org.id },
-        select: { features: true },
-      })
-      const features = orgData?.features
-      if (Array.isArray(features) && features.length > 0 && !features.includes("ai_lead_scoring")) {
-        continue
-      }
+      if (!enabled) continue
 
       const updated = await recalculateOrgLeadScores(org.id)
       totalUpdated += updated

@@ -34,13 +34,13 @@ export async function POST(req: NextRequest) {
       const alerts = await detectAnomalies(org.id, now)
 
       for (const alert of alerts) {
-        // Deduplicate: don't create same alert type for same entity within 24h
+        // Deduplicate: don't create same alert type+message within 24h (uses indexed columns)
         const existing = await prisma.aiAlert.findFirst({
           where: {
             organizationId: org.id,
             type: alert.type,
+            message: alert.message,
             createdAt: { gte: new Date(now.getTime() - 24 * 3600000) },
-            metadata: { path: ["entityId"], equals: alert.metadata?.entityId || "" },
           },
         })
         if (existing) continue
