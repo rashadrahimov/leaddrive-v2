@@ -1,0 +1,386 @@
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { createNotification } from "@/lib/notifications"
+import { isAiFeatureEnabled, checkAiBudget } from "@/lib/ai/budget"
+
+/**
+ * AI Auto-Actions Cron Endpoint
+ * Called by external cron (e.g. every 10 minutes)
+ * Runs all Level 1 automations sequentially.
+ * Each action checks its own feature flag.
+ * New automations start in shadow mode (write to AiShadowAction, don't execute).
+ */
+export async function POST(req: NextRequest) {
+  const cronSecret =
+    req.headers.get("x-cron-secret") ||
+    req.headers.get("authorization")?.replace("Bearer ", "")
+  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  try {
+    const now = new Date()
+    const results: Record<string, number> = {
+      autoAcknowledge: 0,
+      autoFollowUp: 0,
+      autoPaymentReminder: 0,
+      shadowActions: 0,
+    }
+
+    const orgs = await prisma.organization.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    })
+
+    for (const org of orgs) {
+      const budget = await checkAiBudget(org.id)
+      if (!budget.allowed) continue
+
+      // Auto-acknowledge tickets (SLA first response)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_acknowledge")) {
+        results.autoAcknowledge += await runAutoAcknowledge(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_acknowledge_shadow")) {
+        results.shadowActions += await runAutoAcknowledge(org.id, now, true)
+      }
+
+      // Auto follow-up tasks for stale deals
+      if (await isAiFeatureEnabled(org.id, "ai_auto_followup")) {
+        results.autoFollowUp += await runAutoFollowUp(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_followup_shadow")) {
+        results.shadowActions += await runAutoFollowUp(org.id, now, true)
+      }
+
+      // Auto payment reminder enrollment
+      if (await isAiFeatureEnabled(org.id, "ai_auto_payment_reminder")) {
+        results.autoPaymentReminder += await runAutoPaymentReminder(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_payment_reminder_shadow")) {
+        results.shadowActions += await runAutoPaymentReminder(org.id, now, true)
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { ...results, timestamp: now.toISOString() },
+    })
+  } catch (e) {
+    console.error("AI Auto-Actions cron error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
+// ── Auto-Acknowledge: template response for tickets approaching SLA first response ──
+
+async function runAutoAcknowledge(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  let count = 0
+
+  // Find tickets without first response where >50% of SLA time has elapsed
+  const tickets = await prisma.ticket.findMany({
+    where: {
+      organizationId: orgId,
+      status: { in: ["new"] },
+      firstResponseAt: null,
+      slaFirstResponseDueAt: { not: null },
+    },
+    select: {
+      id: true,
+      ticketNumber: true,
+      subject: true,
+      slaFirstResponseDueAt: true,
+      createdAt: true,
+      contactId: true,
+    },
+  })
+
+  for (const ticket of tickets) {
+    if (!ticket.slaFirstResponseDueAt) continue
+
+    const totalSlaMs = ticket.slaFirstResponseDueAt.getTime() - ticket.createdAt.getTime()
+    const elapsedMs = now.getTime() - ticket.createdAt.getTime()
+    const percentElapsed = totalSlaMs > 0 ? elapsedMs / totalSlaMs : 0
+
+    // Only auto-acknowledge when >50% of SLA time has passed
+    if (percentElapsed < 0.5) continue
+
+    // Calculate remaining hours for the template
+    const hoursRemaining = Math.max(0, Math.round((ticket.slaFirstResponseDueAt.getTime() - now.getTime()) / 3600000))
+
+    const templateMessage = `We have received your request ${ticket.ticketNumber}. A specialist will respond within ${hoursRemaining}h. Thank you for your patience.`
+
+    if (shadow) {
+      await prisma.aiShadowAction.create({
+        data: {
+          organizationId: orgId,
+          featureName: "ai_auto_acknowledge",
+          entityType: "ticket",
+          entityId: ticket.id,
+          actionType: "send_template",
+          payload: {
+            ticketNumber: ticket.ticketNumber,
+            message: templateMessage,
+            hoursRemaining,
+            percentElapsed: Math.round(percentElapsed * 100),
+          },
+        },
+      })
+    } else {
+      // Create a comment on the ticket (public)
+      await prisma.comment.create({
+        data: {
+          organizationId: orgId,
+          ticketId: ticket.id,
+          content: templateMessage,
+          isInternal: false,
+          authorName: "AI Assistant",
+        },
+      })
+
+      // Mark first response
+      await prisma.ticket.update({
+        where: { id: ticket.id },
+        data: {
+          firstResponseAt: now,
+          status: "in_progress",
+        },
+      })
+
+      // Notify assigned agent
+      const updatedTicket = await prisma.ticket.findUnique({
+        where: { id: ticket.id },
+        select: { assignedTo: true },
+      })
+      if (updatedTicket?.assignedTo) {
+        await createNotification({
+          organizationId: orgId,
+          userId: updatedTicket.assignedTo,
+          type: "info",
+          title: `Auto-acknowledged: ${ticket.ticketNumber}`,
+          message: `AI auto-responded to "${ticket.subject}" (SLA ${Math.round(percentElapsed * 100)}% elapsed)`,
+          entityType: "ticket",
+          entityId: ticket.id,
+        })
+      }
+    }
+    count++
+  }
+
+  return count
+}
+
+// ── Auto Follow-Up: create tasks for stale deals ──
+
+async function runAutoFollowUp(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  let count = 0
+
+  const activeDeals = await prisma.deal.findMany({
+    where: {
+      organizationId: orgId,
+      stage: { notIn: ["WON", "LOST"] },
+      assignedTo: { not: null },
+    },
+    select: {
+      id: true,
+      name: true,
+      assignedTo: true,
+      company: { select: { name: true } },
+    },
+  })
+
+  for (const deal of activeDeals) {
+    // Check last activity
+    const lastActivity = await prisma.activity.findFirst({
+      where: { organizationId: orgId, relatedType: "deal", relatedId: deal.id },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    })
+    const daysSinceActivity = lastActivity
+      ? Math.floor((now.getTime() - lastActivity.createdAt.getTime()) / 86400000)
+      : 999
+
+    if (daysSinceActivity < 7) continue
+
+    // Idempotency: check if we already created a follow-up task this week
+    const existingTask = await prisma.task.findFirst({
+      where: {
+        organizationId: orgId,
+        relatedType: "deal",
+        relatedId: deal.id,
+        title: { startsWith: "Follow up:" },
+        createdAt: { gte: new Date(now.getTime() - 7 * 86400000) },
+      },
+    })
+    if (existingTask) continue
+
+    const companyName = (deal.company as any)?.name || ""
+    const taskTitle = `Follow up: ${deal.name}${companyName ? ` (${companyName})` : ""}`
+    const taskDescription = `No activity for ${daysSinceActivity} days. Consider reaching out to keep the deal moving.`
+
+    if (shadow) {
+      await prisma.aiShadowAction.create({
+        data: {
+          organizationId: orgId,
+          featureName: "ai_auto_followup",
+          entityType: "deal",
+          entityId: deal.id,
+          actionType: "create_task",
+          payload: {
+            title: taskTitle,
+            description: taskDescription,
+            assignedTo: deal.assignedTo,
+            daysSinceActivity,
+          },
+        },
+      })
+    } else {
+      await prisma.task.create({
+        data: {
+          organizationId: orgId,
+          title: taskTitle,
+          description: taskDescription,
+          assignedTo: deal.assignedTo || "",
+          dueDate: new Date(now.getTime() + 2 * 86400000), // due in 2 days
+          priority: daysSinceActivity > 14 ? "high" : "medium",
+          status: "pending",
+          relatedType: "deal",
+          relatedId: deal.id,
+          createdBy: "system",
+        },
+      })
+
+      if (deal.assignedTo) {
+        await createNotification({
+          organizationId: orgId,
+          userId: deal.assignedTo,
+          type: "info",
+          title: `AI: Follow-up needed`,
+          message: `"${deal.name}" has no activity for ${daysSinceActivity} days`,
+          entityType: "deal",
+          entityId: deal.id,
+        })
+      }
+    }
+    count++
+  }
+
+  return count
+}
+
+// ── Auto Payment Reminder: enroll overdue invoices in reminder journey ──
+
+async function runAutoPaymentReminder(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  let count = 0
+
+  try {
+    // Find overdue invoices (>7 days past due)
+    const overdueThreshold = new Date(now.getTime() - 7 * 86400000)
+    const overdueInvoices = await prisma.invoice.findMany({
+      where: {
+        organizationId: orgId,
+        status: { in: ["sent", "viewed", "overdue"] },
+        dueDate: { lt: overdueThreshold },
+      },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        totalAmount: true,
+        dueDate: true,
+        contactId: true,
+        companyId: true,
+        company: { select: { name: true } },
+      },
+    })
+
+    for (const invoice of overdueInvoices) {
+      if (!invoice.contactId) continue
+
+      const daysOverdue = invoice.dueDate
+        ? Math.floor((now.getTime() - invoice.dueDate.getTime()) / 86400000)
+        : 0
+
+      // Idempotency: check if we already created a reminder action for this invoice
+      const existingShadow = await prisma.aiShadowAction.findFirst({
+        where: {
+          organizationId: orgId,
+          featureName: "ai_auto_payment_reminder",
+          entityId: invoice.id,
+          createdAt: { gte: new Date(now.getTime() - 30 * 86400000) },
+        },
+      })
+      if (existingShadow) continue
+
+      // Check if contact is already in a payment reminder journey
+      const existingEnrollment = await prisma.journeyEnrollment.findFirst({
+        where: {
+          contactId: invoice.contactId,
+          status: { in: ["active", "paused"] },
+          journey: { name: { contains: "payment" } },
+        },
+      })
+      if (existingEnrollment) continue
+
+      const companyName = (invoice.company as any)?.name || ""
+
+      if (shadow) {
+        await prisma.aiShadowAction.create({
+          data: {
+            organizationId: orgId,
+            featureName: "ai_auto_payment_reminder",
+            entityType: "invoice",
+            entityId: invoice.id,
+            actionType: "enroll_journey",
+            payload: {
+              invoiceNumber: invoice.invoiceNumber,
+              amount: invoice.totalAmount,
+              daysOverdue,
+              contactId: invoice.contactId,
+              companyName,
+            },
+          },
+        })
+      } else {
+        // Find payment reminder journey
+        const journey = await prisma.journey.findFirst({
+          where: {
+            organizationId: orgId,
+            name: { contains: "payment" },
+            status: "active",
+          },
+        })
+
+        if (journey && invoice.contactId) {
+          await prisma.journeyEnrollment.create({
+            data: {
+              organizationId: orgId,
+              journeyId: journey.id,
+              contactId: invoice.contactId,
+              status: "active",
+              currentStepIndex: 0,
+            },
+          })
+
+          // Notify finance team
+          const admins = await prisma.user.findMany({
+            where: { organizationId: orgId, role: { in: ["admin", "manager"] }, isActive: true },
+            select: { id: true },
+            take: 3,
+          })
+          for (const admin of admins) {
+            await createNotification({
+              organizationId: orgId,
+              userId: admin.id,
+              type: "info",
+              title: `Auto-enrolled: Payment Reminder`,
+              message: `Invoice ${invoice.invoiceNumber} (${companyName}) overdue ${daysOverdue}d — enrolled in reminder journey`,
+              entityType: "invoice",
+              entityId: invoice.id,
+            })
+          }
+        }
+      }
+      count++
+    }
+  } catch {
+    // invoice/journey models may vary
+  }
+
+  return count
+}

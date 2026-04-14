@@ -39,6 +39,44 @@ async function logAiInteraction(
   }
 }
 
+// Find similar resolved tickets for context
+async function findSimilarResolvedTickets(orgId: string, subject: string, category: string, currentTicketId: string, limit = 3): Promise<string> {
+  const keywords = subject.toLowerCase().split(/\s+/).filter(w => w.length > 3)
+  if (keywords.length === 0) return ""
+
+  const similar = await prisma.ticket.findMany({
+    where: {
+      organizationId: orgId,
+      id: { not: currentTicketId },
+      status: { in: ["resolved", "closed"] },
+      OR: [
+        { category },
+        ...keywords.map(kw => ({ subject: { contains: kw, mode: "insensitive" as const } })),
+      ],
+    },
+    select: {
+      subject: true,
+      description: true,
+      comments: {
+        where: { isInternal: false },
+        orderBy: { createdAt: "desc" as const },
+        take: 1,
+        select: { content: true },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+    take: limit,
+  })
+
+  if (similar.length === 0) return ""
+
+  return "\n\n--- SIMILAR RESOLVED TICKETS ---\n" +
+    similar.map((t: any, i: number) => {
+      const resolution = t.comments[0]?.content?.substring(0, 300) || "No resolution comment"
+      return `[Resolved #${i + 1}] ${t.subject}\nResolution: ${resolution}`
+    }).join("\n\n")
+}
+
 // Search KB articles by keyword relevance
 async function findRelevantKbArticles(orgId: string, query: string, limit = 3): Promise<string> {
   const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
@@ -103,13 +141,17 @@ Comments:\n${commentsText || "No comments yet"}`
     const client = getClient()
 
     if (action === "reply") {
-      // Search KB for relevant articles
+      // Search KB for relevant articles + similar resolved tickets
       const searchQuery = `${ticket.subject} ${ticket.description || ""} ${ticket.category}`
-      const kbContext = await findRelevantKbArticles(orgId, searchQuery)
+      const [kbContext, similarContext] = await Promise.all([
+        findRelevantKbArticles(orgId, searchQuery),
+        findSimilarResolvedTickets(orgId, ticket.subject, ticket.category || "general", ticketId),
+      ])
+      const extraContext = kbContext + similarContext
 
       if (client) {
-        const systemPrompt = kbContext
-          ? `You are a professional support agent. You have access to the company's knowledge base articles below. Use them to provide accurate, helpful answers. If the KB articles contain relevant information, reference it in your reply. ALWAYS reply in ${langName} language regardless of the ticket language. Do not use markdown, write plain text.${kbContext}`
+        const systemPrompt = extraContext
+          ? `You are a professional support agent. You have access to the company's knowledge base articles and similar resolved tickets below. Use them to provide accurate, helpful answers. If the KB articles or resolved tickets contain relevant information, reference them in your reply. ALWAYS reply in ${langName} language regardless of the ticket language. Do not use markdown, write plain text.${extraContext}`
           : `You are a professional support agent. Write a helpful, concise reply to the customer based on the ticket context. ALWAYS reply in ${langName} language regardless of the ticket language. Do not use markdown, write plain text.`
 
         const t0 = Date.now()
@@ -123,12 +165,12 @@ Comments:\n${commentsText || "No comments yet"}`
         await logAiInteraction(orgId, `[ticket-reply] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({
           success: true,
-          data: { text, kbUsed: kbContext.length > 0 },
+          data: { text, kbUsed: kbContext.length > 0, similarUsed: similarContext.length > 0 },
         })
       }
       return NextResponse.json({
         success: true,
-        data: { text: getFallbackReply(ticket, kbContext), kbUsed: kbContext.length > 0 },
+        data: { text: getFallbackReply(ticket, kbContext), kbUsed: kbContext.length > 0, similarUsed: false },
       })
     }
 

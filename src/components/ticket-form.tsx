@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,6 +41,36 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
   const [companies, setCompanies] = useState<OptionItem[]>([])
   const [contacts, setContacts] = useState<OptionItem[]>([])
   const [users, setUsers] = useState<OptionItem[]>([])
+  const [aiCategorizing, setAiCategorizing] = useState(false)
+  const aiCategorizedRef = useRef(false)
+
+  // AI auto-categorization: fires once when subject has 5+ chars (on blur)
+  const tryAiCategorize = useCallback(async () => {
+    if (isEdit || aiCategorizedRef.current) return
+    const subjectVal = form.subject.trim()
+    if (subjectVal.length < 5) return
+
+    aiCategorizedRef.current = true
+    setAiCategorizing(true)
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" }
+      if (orgId) headers["x-organization-id"] = orgId
+      const res = await fetch("/api/v1/tickets/ai-categorize", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ subject: subjectVal, description: form.description.trim() }),
+      })
+      if (res.ok) {
+        const { data } = await res.json()
+        if (data?.category) setForm(f => ({ ...f, category: data.category }))
+        if (data?.priority) setForm(f => ({ ...f, priority: data.priority }))
+      }
+    } catch {
+      // Non-critical — user can always set manually
+    } finally {
+      setAiCategorizing(false)
+    }
+  }, [form.subject, form.description, isEdit, orgId])
 
   useEffect(() => {
     if (open) {
@@ -55,6 +85,7 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
         assignedTo: initialData?.assignedTo || "",
       })
       setError("")
+      aiCategorizedRef.current = false
       loadOptions()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,7 +153,7 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
         <DialogContent>
           {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded mb-3">{error}</div>}
           <div className="grid gap-4">
-            <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} required /></div>
+            <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} onBlur={tryAiCategorize} required />{aiCategorizing && <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">AI classifying...</p>}</div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></Select></div>
               <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option></Select></div>

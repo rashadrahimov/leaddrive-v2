@@ -1324,6 +1324,24 @@ model AiPendingAction {
   @@map("ai_pending_actions")
 }
 
+model AiShadowAction {
+  id             String   @id @default(cuid())
+  organizationId String
+  featureName    String   // ai_auto_followup, ai_auto_acknowledge, ai_payment_reminder
+  entityType     String   // deal, ticket, invoice, lead
+  entityId       String
+  actionType     String   // create_task, send_template, enroll_journey, update_field
+  payload        Json     // what the agent WOULD have done
+  approved       Boolean? // null = pending, true = approved, false = rejected
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, featureName])
+  @@index([organizationId, approved])
+  @@map("ai_shadow_actions")
+}
+
 model ChannelConfig {
   id             String   @id @default(cuid())
   organizationId String

@@ -18,6 +18,7 @@ import { StageProgress } from "@/components/deals/stage-progress"
 import { QuickActionBar, type DealContact } from "@/components/deals/quick-action-bar"
 import { DealSidebar } from "@/components/deals/deal-sidebar"
 import { ActivityTimeline } from "@/components/deals/activity-timeline"
+import { AiSuggestions } from "@/components/deals/ai-suggestions"
 import { StageValidationDialog } from "@/components/deals/stage-validation-dialog"
 import { StageChecklistDialog } from "@/components/deals/stage-checklist-dialog"
 import { useFieldPermissions } from "@/hooks/use-field-permissions"
@@ -596,6 +597,9 @@ export default function DealDetailPage() {
 
           {/* AI Prediction */}
           <AiPredictionCard dealId={id} />
+
+          {/* AI Suggestions (Copilot) */}
+          <AiSuggestions dealId={id} />
 
           {/* Next Steps */}
           <NextStepsWidget
