@@ -20,6 +20,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { WeeklyMetrics } from "@/components/dashboard/weekly-metrics"
+import { DidYouKnow } from "@/components/did-you-know"
 
 function fmt(n: number): string {
   if (n >= 1000000) return `${(n / 1000).toFixed(0)}K`
@@ -124,6 +125,8 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      <DidYouKnow page="dashboard" className="mb-4" />
 
       {/* ═══ Row 1: 6 KPIs ═══ */}
       {widgets.statCards && (

@@ -17,6 +17,7 @@ import {
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
 import { cn } from "@/lib/utils"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface ReportData {
   overview: {
@@ -350,6 +351,8 @@ export default function ReportsPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+
+      <DidYouKnow page="reports" className="mb-4" />
 
       {/* Overview Stats */}
       <div data-tour-id="reports-kpi" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">

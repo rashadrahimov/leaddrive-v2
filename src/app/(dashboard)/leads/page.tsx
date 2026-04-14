@@ -24,6 +24,7 @@ import { PageDescription } from "@/components/page-description"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { LeadsAnalytics } from "@/components/leads/leads-analytics"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface Lead {
   id: string
@@ -250,6 +251,8 @@ export default function LeadsPage() {
       ) : (
         <>
           <PageDescription text={t("pageDescription")} />
+
+          <DidYouKnow page="leads" className="mb-4" />
 
           {/* Stat cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">

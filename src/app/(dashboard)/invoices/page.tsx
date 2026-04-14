@@ -8,6 +8,7 @@ import { ColorStatCard } from "@/components/color-stat-card"
 import { DataTable } from "@/components/data-table"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { InvoicesAnalytics } from "@/components/invoices/invoices-analytics"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -346,6 +347,8 @@ export default function InvoicesPage() {
         </div>
       </div>
       <PageDescription text={t("pageDescription")} />
+
+      <DidYouKnow page="invoices" className="mb-4" />
 
       {/* Row 1 — Financial summary */}
       <div data-tour-id="invoices-stats" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

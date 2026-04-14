@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { MotionList, MotionItem } from "@/components/ui/motion"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface TicketData {
   id: string
@@ -281,6 +282,8 @@ export default function TicketsPage() {
           <Button data-tour-id="tickets-new" onClick={handleAdd}><Plus className="h-4 w-4" /> {t("newTicket")}</Button>
         </div>
       </div>
+
+      <DidYouKnow page="tickets" className="mb-4" />
 
       <div data-tour-id="tickets-list" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={tickets.length} icon={<Ticket className="h-4 w-4" />} color="blue" hint={t("hintTotalTickets")} />

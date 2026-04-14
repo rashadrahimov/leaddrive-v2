@@ -19,6 +19,7 @@ import { DealsAnalytics } from "@/components/deals/deals-analytics"
 import { cn } from "@/lib/utils"
 import { STAGE_COLORS } from "@/lib/constants"
 import { useLocale } from "next-intl"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface Deal {
   id: string
@@ -317,6 +318,8 @@ export default function DealsPage() {
           <Button data-tour-id="deals-new" onClick={() => { setEditDeal(undefined); setFormOpen(true) }}><Plus className="h-4 w-4 mr-1" /> {t("newDeal")}</Button>
         </div>
       </div>
+
+      <DidYouKnow page="deals" className="mb-4" />
 
       {/* Search + Stage Filters (for kanban & list tabs) */}
       {(tab === "kanban" || tab === "list") && (

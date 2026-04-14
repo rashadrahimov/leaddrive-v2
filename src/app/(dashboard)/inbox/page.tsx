@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { PageDescription } from "@/components/page-description"
+import { DidYouKnow } from "@/components/did-you-know"
 import { cn } from "@/lib/utils"
 
 /* -- Types -- */
@@ -389,6 +390,8 @@ export default function InboxPage() {
       </div>
 
       <PageDescription text={t("pageDescription")} />
+
+      <DidYouKnow page="inbox" className="mb-4" />
 
       {/* -- Stats cards -- */}
       <div data-tour-id="inbox-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3">
