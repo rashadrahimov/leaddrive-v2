@@ -564,10 +564,10 @@ async function main() {
   console.log(`Activities: ${activities.length}`)
 
   // ─── Deal-linked activities (some stale for AI shadow demo) ───
-  const createdDeals = await prisma.deal.findMany({ where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } }, select: { id: true, name: true }, take: 12 })
+  const activeDeals = await prisma.deal.findMany({ where: { organizationId: orgId, stage: { notIn: ["WON", "LOST"] } }, select: { id: true, name: true }, take: 12 })
   let dealActCount = 0
-  for (let i = 0; i < createdDeals.length; i++) {
-    const deal = createdDeals[i]
+  for (let i = 0; i < activeDeals.length; i++) {
+    const deal = activeDeals[i]
     const existing = await prisma.activity.findFirst({ where: { organizationId: orgId, relatedType: "deal", relatedId: deal.id } })
     if (existing) continue
     // First 3 deals: recent activity (1-3 days ago) → healthy
