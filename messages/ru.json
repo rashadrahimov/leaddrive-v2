@@ -1114,8 +1114,8 @@
     "qabAttach": "Прикрепить"
   },
   "tasks": {
-    "title": "Задачи",
-    "subtitle": "Управление задачами команды",
+    "title": "Управление задачами",
+    "subtitle": "Создавайте, назначайте и отслеживайте задачи команды",
     "newTask": "Новая задача",
     "deleteTask": "Удалить задачу",
     "searchPlaceholder": "Поиск задач...",
@@ -1217,7 +1217,14 @@
     "noComments": "Пока нет комментариев",
     "subtasksProgress": "{done} из {total}",
     "taskInfo": "Информация",
-    "activityLog": "Активность"
+    "activityLog": "Активность",
+    "dueOverdue": "просрочено на {days}д",
+    "dueHoursLeft": "осталось {hours}ч",
+    "dueDaysHoursLeft": "осталось {days}д {hours}ч",
+    "dueDaysLeft": "осталось {days}д",
+    "syncSuccess": "Синхронизировано с Google Calendar!",
+    "syncNotConnected": "Google Calendar не подключён. Перейти в Настройки?",
+    "syncFailed": "Ошибка синхронизации с Google Calendar"
   },
   "tickets": {
     "title": "Тикеты",

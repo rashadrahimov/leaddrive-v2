@@ -111,18 +111,18 @@ function getDaysOpen(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000)
 }
 
-function getDueDateCountdown(dueDate: string | null): { text: string; overdue: boolean; urgent: boolean } {
+function getDueDateCountdown(dueDate: string | null, t?: (key: string, params?: Record<string, any>) => string): { text: string; overdue: boolean; urgent: boolean } {
   if (!dueDate) return { text: "\u2014", overdue: false, urgent: false }
   const diff = new Date(dueDate).getTime() - Date.now()
   if (diff <= 0) {
     const days = Math.abs(Math.floor(diff / 86400000))
-    return { text: `${days}d overdue`, overdue: true, urgent: false }
+    return { text: t ? t("dueOverdue", { days }) : `${days}d overdue`, overdue: true, urgent: false }
   }
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)
-  if (days === 0) return { text: `${hours}h left`, overdue: false, urgent: true }
-  if (days <= 2) return { text: `${days}d ${hours}h left`, overdue: false, urgent: true }
-  return { text: `${days}d left`, overdue: false, urgent: false }
+  if (days === 0) return { text: t ? t("dueHoursLeft", { hours }) : `${hours}h left`, overdue: false, urgent: true }
+  if (days <= 2) return { text: t ? t("dueDaysHoursLeft", { days, hours }) : `${days}d ${hours}h left`, overdue: false, urgent: true }
+  return { text: t ? t("dueDaysLeft", { days }) : `${days}d left`, overdue: false, urgent: false }
 }
 
 // ─── Checklist Component ────────────────────────────────────────
@@ -438,7 +438,7 @@ export default function TaskDetailPage() {
   const statusStyle = STATUS_STYLES[task.status] || STATUS_STYLES.pending
   const priorityStyle = PRIORITY_STYLES[task.priority] || PRIORITY_STYLES.medium
   const daysOpen = getDaysOpen(task.createdAt)
-  const dueDateInfo = getDueDateCountdown(task.dueDate)
+  const dueDateInfo = getDueDateCountdown(task.dueDate, t)
 
   return (
     <div className="space-y-6">
@@ -485,13 +485,13 @@ export default function TaskDetailPage() {
                     }),
                   })
                   const json = await res.json()
-                  if (json.success) alert("Synced to Google Calendar!")
+                  if (json.success) alert(t("syncSuccess"))
                   else if (res.status === 403 || json.error?.includes("not connected")) {
-                    if (confirm("Google Calendar not connected. Go to Settings?")) {
+                    if (confirm(t("syncNotConnected"))) {
                       window.location.href = "/settings/integrations"
                     }
-                  } else alert(json.error || "Failed to sync")
-                } catch { alert("Failed to sync to Google Calendar") }
+                  } else alert(json.error || t("syncFailed"))
+                } catch { alert(t("syncFailed")) }
                 finally { setSyncing(false) }
               }}
             >

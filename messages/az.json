@@ -1112,8 +1112,8 @@
     "qabAttach": "Əlavə et"
   },
   "tasks": {
-    "title": "Tapşırıqlar",
-    "subtitle": "Komanda tapşırıqlarını idarə et",
+    "title": "Tapşırıq idarəetməsi",
+    "subtitle": "Komanda tapşırıqlarını yaradın, təyin edin və izləyin",
     "newTask": "Yeni tapşırıq",
     "deleteTask": "Tapşırığı sil",
     "searchPlaceholder": "Tapşırıq axtar...",
@@ -1215,7 +1215,14 @@
     "noComments": "Hələ şərh yoxdur",
     "subtasksProgress": "{done} / {total}",
     "taskInfo": "Məlumat",
-    "activityLog": "Fəaliyyət"
+    "activityLog": "Fəaliyyət",
+    "dueOverdue": "{days}g gecikib",
+    "dueHoursLeft": "{hours}s qalıb",
+    "dueDaysHoursLeft": "{days}g {hours}s qalıb",
+    "dueDaysLeft": "{days}g qalıb",
+    "syncSuccess": "Google Calendar ilə sinxronlaşdırıldı!",
+    "syncNotConnected": "Google Calendar qoşulmayıb. Tənzimləmələrə keçmək istəyirsiniz?",
+    "syncFailed": "Google Calendar ilə sinxronlaşma xətası"
   },
   "tickets": {
     "title": "Service Desk",

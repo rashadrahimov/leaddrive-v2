@@ -1114,8 +1114,8 @@
     "qabAttach": "Attach"
   },
   "tasks": {
-    "title": "Tasks",
-    "subtitle": "Manage team tasks",
+    "title": "Task Management",
+    "subtitle": "Create, assign and track tasks across your team",
     "newTask": "New Task",
     "deleteTask": "Delete Task",
     "searchPlaceholder": "Search tasks...",
@@ -1217,7 +1217,14 @@
     "noComments": "No comments yet",
     "subtasksProgress": "{done} of {total}",
     "taskInfo": "Task Info",
-    "activityLog": "Activity"
+    "activityLog": "Activity",
+    "dueOverdue": "{days}d overdue",
+    "dueHoursLeft": "{hours}h left",
+    "dueDaysHoursLeft": "{days}d {hours}h left",
+    "dueDaysLeft": "{days}d left",
+    "syncSuccess": "Synced to Google Calendar!",
+    "syncNotConnected": "Google Calendar not connected. Go to Settings?",
+    "syncFailed": "Failed to sync to Google Calendar"
   },
   "tickets": {
     "title": "Tickets",
