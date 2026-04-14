@@ -1,8 +1,9 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react"
+import { useSession } from "next-auth/react"
 
-const STORAGE_KEY = "leaddrive_tours_completed"
+const STORAGE_PREFIX = "leaddrive_tours_"
 
 interface TourState {
   activeTour: string | null
@@ -27,24 +28,31 @@ interface TourContextValue {
 
 const TourContext = createContext<TourContextValue | null>(null)
 
-function loadCompleted(): Set<string> {
+function getStorageKey(userId: string | undefined): string {
+  return userId ? `${STORAGE_PREFIX}${userId}` : `${STORAGE_PREFIX}anonymous`
+}
+
+function loadCompleted(userId: string | undefined): Set<string> {
   if (typeof window === "undefined") return new Set()
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(getStorageKey(userId))
     return stored ? new Set(JSON.parse(stored)) : new Set()
   } catch {
     return new Set()
   }
 }
 
-function saveCompleted(completed: Set<string>) {
+function saveCompleted(completed: Set<string>, userId: string | undefined) {
   if (typeof window === "undefined") return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]))
+    localStorage.setItem(getStorageKey(userId), JSON.stringify([...completed]))
   } catch {}
 }
 
 export function TourProvider({ children }: { children: ReactNode }) {
+  const { data: session } = useSession()
+  const userId = session?.user?.id
+
   const [state, setState] = useState<TourState>({
     activeTour: null,
     currentStep: 0,
@@ -52,10 +60,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
   })
   const [totalSteps, setTotalSteps] = useState(0)
 
-  // Load completed tours from localStorage on mount
+  // Reload completed tours when user changes (login, switch tenant)
   useEffect(() => {
-    setState(s => ({ ...s, completedTours: loadCompleted() }))
-  }, [])
+    setState(s => ({ ...s, activeTour: null, currentStep: 0, completedTours: loadCompleted(userId) }))
+  }, [userId])
 
   const startTour = useCallback((tourId: string) => {
     setState(s => {
@@ -76,10 +84,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
     setState(s => {
       const completed = new Set(s.completedTours)
       completed.add(tourId)
-      saveCompleted(completed)
+      saveCompleted(completed, userId)
       return { ...s, activeTour: null, currentStep: 0, completedTours: completed }
     })
-  }, [])
+  }, [userId])
 
   const skipTour = useCallback(() => {
     if (state.activeTour) markComplete(state.activeTour)
@@ -97,17 +105,17 @@ export function TourProvider({ children }: { children: ReactNode }) {
     setState(s => {
       const completed = new Set(s.completedTours)
       completed.delete(tourId)
-      saveCompleted(completed)
+      saveCompleted(completed, userId)
       return { ...s, completedTours: completed }
     })
-  }, [])
+  }, [userId])
 
   const resetAllTours = useCallback(() => {
     setState(s => {
-      saveCompleted(new Set())
+      saveCompleted(new Set(), userId)
       return { ...s, completedTours: new Set() }
     })
-  }, [])
+  }, [userId])
 
   return (
     <TourContext.Provider
