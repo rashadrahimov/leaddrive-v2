@@ -47,11 +47,18 @@ export async function POST(req: NextRequest) {
     const hash = crypto.randomBytes(8).toString("hex")
     const filename = `logo-${hash}${ext}`
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "logos")
+    // Save to project root (not standalone) so files survive redeploys
+    const projectRoot = process.env.APP_DIR || path.resolve(process.cwd(), "../..")
+    const uploadDir = path.join(projectRoot, "public", "uploads", "logos")
     await mkdir(uploadDir, { recursive: true })
 
     const filePath = path.join(uploadDir, filename)
     await writeFile(filePath, buffer)
+
+    // Also copy to standalone/public so it's served immediately (before next deploy)
+    const standaloneDir = path.join(process.cwd(), "public", "uploads", "logos")
+    await mkdir(standaloneDir, { recursive: true })
+    await writeFile(path.join(standaloneDir, filename), buffer)
 
     const url = `/uploads/logos/${filename}`
 
