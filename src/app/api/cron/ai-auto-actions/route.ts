@@ -123,14 +123,13 @@ async function runAutoAcknowledge(orgId: string, now: Date, shadow: boolean): Pr
         },
       })
     } else {
-      // Create a comment on the ticket (public)
-      await prisma.comment.create({
+      // Create a comment on the ticket (public, no userId = system)
+      await prisma.ticketComment.create({
         data: {
-          organizationId: orgId,
           ticketId: ticket.id,
-          content: templateMessage,
+          comment: templateMessage,
           isInternal: false,
-          authorName: "AI Assistant",
+          userId: null,
         },
       })
 

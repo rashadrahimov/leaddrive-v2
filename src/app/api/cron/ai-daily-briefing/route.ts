@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const orgs = await prisma.organization.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, features: true },
+      select: { id: true, name: true, features: true, settings: true },
     })
 
     for (const org of orgs) {
@@ -39,7 +39,11 @@ export async function POST(req: NextRequest) {
       const briefing = await collectBriefingData(org.id, now)
       if (!briefing.hasContent) continue
 
-      const narrative = await generateNarrative(org.id, briefing)
+      // Detect org language from settings, default to Russian
+      const orgSettings = (org.settings as Record<string, any>) || {}
+      const lang = orgSettings.language || orgSettings.locale || "ru"
+
+      const narrative = await generateNarrative(org.id, briefing, lang)
       if (!narrative) continue
 
       // Send to all admin/manager users in org
@@ -61,6 +65,32 @@ export async function POST(req: NextRequest) {
           message: narrative,
           entityType: "briefing",
         })
+      }
+
+      // Slack delivery (if configured)
+      if (orgSettings.slackWebhookUrl) {
+        try {
+          const { sendSlackNotification } = await import("@/lib/slack")
+          await sendSlackNotification(orgSettings.slackWebhookUrl, {
+            text: `*Daily AI Briefing*\n${narrative}`,
+          })
+        } catch { /* non-critical */ }
+      }
+
+      // Telegram delivery (if configured)
+      if (orgSettings.telegramBotToken && orgSettings.telegramChatId) {
+        try {
+          const tgUrl = `https://api.telegram.org/bot${orgSettings.telegramBotToken}/sendMessage`
+          await fetch(tgUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: orgSettings.telegramChatId,
+              text: `📊 *Daily AI Briefing*\n\n${narrative}`,
+              parse_mode: "Markdown",
+            }),
+          })
+        } catch { /* non-critical */ }
       }
 
       briefingsSent++
@@ -93,24 +123,29 @@ async function collectBriefingData(orgId: string, now: Date): Promise<BriefingDa
   const todayStart = new Date(now)
   todayStart.setHours(0, 0, 0, 0)
 
-  // 1. Stale deals (no activity >7 days)
+  // 1. Stale deals (no activity >7 days) — single query with last activity
   const activeDeals = await prisma.deal.findMany({
     where: {
       organizationId: orgId,
       stage: { notIn: ["WON", "LOST"] },
     },
-    select: { id: true, name: true, valueAmount: true },
+    select: {
+      id: true,
+      name: true,
+      valueAmount: true,
+      activities: {
+        orderBy: { createdAt: "desc" as const },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
   })
 
   const staleDeals: BriefingData["staleDeals"] = []
   for (const deal of activeDeals) {
-    const lastActivity = await prisma.activity.findFirst({
-      where: { organizationId: orgId, relatedType: "deal", relatedId: deal.id },
-      orderBy: { createdAt: "desc" },
-      select: { createdAt: true },
-    })
-    const days = lastActivity
-      ? Math.floor((now.getTime() - lastActivity.createdAt.getTime()) / 86400000)
+    const lastAct = (deal as any).activities?.[0]?.createdAt
+    const days = lastAct
+      ? Math.floor((now.getTime() - new Date(lastAct).getTime()) / 86400000)
       : 999
     if (days > 7) {
       staleDeals.push({ name: deal.name, days, value: deal.valueAmount || 0 })
@@ -142,25 +177,31 @@ async function collectBriefingData(orgId: string, now: Date): Promise<BriefingDa
     }
   }
 
-  // 3. Hot leads without follow-up
+  // 3. Hot leads without follow-up — single query with last activity
   const leads = await prisma.lead.findMany({
     where: {
       organizationId: orgId,
       status: { notIn: ["converted", "lost"] },
       score: { gte: 60 },
     },
-    select: { id: true, contactName: true, email: true, score: true },
+    select: {
+      id: true,
+      contactName: true,
+      email: true,
+      score: true,
+      activities: {
+        orderBy: { createdAt: "desc" as const },
+        take: 1,
+        select: { createdAt: true },
+      },
+    },
   })
 
   const hotLeads: BriefingData["hotLeads"] = []
   for (const lead of leads) {
-    const lastAct = await prisma.activity.findFirst({
-      where: { organizationId: orgId, relatedType: "lead", relatedId: lead.id },
-      orderBy: { createdAt: "desc" },
-      select: { createdAt: true },
-    })
+    const lastAct = (lead as any).activities?.[0]?.createdAt
     const days = lastAct
-      ? Math.floor((now.getTime() - lastAct.createdAt.getTime()) / 86400000)
+      ? Math.floor((now.getTime() - new Date(lastAct).getTime()) / 86400000)
       : 999
     if (days > 3) {
       hotLeads.push({
@@ -274,7 +315,10 @@ async function collectBriefingData(orgId: string, now: Date): Promise<BriefingDa
   }
 }
 
-async function generateNarrative(orgId: string, data: BriefingData): Promise<string | null> {
+async function generateNarrative(orgId: string, data: BriefingData, lang: string = "ru"): Promise<string | null> {
+  const langMap: Record<string, string> = { ru: "RUSSIAN", en: "ENGLISH", az: "AZERBAIJANI" }
+  const langName = langMap[lang] || "RUSSIAN"
+
   try {
     const anthropic = new Anthropic()
 
@@ -296,7 +340,7 @@ async function generateNarrative(orgId: string, data: BriefingData): Promise<str
       messages: [
         {
           role: "user",
-          content: `You are a CRM assistant. Generate a concise daily briefing (max 300 words) in the user's language based on this data. Use bullet points. Prioritize urgent items (SLA breaches, high churn risk, overdue invoices). Skip sections with no data. No greetings or sign-offs — just the briefing.\n\nData:\n${dataSnapshot}`,
+          content: `You are a CRM assistant. Generate a concise daily briefing (max 300 words) in ${langName} language based on this data. Use bullet points. Prioritize urgent items (SLA breaches, high churn risk, overdue invoices). Skip sections with no data. No greetings or sign-offs — just the briefing.\n\nData:\n${dataSnapshot}`,
         },
       ],
     })

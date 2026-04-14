@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2, Building2 } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2, Building2, Bot } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
@@ -29,6 +29,7 @@ export default function SettingsPage() {
     { icon: Plug, title: t("integrationsTitle"), description: t("integrationsDesc"), href: "/settings/integrations", hint: t("integrationsHint") },
     { icon: Keyboard, title: t("macrosTitle"), description: t("macrosDesc"), href: "/settings/macros", hint: t("macrosHint") },
     { icon: Globe2, title: t("customDomainsTitle"), description: t("customDomainsDesc"), href: "/settings/custom-domains", hint: t("hintCustomDomains") },
+    { icon: Bot, title: "AI Automation", description: "Manage AI features, shadow actions, budget", href: "/settings/ai-automation", hint: "Configure AI-powered automations" },
   ]
 
   return (

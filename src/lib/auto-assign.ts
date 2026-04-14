@@ -127,55 +127,68 @@ export async function autoAssignTicket(
       })
     } else {
       // Weighted scoring: combines load, category expertise, and resolution speed
-      const agentScores = await Promise.all(
-        availableAgents.map(async (agent: any) => {
-          const load = countMap[agent.id] || 0
+      // Batch queries for all agents at once (avoids N+1)
+      const agentIds = availableAgents.map((a: any) => a.id)
 
-          // Category expertise: count of resolved tickets in this category by this agent
-          const resolvedInCategory = await prisma.ticket.count({
-            where: {
-              organizationId: orgId,
-              assignedTo: agent.id,
-              category,
-              status: { in: ["resolved", "closed"] },
-            },
-          })
-
-          // Avg resolution time for this agent in this category (last 90 days)
-          const recentResolved = await prisma.ticket.findMany({
-            where: {
-              organizationId: orgId,
-              assignedTo: agent.id,
-              category,
-              status: { in: ["resolved", "closed"] },
-              updatedAt: { gte: new Date(Date.now() - 90 * 86400000) },
-            },
-            select: { createdAt: true, updatedAt: true },
-            take: 20,
-          })
-          const avgResolutionHours = recentResolved.length > 0
-            ? recentResolved.reduce(
-                (sum: number, t: any) => sum + (t.updatedAt.getTime() - t.createdAt.getTime()) / 3600000,
-                0,
-              ) / recentResolved.length
-            : 999
-
-          // Weighted score: lower is better
-          // - Load weight: 40% (primary factor)
-          // - Expertise weight: 30% (more resolved = better, inverted)
-          // - Speed weight: 30% (faster resolution = better)
-          const loadScore = load * 10
-          const expertiseScore = resolvedInCategory > 0 ? -Math.min(resolvedInCategory, 20) : 5
-          const speedScore = Math.min(avgResolutionHours / 10, 10)
-
-          return {
-            agent,
-            score: loadScore * 0.4 + expertiseScore * 0.3 + speedScore * 0.3,
-          }
+      const [expertiseCounts, recentResolved] = await Promise.all([
+        // Category expertise: count resolved tickets per agent in this category
+        prisma.ticket.groupBy({
+          by: ["assignedTo"],
+          where: {
+            organizationId: orgId,
+            assignedTo: { in: agentIds },
+            category,
+            status: { in: ["resolved", "closed"] },
+          },
+          _count: { id: true },
         }),
-      )
+        // Recent resolved tickets for speed calculation (last 90 days)
+        prisma.ticket.findMany({
+          where: {
+            organizationId: orgId,
+            assignedTo: { in: agentIds },
+            category,
+            status: { in: ["resolved", "closed"] },
+            updatedAt: { gte: new Date(Date.now() - 90 * 86400000) },
+          },
+          select: { assignedTo: true, createdAt: true, updatedAt: true },
+        }),
+      ])
 
-      agentScores.sort((a, b) => a.score - b.score)
+      // Build lookup maps
+      const expertiseMap: Record<string, number> = {}
+      for (const row of expertiseCounts) {
+        if (row.assignedTo) expertiseMap[row.assignedTo] = row._count.id
+      }
+
+      const speedMap: Record<string, number> = {}
+      const speedCounts: Record<string, number> = {}
+      for (const t of recentResolved) {
+        if (!t.assignedTo) continue
+        const hours = (t.updatedAt.getTime() - t.createdAt.getTime()) / 3600000
+        speedMap[t.assignedTo] = (speedMap[t.assignedTo] || 0) + hours
+        speedCounts[t.assignedTo] = (speedCounts[t.assignedTo] || 0) + 1
+      }
+
+      const agentScores = availableAgents.map((agent: any) => {
+        const load = countMap[agent.id] || 0
+        const resolvedInCategory = expertiseMap[agent.id] || 0
+        const avgResolutionHours = speedCounts[agent.id]
+          ? speedMap[agent.id] / speedCounts[agent.id]
+          : 999
+
+        // Weighted score: lower is better
+        const loadScore = load * 10
+        const expertiseScore = resolvedInCategory > 0 ? -Math.min(resolvedInCategory, 20) : 5
+        const speedScore = Math.min(avgResolutionHours / 10, 10)
+
+        return {
+          agent,
+          score: loadScore * 0.4 + expertiseScore * 0.3 + speedScore * 0.3,
+        }
+      })
+
+      agentScores.sort((a: any, b: any) => a.score - b.score)
       selectedAgent = agentScores[0].agent
     }
 

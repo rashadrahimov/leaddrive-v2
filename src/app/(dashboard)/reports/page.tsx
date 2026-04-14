@@ -10,6 +10,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent } from "@/components/u
 import {
   TrendingUp, DollarSign, BarChart3, CheckSquare, Clock,
   Users, Building2, Target, FileText, Wallet, ArrowRight, Star, Loader2, X,
+  Sparkles,
 } from "lucide-react"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
@@ -66,6 +67,49 @@ interface ReportData {
     totalRatings: number
     byRating: { rating: number | null; count: number }[]
   }
+}
+
+// -- AI Forecast Narrative --
+function ForecastNarrative() {
+  const [narrative, setNarrative] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+
+  const load = () => {
+    setLoading(true)
+    fetch("/api/v1/reports/ai-narrative")
+      .then(r => r.json())
+      .then(res => { if (res.data?.narrative) setNarrative(res.data.narrative) })
+      .catch(() => {})
+      .finally(() => { setLoading(false); setLoaded(true) })
+  }
+
+  if (!loaded && !loading) {
+    return (
+      <button onClick={load} className="flex items-center gap-1.5 mt-3 text-[11px] text-violet-600 hover:text-violet-800 transition-colors">
+        <Sparkles className="h-3 w-3" /> AI Commentary
+      </button>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-1.5 mt-3 text-[11px] text-muted-foreground animate-pulse">
+        <Sparkles className="h-3 w-3" /> Generating insight...
+      </div>
+    )
+  }
+
+  if (!narrative) return null
+
+  return (
+    <div className="mt-3 p-2.5 rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200/50 dark:border-violet-800/30">
+      <div className="flex items-start gap-1.5">
+        <Sparkles className="h-3 w-3 text-violet-500 mt-0.5 shrink-0" />
+        <p className="text-[11px] leading-relaxed text-foreground/80">{narrative}</p>
+      </div>
+    </div>
+  )
 }
 
 // -- CircularGauge --
@@ -519,6 +563,7 @@ export default function ReportsPage() {
               <span className="flex items-center gap-1"><span className="w-3 h-2 bg-primary/70 rounded border-t border-dashed border-primary" /> Forecast</span>
               <span className="ml-auto text-muted-foreground">6m total: {(totalForecast / 1000).toFixed(0)}k ₼</span>
             </div>
+            <ForecastNarrative />
           </CardContent>
         </Card>
 

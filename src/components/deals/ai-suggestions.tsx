@@ -36,6 +36,31 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
   const [error, setError] = useState(false)
   const [expanded, setExpanded] = useState(true)
   const [dismissed, setDismissed] = useState<Set<number>>(new Set())
+  const [applying, setApplying] = useState<number | null>(null)
+  const [applied, setApplied] = useState<Set<number>>(new Set())
+
+  const applyAction = async (s: Suggestion, idx: number) => {
+    setApplying(idx)
+    try {
+      // Create a task based on the suggestion
+      const dueDate = new Date()
+      dueDate.setDate(dueDate.getDate() + (s.priority === "high" ? 1 : 3))
+      await fetch("/api/v1/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: s.action,
+          description: `AI suggestion: ${s.reason}`,
+          priority: s.priority,
+          dueDate: dueDate.toISOString(),
+          relatedType: "deal",
+          relatedId: dealId,
+        }),
+      })
+      setApplied(prev => new Set(prev).add(idx))
+    } catch {}
+    setApplying(null)
+  }
 
   const fetchSuggestions = () => {
     setLoading(true)
@@ -118,6 +143,18 @@ export function AiSuggestions({ dealId }: { dealId: string }) {
                 </div>
                 <p className="text-xs text-muted-foreground pl-5.5 leading-relaxed">{s.reason}</p>
                 <div className="flex gap-2 pl-5.5 pt-1">
+                  {applied.has(originalIdx) ? (
+                    <span className="text-[10px] text-green-600">Task created</span>
+                  ) : (
+                    <button
+                      onClick={() => applyAction(s, originalIdx)}
+                      disabled={applying === originalIdx}
+                      className="text-[10px] text-primary hover:text-primary/80 font-medium transition-colors"
+                    >
+                      {applying === originalIdx ? "Creating..." : "Create Task"}
+                    </button>
+                  )}
+                  <span className="text-[10px] text-muted-foreground">·</span>
                   <button
                     onClick={() => setDismissed(prev => new Set(prev).add(originalIdx))}
                     className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
