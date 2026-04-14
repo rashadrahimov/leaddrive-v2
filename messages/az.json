@@ -2762,7 +2762,7 @@
     "dealDragTitle": "Sürüklə = mərhələ + ehtimal dəyişir", "dealDragDesc": "Kartı Kanban-da sütunlar arasında sürükləyin — mərhələ və ehtimal avtomatik yenilənir.", "dealDragCta": "Kanban-a keçin",
     "dealRottingTitle": "AI durğun sövdələri qeyd edir", "dealRottingDesc": ">14 gün aktivsiz sövdələr vurğulanır. AI follow-up tapşırıq yaradır (kölgə).", "dealRottingCta": "Kölgə hərəkətlər",
     "dealWeightedTitle": "Çəkili pipeline = reallıq", "dealWeightedDesc": "Hər sövdə × ehtimal. Total ilə böyük fərq = çox riskli sövdələr.", "dealWeightedCta": "Pipeline",
-    "dealCloseTitle": "Vaxtı keçmiş tarix AI score azaldır", "dealCloseDesc": "Expected close keçibsə = -10 ehtimala. Proqnozun dəqiq olması üçün yeniləyin.", "dealClosesCta": "Sövdələr",
+    "dealCloseTitle": "Vaxtı keçmiş tarix AI score azaldır", "dealCloseDesc": "Expected close keçibsə = -10 ehtimala. Proqnozun dəqiq olması üçün yeniləyin.", "dealCloseCta": "Sövdələr",
     "dealTeamTitle": "Sövdədə komanda üzvləri", "dealTeamDesc": "Closer, consultant, engineer — hər biri 'Mənim sövdələrim'-də görür.", "dealTeamCta": "Sövdə açın",
     "dealCompTitle": "Rəqiblər sövdədə", "dealCompDesc": "Competitors tabı: ad, məhsul, zəif/güclü tərəflər.", "dealCompCta": "Sövdə açın",
     "ticketShortTitle": "? = klaviatura qısayolları", "ticketShortDesc": "Biletdə: R=cavab, N=qeyd, A=təyin et, E=eskalasiya, J/K=naviqasiya.", "ticketShortCta": "Bilet açın",

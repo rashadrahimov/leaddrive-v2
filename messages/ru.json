@@ -2767,7 +2767,7 @@
     "dealDragTitle": "Drag = смена стадии + пересчёт", "dealDragDesc": "Перетащите карточку в Kanban — стадия и win probability пересчитаются автоматически.", "dealDragCta": "На Kanban",
     "dealRottingTitle": "AI помечает застывшие сделки", "dealRottingDesc": "Сделки >14д без активности подсвечиваются. AI создаёт follow-up задачу (shadow mode).", "dealRottingCta": "Shadow actions",
     "dealWeightedTitle": "Weighted pipeline = реальность", "dealWeightedDesc": "\"Взвешенная\" = сделка × вероятность. Большой разрыв с Total = много рискованных.", "dealWeightedCta": "Pipeline",
-    "dealCloseTitle": "Просроченная дата снижает AI score", "dealCloseDesc": "Expected close в прошлом = -10 к win probability. Обновите для точного прогноза.", "dealClosesCta": "Сделки",
+    "dealCloseTitle": "Просроченная дата снижает AI score", "dealCloseDesc": "Expected close в прошлом = -10 к win probability. Обновите для точного прогноза.", "dealCloseCta": "Сделки",
     "dealTeamTitle": "Team Members на сделке", "dealTeamDesc": "Closer, consultant, engineer — каждый видит сделку в 'Мои сделки'.", "dealTeamCta": "Открыть сделку",
     "dealCompTitle": "Конкуренты на сделке", "dealCompDesc": "Вкладка Competitors: название, продукт, слабости. Знай врага.", "dealCompCta": "Открыть сделку",
     "ticketShortTitle": "? = горячие клавиши", "ticketShortDesc": "На тикете: R=ответ, N=заметка, A=назначить, E=эскалировать, J/K=навигация.", "ticketShortCta": "Открыть тикет",

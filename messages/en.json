@@ -2766,7 +2766,7 @@
     "dealDragTitle": "Drag = stage change + probability recalc", "dealDragDesc": "Drag a deal card between Kanban columns — stage changes and win probability recalculates automatically.", "dealDragCta": "Go to Kanban",
     "dealRottingTitle": "AI flags stale deals", "dealRottingDesc": "Deals >14 days without activity get highlighted. AI creates a follow-up task in shadow mode.", "dealRottingCta": "Check shadow actions",
     "dealWeightedTitle": "Weighted pipeline = reality check", "dealWeightedDesc": "\"Weighted\" = each deal × probability. Big gap from Total? Too many low-probability deals.", "dealWeightedCta": "View pipeline",
-    "dealCloseTitle": "Overdue close date hurts AI score", "dealCloseDesc": "Past-due expected close date = -10 to AI win probability. Update it to keep forecasts accurate.", "dealClosesCta": "Open deals",
+    "dealCloseTitle": "Overdue close date hurts AI score", "dealCloseDesc": "Past-due expected close date = -10 to AI win probability. Update it to keep forecasts accurate.", "dealCloseCta": "Open deals",
     "dealTeamTitle": "Add Team Members to deals", "dealTeamDesc": "Closer, consultant, engineer — each team member sees the deal in 'My Deals'.", "dealTeamCta": "Open a deal",
     "dealCompTitle": "Track competitors on deals", "dealCompDesc": "Competitors tab: name, product, strengths, weaknesses. Know your enemy.", "dealCompCta": "Open a deal",
     "ticketShortTitle": "Press ? for keyboard shortcuts", "ticketShortDesc": "On any ticket: R=reply, N=internal note, A=assign to me, E=escalate, J/K=next/prev.", "ticketShortCta": "Open a ticket",
