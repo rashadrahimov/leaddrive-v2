@@ -231,23 +231,23 @@ export function DidYouKnow({ page, className = "" }: { page: string; className?:
 
       {/* Navigation: ← counter → */}
       {available.length > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-3 pt-2 border-t border-violet-200/30 dark:border-violet-800/20">
+        <div className="flex items-center justify-center gap-3 mt-3 pt-2.5 border-t border-violet-200/40 dark:border-violet-800/30">
           <button
             onClick={goPrev}
             disabled={safeIdx === 0}
-            className="p-0.5 rounded hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-30 transition-colors"
+            className="h-7 w-7 flex items-center justify-center rounded-md border border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50 disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            <ChevronLeft className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+            <ChevronLeft className="h-4 w-4 text-violet-700 dark:text-violet-300" />
           </button>
-          <span className="text-[10px] text-muted-foreground min-w-[3rem] text-center">
+          <span className="text-xs font-medium text-violet-600 dark:text-violet-400 min-w-[3rem] text-center">
             {safeIdx + 1} / {available.length}
           </span>
           <button
             onClick={goNext}
             disabled={safeIdx >= available.length - 1}
-            className="p-0.5 rounded hover:bg-violet-100 dark:hover:bg-violet-900/30 disabled:opacity-30 transition-colors"
+            className="h-7 w-7 flex items-center justify-center rounded-md border border-violet-300 dark:border-violet-700 bg-white dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-800/50 disabled:opacity-25 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            <ChevronRight className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+            <ChevronRight className="h-4 w-4 text-violet-700 dark:text-violet-300" />
           </button>
         </div>
       )}
