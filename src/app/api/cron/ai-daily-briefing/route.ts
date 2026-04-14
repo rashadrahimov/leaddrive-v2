@@ -123,29 +123,30 @@ async function collectBriefingData(orgId: string, now: Date): Promise<BriefingDa
   const todayStart = new Date(now)
   todayStart.setHours(0, 0, 0, 0)
 
-  // 1. Stale deals (no activity >7 days) — single query with last activity
+  // 1. Stale deals (no activity >7 days) — batch activity lookup
   const activeDeals = await prisma.deal.findMany({
     where: {
       organizationId: orgId,
       stage: { notIn: ["WON", "LOST"] },
     },
-    select: {
-      id: true,
-      name: true,
-      valueAmount: true,
-      activities: {
-        orderBy: { createdAt: "desc" as const },
-        take: 1,
-        select: { createdAt: true },
-      },
-    },
+    select: { id: true, name: true, valueAmount: true },
   })
+
+  // Batch: get latest activity per deal in one query
+  const dealIds = activeDeals.map((d: any) => d.id)
+  const dealActivities = dealIds.length > 0 ? await prisma.activity.findMany({
+    where: { organizationId: orgId, relatedType: "deal", relatedId: { in: dealIds } },
+    orderBy: { createdAt: "desc" },
+    distinct: ["relatedId"],
+    select: { relatedId: true, createdAt: true },
+  }) : []
+  const dealLastActivity = new Map<string, Date>(dealActivities.map((a: any) => [a.relatedId, a.createdAt]))
 
   const staleDeals: BriefingData["staleDeals"] = []
   for (const deal of activeDeals) {
-    const lastAct = (deal as any).activities?.[0]?.createdAt
+    const lastAct = dealLastActivity.get(deal.id)
     const days = lastAct
-      ? Math.floor((now.getTime() - new Date(lastAct).getTime()) / 86400000)
+      ? Math.floor((now.getTime() - lastAct.getTime()) / 86400000)
       : 999
     if (days > 7) {
       staleDeals.push({ name: deal.name, days, value: deal.valueAmount || 0 })
@@ -177,31 +178,30 @@ async function collectBriefingData(orgId: string, now: Date): Promise<BriefingDa
     }
   }
 
-  // 3. Hot leads without follow-up — single query with last activity
+  // 3. Hot leads without follow-up — batch activity lookup
   const leads = await prisma.lead.findMany({
     where: {
       organizationId: orgId,
       status: { notIn: ["converted", "lost"] },
       score: { gte: 60 },
     },
-    select: {
-      id: true,
-      contactName: true,
-      email: true,
-      score: true,
-      activities: {
-        orderBy: { createdAt: "desc" as const },
-        take: 1,
-        select: { createdAt: true },
-      },
-    },
+    select: { id: true, contactName: true, email: true, score: true },
   })
+
+  const leadIds = leads.map((l: any) => l.id)
+  const leadActivities = leadIds.length > 0 ? await prisma.activity.findMany({
+    where: { organizationId: orgId, relatedType: "lead", relatedId: { in: leadIds } },
+    orderBy: { createdAt: "desc" },
+    distinct: ["relatedId"],
+    select: { relatedId: true, createdAt: true },
+  }) : []
+  const leadLastActivity = new Map<string, Date>(leadActivities.map((a: any) => [a.relatedId, a.createdAt]))
 
   const hotLeads: BriefingData["hotLeads"] = []
   for (const lead of leads) {
-    const lastAct = (lead as any).activities?.[0]?.createdAt
+    const lastAct = leadLastActivity.get(lead.id)
     const days = lastAct
-      ? Math.floor((now.getTime() - new Date(lastAct).getTime()) / 86400000)
+      ? Math.floor((now.getTime() - lastAct.getTime()) / 86400000)
       : 999
     if (days > 3) {
       hotLeads.push({
