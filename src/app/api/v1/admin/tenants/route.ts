@@ -144,10 +144,12 @@ export async function POST(req: NextRequest) {
     let seedStarted = false
     if (seedDemoData) {
       try {
-        const scriptPath = path.resolve(process.cwd(), "scripts/seed-tenant-demo.mjs")
+        // In standalone mode, process.cwd() is .next/standalone/ — resolve to project root
+        const projectRoot = process.env.APP_DIR || path.resolve(process.cwd(), "../..")
+        const scriptPath = path.join(projectRoot, "scripts/seed-tenant-demo.mjs")
         const password = result.tempPassword
         const cmd = `node "${scriptPath}" --slug=${slug} --password="${password}"`
-        exec(cmd, { timeout: 300000 }, (err, stdout, stderr) => {
+        exec(cmd, { cwd: projectRoot, timeout: 300000 }, (err, stdout, stderr) => {
           if (err) {
             console.error(`[TENANT] Seed script error for ${slug}:`, err.message)
             if (stderr) console.error("[TENANT] Seed stderr:", stderr)
