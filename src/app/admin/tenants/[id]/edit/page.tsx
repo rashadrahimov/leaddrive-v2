@@ -67,7 +67,7 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
     { moduleId: "projects", label: "Projects", href: "/projects" },
   ]},
   { group: "Route & Field", items: [
-    { moduleId: "mtm", label: "MTM Dashboard", href: "/mtm" },
+    { moduleId: "mtm", label: "Dashboard", href: "/mtm" },
     { moduleId: "mtm", label: "Live Map", href: "/mtm/map" },
     { moduleId: "mtm", label: "Routes", href: "/mtm/routes" },
     { moduleId: "mtm", label: "Visits", href: "/mtm/visits" },
@@ -81,7 +81,7 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
     { moduleId: "mtm", label: "Leaderboard", href: "/mtm/leaderboard" },
     { moduleId: "mtm", label: "Activity Log", href: "/mtm/activity" },
     { moduleId: "mtm", label: "Reports", href: "/mtm/reports" },
-    { moduleId: "mtm", label: "MTM Settings", href: "/mtm/settings" },
+    { moduleId: "mtm", label: "Settings", href: "/mtm/settings" },
   ]},
   { group: "Settings", items: [
     { moduleId: "core", label: "Dashboard Settings", href: "/settings/dashboard" },
