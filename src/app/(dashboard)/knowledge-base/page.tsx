@@ -55,11 +55,15 @@ function getContentPreview(content?: string): string {
   return plain.length > 120 ? plain.slice(0, 120) + "..." : plain
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function KnowledgeBasePage() {
   const { data: session } = useSession()
   const t = useTranslations("kb")
   const tc = useTranslations("common")
   const [articles, setArticles] = useState<KbArticle[]>([])
+  useAutoTour("knowledgeBase")
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -186,14 +190,14 @@ export default function KnowledgeBasePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="knowledgeBase" /></h1>
           <p className="text-sm text-muted-foreground">{total} {t("articles")} · {published} {t("publishedArticles")} · {totalViews} {t("views")}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowCatManager(true)}>
+          <Button variant="outline" size="sm" onClick={() => setShowCatManager(true)} data-tour-id="kb-categories">
             <Settings2 className="h-4 w-4 mr-1" /> {t("manageCategories") || "Categories"}
           </Button>
-          <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm">
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }} size="sm" data-tour-id="kb-new">
             <Plus className="h-4 w-4 mr-1" /> {t("newArticle")}
           </Button>
         </div>

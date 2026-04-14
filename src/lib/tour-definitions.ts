@@ -162,6 +162,84 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     ],
   },
 
-  // ── Phase 3 (Other modules) — to be added ──
+  // ── Phase 3: Other modules ──
+
+  companies: {
+    steps: [
+      { targetId: "companies-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "companies-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "companies-list", titleKey: "listTitle", descKey: "listDesc" },
+    ],
+  },
+
+  companyDetail: {
+    steps: [
+      { targetId: "company-kpi", titleKey: "kpiTitle", descKey: "kpiDesc" },
+      { targetId: "company-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
+    ],
+  },
+
+  contacts: {
+    steps: [
+      { targetId: "contacts-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "contacts-new", titleKey: "newTitle", descKey: "newDesc" },
+    ],
+  },
+
+  contactDetail: {
+    steps: [
+      { targetId: "contact-kpi", titleKey: "kpiTitle", descKey: "kpiDesc" },
+      { targetId: "contact-comm", titleKey: "commTitle", descKey: "commDesc" },
+    ],
+  },
+
+  tasks: {
+    steps: [
+      { targetId: "tasks-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "tasks-views", titleKey: "viewsTitle", descKey: "viewsDesc" },
+      { targetId: "tasks-new", titleKey: "newTitle", descKey: "newDesc" },
+    ],
+  },
+
+  taskDetail: {
+    steps: [
+      { targetId: "task-status", titleKey: "statusTitle", descKey: "statusDesc" },
+    ],
+  },
+
+  projects: {
+    steps: [
+      { targetId: "projects-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "projects-list", titleKey: "listTitle", descKey: "listDesc" },
+    ],
+  },
+
+  projectDetail: {
+    steps: [
+      { targetId: "project-tabs", titleKey: "tabsTitle", descKey: "tabsDesc" },
+    ],
+  },
+
+  knowledgeBase: {
+    steps: [
+      { targetId: "kb-new", titleKey: "newTitle", descKey: "newDesc" },
+      { targetId: "kb-categories", titleKey: "catTitle", descKey: "catDesc" },
+    ],
+  },
+
+  contracts: {
+    steps: [
+      { targetId: "contracts-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "contracts-new", titleKey: "newTitle", descKey: "newDesc" },
+    ],
+  },
+
+  offers: {
+    steps: [
+      { targetId: "offers-stats", titleKey: "statsTitle", descKey: "statsDesc" },
+      { targetId: "offers-new", titleKey: "newTitle", descKey: "newDesc" },
+    ],
+  },
+
   // ── Phase 4 (Settings) — to be added ──
 }

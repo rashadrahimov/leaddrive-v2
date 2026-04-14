@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { DataTable } from "@/components/data-table"
+import { MotionPage } from "@/components/ui/motion"
 import { PageDescription } from "@/components/page-description"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ProjectForm } from "@/components/projects/project-form"
@@ -41,11 +42,15 @@ interface Project {
   _count?: { tasks: number; members: number; milestones: number }
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ProjectsPage() {
   const router = useRouter()
   const { data: session } = useSession()
   const t = useTranslations("projects")
   const [projects, setProjects] = useState<Project[]>([])
+  useAutoTour("projects")
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -294,17 +299,18 @@ export default function ProjectsPage() {
   }
 
   return (
+    <MotionPage>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="projects" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-1" /> Export
+            <Download className="h-4 w-4 mr-1" /> {t("export")}
           </Button>
-          <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+          <Button onClick={() => { setEditData(undefined); setShowForm(true) }} data-tour-id="projects-new">
             <Plus className="h-4 w-4 mr-1" /> {t("newProject")}
           </Button>
         </div>
@@ -319,23 +325,31 @@ export default function ProjectsPage() {
         hints={{ total: t("hintTotalProjects"), active: t("hintActiveProjects") }}
       />
 
-      {/* Filter tabs */}
+      {/* Filter pills */}
       <div className="flex flex-wrap gap-2">
-        <Button variant={activeFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setFilter("all")}>
+        <button
+          onClick={() => setFilter("all")}
+          className={cn("px-3 py-1.5 text-sm rounded-full border transition-all duration-200",
+            activeFilter === "all" ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:bg-muted border-border"
+          )}>
           {t("allProjects")} ({total})
-        </Button>
+        </button>
         {(["planning", "active", "on_hold", "completed", "cancelled"] as const).map(key => (
           statusCounts[key] ? (
-            <Button key={key} variant={activeFilter === key ? "default" : "outline"} size="sm" onClick={() => setFilter(key)}>
+            <button key={key}
+              onClick={() => setFilter(key)}
+              className={cn("px-3 py-1.5 text-sm rounded-full border transition-all duration-200",
+                activeFilter === key ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background hover:bg-muted border-border"
+              )}>
               {statusLabels[key]} ({statusCounts[key]})
-            </Button>
+            </button>
           ) : null
         ))}
       </div>
 
       {/* Bulk actions */}
       {selectedIds.size > 0 && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/10 border border-primary/20 rounded-lg">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-card/80 backdrop-blur-xl border border-border/60 shadow-lg rounded-xl">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <select onChange={e => { if (e.target.value) handleBulkStatusChange(e.target.value); e.target.value = "" }}
             className="text-xs rounded-lg border border-input bg-background px-2 py-1.5">
@@ -365,7 +379,7 @@ export default function ProjectsPage() {
       </div>
 
       {projects.length > 0 ? (
-        <>
+        <div data-tour-id="projects-list">
           <DataTable
             columns={columns as any}
             data={projects as any}
@@ -376,7 +390,7 @@ export default function ProjectsPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-2">
               <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>
-                Prev
+                {t("prev")}
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
@@ -389,12 +403,12 @@ export default function ProjectsPage() {
                   </span>
                 ))}
               <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => goToPage(currentPage + 1)}>
-                Next
+                {t("next")}
               </Button>
               <span className="text-xs text-muted-foreground ml-2">{total} total</span>
             </div>
           )}
-        </>
+        </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <FolderKanban className="h-12 w-12 text-muted-foreground/30 mb-4" />
@@ -421,5 +435,6 @@ export default function ProjectsPage() {
         itemName={deleteName}
       />
     </div>
+    </MotionPage>
   )
 }

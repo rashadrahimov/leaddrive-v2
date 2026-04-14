@@ -44,9 +44,13 @@ const statusColors: Record<string, string> = {
   inactive: "bg-muted text-muted-foreground",
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function CompaniesPage() {
   const { data: session } = useSession()
   const t = useTranslations("companies")
+  useAutoTour("companies")
   const statusLabels: Record<string, string> = {
     active: t("statusActive"), prospect: t("statusProspect"), inactive: t("statusInactive"),
   }
@@ -135,16 +139,16 @@ export default function CompaniesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")} ({filtered.length})</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} ({filtered.length}) <TourReplayButton tourId="companies" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setFormOpen(true) }}>
+        <Button data-tour-id="companies-new" onClick={() => { setEditData(undefined); setFormOpen(true) }}>
           <Plus className="h-4 w-4 mr-1" /> {t("add")}
         </Button>
       </div>
       <PageDescription text={t("pageDescription")} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
+      <div data-tour-id="companies-stats" className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Building2 className="h-4 w-4" />} color="blue" hint={t("hintCompaniesCount")} />
         <ColorStatCard label={t("statActive")} value={activeCount} icon={<Building2 className="h-4 w-4" />} color="green" hint={t("hintActiveClients")} />
         <ColorStatCard label={t("statContacts")} value={totalContacts} icon={<Users className="h-4 w-4" />} color="violet" hint={t("hintTotalContacts")} />
@@ -194,7 +198,7 @@ export default function CompaniesPage() {
       </div>
 
       {/* Company cards grid */}
-      <MotionList className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" staggerDelay={0.05}>
+      <div data-tour-id="companies-list"><MotionList className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" staggerDelay={0.05}>
         {filtered.length === 0 ? (
           <div className="col-span-3 text-center py-12 text-muted-foreground">
             {t("noResults")}
@@ -271,7 +275,7 @@ export default function CompaniesPage() {
             </MotionItem>
           ))
         )}
-      </MotionList>
+      </MotionList></div>
 
       <CompanyForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchCompanies} initialData={editData} orgId={orgId} />
 

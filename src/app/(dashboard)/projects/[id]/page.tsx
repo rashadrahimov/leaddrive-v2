@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { MotionPage } from "@/components/ui/motion"
+import { MotionPage, MotionTab } from "@/components/ui/motion"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
 import { ProjectForm } from "@/components/projects/project-form"
 import { cn } from "@/lib/utils"
@@ -22,6 +22,9 @@ import { ProjectMembersTab } from "@/components/projects/project-members-tab"
 import { ProjectMilestonesTab } from "@/components/projects/project-milestones-tab"
 import { ProjectBudgetTab } from "@/components/projects/project-budget-tab"
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -30,6 +33,7 @@ export default function ProjectDetailPage() {
   const orgId = session?.user?.organizationId
 
   const [project, setProject] = useState<ProjectDetail | null>(null)
+  useAutoTour("projectDetail")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("overview")
   const [users, setUsers] = useState<{ id: string; name: string }[]>([])
@@ -111,7 +115,7 @@ export default function ProjectDetailPage() {
 
   return (
     <MotionPage>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-8">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -120,8 +124,8 @@ export default function ProjectDetailPage() {
             </Button>
             <div>
               <div className="flex items-center gap-2.5">
-                <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
-                <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
+                <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+                <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{project.name} <TourReplayButton tourId="projectDetail" /></h1>
                 <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[project.status])}>
                   {statusLabels[project.status]}
                 </span>
@@ -142,7 +146,7 @@ export default function ProjectDetailPage() {
             <Button variant="outline" size="sm" onClick={() => setShowEditForm(true)}>
               <Pencil className="h-3.5 w-3.5 mr-1" /> {t("edit")}
             </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 hover:border-red-300" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="h-3.5 w-3.5 mr-1" /> {t("delete")}
             </Button>
           </div>
@@ -156,7 +160,7 @@ export default function ProjectDetailPage() {
 
           <div>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
+              <TabsList data-tour-id="project-tabs">
                 <TabsTrigger value="overview">{t("overview")}</TabsTrigger>
                 <TabsTrigger value="tasks">{t("tasks")} ({allTasks.length})</TabsTrigger>
                 <TabsTrigger value="members">{t("members")} ({members.length})</TabsTrigger>
@@ -164,28 +168,30 @@ export default function ProjectDetailPage() {
                 <TabsTrigger value="budget">{t("budget")}</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="mt-4">
-                <ProjectOverviewTab project={project} allTasks={allTasks} milestones={milestones} membersCount={members.length} />
-              </TabsContent>
+              <MotionTab activeKey={activeTab}>
+                <TabsContent value="overview" className="mt-4">
+                  <ProjectOverviewTab project={project} allTasks={allTasks} milestones={milestones} membersCount={members.length} />
+                </TabsContent>
 
-              <TabsContent value="tasks" className="mt-4">
-                <ProjectTasksTab projectId={id} tasks={allTasks} allTasks={allTasks} milestones={milestones}
-                  users={users} headers={headers} onRefresh={fetchProject} getUserName={getUserName} />
-              </TabsContent>
+                <TabsContent value="tasks" className="mt-4">
+                  <ProjectTasksTab projectId={id} tasks={allTasks} allTasks={allTasks} milestones={milestones}
+                    users={users} headers={headers} onRefresh={fetchProject} getUserName={getUserName} />
+                </TabsContent>
 
-              <TabsContent value="members" className="mt-4">
-                <ProjectMembersTab projectId={id} members={members} users={users} currency={project.currency}
-                  headers={headers} onRefresh={fetchProject} getUserName={getUserName} />
-              </TabsContent>
+                <TabsContent value="members" className="mt-4">
+                  <ProjectMembersTab projectId={id} members={members} users={users} currency={project.currency}
+                    headers={headers} onRefresh={fetchProject} getUserName={getUserName} />
+                </TabsContent>
 
-              <TabsContent value="milestones" className="mt-4">
-                <ProjectMilestonesTab projectId={id} milestones={milestones} allTasks={allTasks}
-                  headers={headers} onRefresh={fetchProject} />
-              </TabsContent>
+                <TabsContent value="milestones" className="mt-4">
+                  <ProjectMilestonesTab projectId={id} milestones={milestones} allTasks={allTasks}
+                    headers={headers} onRefresh={fetchProject} />
+                </TabsContent>
 
-              <TabsContent value="budget" className="mt-4">
-                <ProjectBudgetTab project={project} members={members} getUserName={getUserName} />
-              </TabsContent>
+                <TabsContent value="budget" className="mt-4">
+                  <ProjectBudgetTab project={project} members={members} getUserName={getUserName} />
+                </TabsContent>
+              </MotionTab>
             </Tabs>
           </div>
         </div>

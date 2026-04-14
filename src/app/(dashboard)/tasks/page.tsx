@@ -376,12 +376,16 @@ function BulkActionsBar({ selectedIds, onAction, onClear }: {
 }
 
 // ─── Main Page ──────────────────────────────────────────────────
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function TasksPage() {
   const t = useTranslations("tasks")
   const tc = useTranslations("common")
   const router = useRouter()
   const { data: session } = useSession()
   const [tasks, setTasks] = useState<Task[]>([])
+  useAutoTour("tasks")
   const [view, setView] = useState<ViewMode>("list")
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -709,7 +713,7 @@ export default function TasksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="tasks" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("pageDescription")} />
         </div>
@@ -723,7 +727,7 @@ export default function TasksPage() {
             <User2 className="h-3.5 w-3.5 mr-1" /> {t("myTasks") || "My Tasks"}
           </Button>
 
-          <div className="flex rounded-lg border">
+          <div className="flex rounded-lg border" data-tour-id="tasks-views">
             <button
               onClick={() => setView("list")}
               className={cn("px-3 py-1.5 text-sm flex items-center gap-1", view === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
@@ -746,13 +750,13 @@ export default function TasksPage() {
           <Button variant="outline" onClick={() => setCalModalOpen(true)}>
             <Link2 className="h-4 w-4 mr-1" /> {t("connectCalendar")}
           </Button>
-          <Button onClick={handleAdd}>
+          <Button onClick={handleAdd} data-tour-id="tasks-new">
             <Plus className="h-4 w-4 mr-1" /> {t("newTask")}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 stagger-children" data-tour-id="tasks-stats">
         <ColorStatCard label={t("statAll")} value={tasks.length} icon={<CheckSquare className="h-4 w-4" />} color="blue" hint={t("hintTotalTasks")} />
         <ColorStatCard label={t("statCompleted")} value={completed} icon={<CheckSquare className="h-4 w-4" />} color="green" hint={t("hintCompletedWeek")} />
         <ColorStatCard label={t("statOverdue")} value={overdue} icon={<AlertTriangle className="h-4 w-4" />} color="red" hint={t("hintOverdueTasks")} />

@@ -117,6 +117,9 @@ function ContactEngagementInner({ contactId, orgId }: { contactId: string; orgId
   )
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ContactDetailPage() {
   const t = useTranslations("contacts")
   const tc = useTranslations("common")
@@ -124,6 +127,7 @@ export default function ContactDetailPage() {
   const params = useParams()
   const { data: session } = useSession()
   const [contact, setContact] = useState<Contact | null>(null)
+  useAutoTour("contactDetail")
   const [loading, setLoading] = useState(true)
   const id = params.id as string
   const orgId = session?.user?.organizationId
@@ -273,7 +277,7 @@ export default function ContactDetailPage() {
               {initials}
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{contact.fullName}</h1>
+              <h1 className="text-2xl font-bold flex items-center gap-2">{contact.fullName} <TourReplayButton tourId="contactDetail" /></h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{contact.position}</span>
                 {contact.company && (
@@ -302,7 +306,7 @@ export default function ContactDetailPage() {
                 </div>
               )}
               {/* Communication action buttons */}
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2" data-tour-id="contact-comm">
                 {isVisible("phone") && contact.phone && (
                   <ClickToCallButton phone={contact.phone!} contactId={contact.id} contactName={contact.fullName} />
                 )}
@@ -342,7 +346,7 @@ export default function ContactDetailPage() {
           ? "bg-green-500 shadow-green-500/30"
           : "bg-muted-foreground/40 shadow-muted-foreground/30"
         return (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-tour-id="contact-kpi">
             <ColorStatCard
               label={t("lastContact")}
               value={daysSince !== null ? `${daysSince} ${tc("days")}` : "—"}

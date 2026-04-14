@@ -33,6 +33,9 @@ interface Contact {
   engagementScore?: number
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ContactsPage() {
   const router = useRouter()
   const { data: session } = useSession()
@@ -40,6 +43,7 @@ export default function ContactsPage() {
   const tc = useTranslations("common")
   const te = useTranslations("engagement")
   const [contacts, setContacts] = useState<Contact[]>([])
+  useAutoTour("contacts")
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
@@ -197,18 +201,18 @@ export default function ContactsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="contacts" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" /> CSV Import</Button>
-          <Button onClick={handleAdd}><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
+          <Button onClick={handleAdd} data-tour-id="contacts-new"><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
         </div>
       </div>
 
       <PageDescription text={t("pageDescription")} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children" data-tour-id="contacts-stats">
         <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintTotalContacts")} />
         <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" hint={t("hintActiveContacts")} />
         <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />

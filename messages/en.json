@@ -2907,6 +2907,72 @@
       "headerDesc": "Rates based on your cost model + desired margin. Sliders simulate 'what if' scenarios.",
       "tabsTitle": "Three Views",
       "tabsDesc": "Model — current pricing logic. Edit — adjust rates per service. Sales — see how pricing affects deal profitability."
+    },
+    "companies": {
+      "statsTitle": "Client Health",
+      "statsDesc": "Active vs inactive, lead status breakdown. Red = needs attention. Click stats to filter the list below.",
+      "newTitle": "Build Your Client Base",
+      "newDesc": "Every company links to contacts, deals, tickets. The more data — the smarter AI predictions become.",
+      "listTitle": "Your Portfolio",
+      "listDesc": "Click any company to see full history: contacts, deals, invoices, timeline. Color = lead status."
+    },
+    "companyDetail": {
+      "kpiTitle": "Account Health",
+      "kpiDesc": "Contacts, deals, revenue, tickets — at a glance. Declining numbers? This client may be churning.",
+      "tabsTitle": "Deep Dive",
+      "tabsDesc": "Overview for summary, Contacts for people, Deals for pipeline, Timeline for full history, Pricing for rates."
+    },
+    "contacts": {
+      "statsTitle": "People Overview",
+      "statsDesc": "Total contacts, active, with email, with phone. Low email coverage = missed campaign opportunities.",
+      "newTitle": "Add People",
+      "newDesc": "Link to company, add phone + email. More contact data = better AI scoring and campaign targeting."
+    },
+    "contactDetail": {
+      "kpiTitle": "Engagement Profile",
+      "kpiDesc": "Activity count, last contact date, engagement score. Score decays if no interaction for 30+ days.",
+      "commTitle": "Reach Out",
+      "commDesc": "Call, email, or WhatsApp directly from here. Every interaction logs to timeline and boosts engagement score."
+    },
+    "tasks": {
+      "statsTitle": "Workload Dashboard",
+      "statsDesc": "Red = overdue, needs action NOW. 'Today' shows what's due. Use 'My Tasks' toggle to focus on yours.",
+      "viewsTitle": "Pick Your View",
+      "viewsDesc": "List for detail, Kanban for workflow, Calendar for scheduling. Switch anytime — data is the same.",
+      "newTitle": "Never Forget",
+      "newDesc": "Link tasks to deals or tickets — they appear in the deal timeline. Set due date for AI follow-up alerts."
+    },
+    "taskDetail": {
+      "statusTitle": "Update Progress",
+      "statusDesc": "Click a status button to move task forward: pending → in progress → completed. Overdue? Change date or escalate."
+    },
+    "projects": {
+      "newTitle": "Link to Revenue",
+      "newDesc": "Connect project to a deal — this tracks delivery against revenue. Set milestones for progress checkpoints.",
+      "listTitle": "Project Portfolio",
+      "listDesc": "Color = status. Red = at risk. Click for details: tasks, milestones, budget, team members."
+    },
+    "projectDetail": {
+      "tabsTitle": "Project Workspace",
+      "tabsDesc": "Overview for KPIs, Tasks for work items, Members for team, Milestones for checkpoints, Budget for costs."
+    },
+    "knowledgeBase": {
+      "newTitle": "Feed the AI",
+      "newDesc": "Every article you publish here is used by AI to answer tickets and portal chat. More articles = smarter AI responses.",
+      "catTitle": "Organize Knowledge",
+      "catDesc": "Categories structure your KB. Customers see published articles in the portal. Draft = internal only."
+    },
+    "contracts": {
+      "statsTitle": "Contract Overview",
+      "statsDesc": "Watch 'Expiring Soon' — renew before clients look elsewhere. MRR shows your recurring revenue baseline.",
+      "newTitle": "Formalize the Deal",
+      "newDesc": "Link to company + deal. Contract value feeds revenue reports and profitability calculations."
+    },
+    "offers": {
+      "statsTitle": "Proposal Pipeline",
+      "statsDesc": "Track approval rate: approved vs rejected. Low rate? Review pricing or value proposition.",
+      "newTitle": "Win the Deal",
+      "newDesc": "Link to deal for conversion tracking. Offer → Contract → Invoice = full revenue chain."
     }
   },
   "dashboardSettings": {

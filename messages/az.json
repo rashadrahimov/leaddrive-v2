@@ -2902,6 +2902,72 @@
       "headerDesc": "Tariflər = maya dəyəri + marja. Sürgülər 'nə olardı' ssenariləri simulyasiya edir.",
       "tabsTitle": "Üç görünüş",
       "tabsDesc": "Model — cari qiymət məntiqi. Redaktə — xidmət üzrə tariflər. Satış — qiymətlərin sövdə rentabelliyinə təsiri."
+    },
+    "companies": {
+      "statsTitle": "Müştəri sağlamlığı",
+      "statsDesc": "Aktiv vs qeyri-aktiv. Qırmızı = diqqət tələb edir. Filtrləmək üçün karta klikləyin.",
+      "newTitle": "Müştəri bazası qurun",
+      "newDesc": "Hər şirkət kontaktlar, sövdələr, biletlərlə bağlıdır. Daha çox məlumat = daha ağıllı AI proqnozlar.",
+      "listTitle": "Portfeliniz",
+      "listDesc": "Şirkətə klikləyin: kontaktlar, sövdələr, fakturalar, tarixçə. Rəng = lid statusu."
+    },
+    "companyDetail": {
+      "kpiTitle": "Hesab sağlamlığı",
+      "kpiDesc": "Kontaktlar, sövdələr, gəlir, biletlər — bir baxışda. Rəqəmlər düşür? Müştəri gedə bilər.",
+      "tabsTitle": "Dərin araşdırma",
+      "tabsDesc": "İcmal, Kontaktlar, Sövdələr, Tarixçə, Qiymətləndirmə — müştərinin tam mənzərəsi."
+    },
+    "contacts": {
+      "statsTitle": "Kontakt icmalı",
+      "statsDesc": "Cəmi, aktiv, email ilə, telefonla. Az email = kampaniya imkanları əldən çıxır.",
+      "newTitle": "İnsan əlavə edin",
+      "newDesc": "Şirkətə bağlayın, telefon + email əlavə edin. Daha çox məlumat = daha dəqiq AI qiymətləndirmə."
+    },
+    "contactDetail": {
+      "kpiTitle": "Aktivlik profili",
+      "kpiDesc": "Fəaliyyət sayı, son əlaqə tarixi, aktivlik balı. 30+ gün əlaqə olmasa bal düşür.",
+      "commTitle": "Əlaqə saxlayın",
+      "commDesc": "Zəng, email və ya WhatsApp buradan birbaşa. Hər əlaqə qeydə alınır və aktivlik balını artırır."
+    },
+    "tasks": {
+      "statsTitle": "İş yükü paneli",
+      "statsDesc": "Qırmızı = vaxtı keçib, İNDİ hərəkət edin. 'Bu gün' = son tarix olan tapşırıqlar. 'Mənim' filtrini istifadə edin.",
+      "viewsTitle": "Görünüşü seçin",
+      "viewsDesc": "Siyahı detallara, Kanban prosesə, Təqvim planlaşdırmaya uyğundur. Məlumatlar eynidir.",
+      "newTitle": "Unutmayın",
+      "newDesc": "Sövdəyə və ya biletə bağlayın — tapşırıq tarixçədə görünəcək. Son tarix AI xatırlatmalarını aktivləşdirir."
+    },
+    "taskDetail": {
+      "statusTitle": "İrəliləyişi yeniləyin",
+      "statusDesc": "Status düyməsinə klikləyin: gözləyir → icrada → tamamlandı. Vaxtı keçib? Tarixi dəyişin və ya eskalasiya edin."
+    },
+    "projects": {
+      "newTitle": "Gəlirə bağlayın",
+      "newDesc": "Layihəni sövdəyə bağlayın — çatdırılma vs gəliri izləyir. Mərhələlər irəliləyiş nöqtələridir.",
+      "listTitle": "Layihə portfeli",
+      "listDesc": "Rəng = status. Qırmızı = risk altında. Klikləyin: tapşırıqlar, mərhələlər, büdcə, komanda."
+    },
+    "projectDetail": {
+      "tabsTitle": "Layihə sahəsi",
+      "tabsDesc": "İcmal KPI üçün, Tapşırıqlar iş maddələri, Üzvlər komanda, Mərhələlər yoxlama nöqtələri, Büdcə xərclər."
+    },
+    "knowledgeBase": {
+      "newTitle": "AI-ni qidalandırın",
+      "newDesc": "Dərc etdiyiniz hər məqalə AI tərəfindən bilet cavabları və portal çatı üçün istifadə olunur. Daha çox məqalə = daha ağıllı cavablar.",
+      "catTitle": "Bilikləri təşkil edin",
+      "catDesc": "Kateqoriyalar KB-ni strukturlaşdırır. Müştərilər portalda Published məqalələri görür. Draft = yalnız daxili."
+    },
+    "contracts": {
+      "statsTitle": "Müqavilə icmalı",
+      "statsDesc": "'Tezliklə bitən'-ə diqqət edin — müştəri getmədən yeniləyin. MRR = təkrarlanan gəlir bazası.",
+      "newTitle": "Sövdəni rəsmiləşdirin",
+      "newDesc": "Şirkət + sövdəyə bağlayın. Müqavilə məbləği gəlir hesabatlarını və rentabelliyi qidalandırır."
+    },
+    "offers": {
+      "statsTitle": "Təklif hunisi",
+      "statsDesc": "Təsdiq nisbətini izləyin: təsdiqlənmiş vs rədd edilmiş. Aşağı nisbət? Qiymətləri nəzərdən keçirin.",
+      "newTitle": "Sövdəni qazanın",
+      "newDesc": "Konversiya izləmək üçün sövdəyə bağlayın. Təklif → Müqavilə → Faktura = tam gəlir zənciri."
     }
   },
   "dashboardSettings": {

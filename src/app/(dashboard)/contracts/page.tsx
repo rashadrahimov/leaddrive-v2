@@ -77,10 +77,14 @@ function daysUntilExpiry(endDate?: string): number | null {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function ContractsPage() {
   const { data: session } = useSession()
   const t = useTranslations("contracts")
   const [contracts, setContracts] = useState<Contract[]>([])
+  useAutoTour("contracts")
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -383,10 +387,10 @@ export default function ContractsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="contracts" /></h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button onClick={() => { setEditData(undefined); setShowForm(true) }}>
+        <Button onClick={() => { setEditData(undefined); setShowForm(true) }} data-tour-id="contracts-new">
           <Plus className="h-4 w-4 mr-1" /> {t("newContract")}
         </Button>
       </div>
@@ -394,7 +398,7 @@ export default function ContractsPage() {
       <PageDescription text={t("pageDescription")} />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3" data-tour-id="contracts-stats">
         <ColorStatCard label={t("statTotal")} value={total} icon={<FileText className="h-4 w-4" />} color="blue" hint={t("hintTotalContracts")} />
         <ColorStatCard label={t("statActive")} value={activeCount} icon={<FileText className="h-4 w-4" />} color="green" hint={t("hintActiveContracts")} />
         <ColorStatCard label={t("statTotalAmount")} value={`${totalValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="teal" hint={t("hintContractValue")} />

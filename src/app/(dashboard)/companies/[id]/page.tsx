@@ -68,6 +68,9 @@ function TimelineIcon({ type, activityType }: { type: string; activityType?: str
   return <span className="text-base leading-none">{emoji}</span>
 }
 
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function CompanyDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -75,6 +78,7 @@ export default function CompanyDetailPage() {
   const t = useTranslations("companies")
   const tc = useTranslations("common")
   const [company, setCompany] = useState<CompanyDetail | null>(null)
+  useAutoTour("companyDetail")
   const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
   const [pricingProfile, setPricingProfile] = useState<any>(null)
@@ -172,7 +176,7 @@ export default function CompanyDetailPage() {
               {company.name.charAt(0)}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-bold truncate">{company.name}</h1>
+              <h1 className="text-xl font-bold truncate flex items-center gap-2">{company.name} <TourReplayButton tourId="companyDetail" /></h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {company.industry && <span>{company.industry}</span>}
                 <Badge variant={company.status === "active" ? "default" : "secondary"} className="text-xs">{company.status}</Badge>
@@ -186,7 +190,7 @@ export default function CompanyDetailPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-tour-id="company-kpi">
         <ColorStatCard label={t("kpiContacts")} value={company.contacts?.length || 0} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintKpiContacts")} />
         <ColorStatCard label={t("kpiActiveDeals")} value={activeDeals.length} icon={<Handshake className="h-4 w-4" />} color="indigo" hint={t("hintKpiActiveDeals")} />
         <ColorStatCard label={t("kpiPipeline")} value={`${pipelineValue.toLocaleString()} ₼`} icon={<TrendingUp className="h-4 w-4" />} color="green" hint={t("hintKpiPipeline")} />
@@ -224,7 +228,7 @@ export default function CompanyDetailPage() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-muted/60 p-1 h-auto flex-wrap">
+        <TabsList className="bg-muted/60 p-1 h-auto flex-wrap" data-tour-id="company-tabs">
           <TabsTrigger value="overview" className="rounded-md text-sm">{t("tabOverview")} <InfoHint text={t("hintTabOverview")} size={12} className="ml-1" /></TabsTrigger>
           <TabsTrigger value="contacts" className="rounded-md text-sm">{t("tabContacts")} ({company.contacts?.length || 0}) <InfoHint text={t("hintTabContacts")} size={12} className="ml-1" /></TabsTrigger>
           <TabsTrigger value="deals" className="rounded-md text-sm">{t("tabDeals")} ({company.deals?.length || 0}) <InfoHint text={t("hintTabDeals")} size={12} className="ml-1" /></TabsTrigger>

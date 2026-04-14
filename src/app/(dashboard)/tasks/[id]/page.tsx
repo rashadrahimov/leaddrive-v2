@@ -312,6 +312,9 @@ function TaskCommentsSection({ taskId, orgId, comments, onRefresh }: {
 }
 
 // ─── Main Page ──────────────────────────────────────────────────
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+
 export default function TaskDetailPage() {
   const t = useTranslations("tasks")
   const tc = useTranslations("common")
@@ -323,6 +326,7 @@ export default function TaskDetailPage() {
   const orgId = session?.user?.organizationId
 
   const [task, setTask] = useState<TaskData | null>(null)
+  useAutoTour("taskDetail")
   const [syncing, setSyncing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -450,7 +454,7 @@ export default function TaskDetailPage() {
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold truncate">{task.title}</h1>
+          <h1 className="text-lg font-bold truncate flex items-center gap-2">{task.title} <TourReplayButton tourId="taskDetail" /></h1>
           <div className="flex items-center gap-2 mt-1">
             <Badge className={statusStyle.className}>{STATUS_LABELS[task.status] || task.status}</Badge>
             <Badge className={priorityStyle.className}>{PRIORITY_LABELS[task.priority] || task.priority}</Badge>
@@ -502,7 +506,7 @@ export default function TaskDetailPage() {
       </div>
 
       {/* Status Pipeline */}
-      <div className="flex gap-0 rounded-xl overflow-hidden border">
+      <div className="flex gap-0 rounded-xl overflow-hidden border" data-tour-id="task-status">
         {STATUS_PIPELINE.map((s, i) => {
           const isCurrent = task.status === s || (task.status === "todo" && s === "pending")
           const currentIdx = STATUS_PIPELINE.indexOf(task.status === "todo" ? "pending" : task.status)
