@@ -83,6 +83,7 @@ export async function provisionTenant(input: TenantInput): Promise<ProvisionResu
         maxContacts: planDefaults.maxContacts,
         features: JSON.stringify(input.features || planDefaults.features),
         addons: input.features || planDefaults.addons,
+        logo: input.branding?.logo || null,
         branding: JSON.stringify(input.branding || {}),
         isActive: true,
         serverType: "shared",

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, CheckCircle2, Copy, Database } from "lucide-react"
+import { ArrowLeft, Loader2, CheckCircle2, Copy, Database, Upload, X } from "lucide-react"
 import Link from "next/link"
 import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
 import { TENANT_PLANS, type TenantPlan } from "@/lib/tenant-plans"
@@ -34,6 +34,9 @@ export default function NewTenantPage() {
   const [result, setResult] = useState<ProvisionResult | null>(null)
   const [copied, setCopied] = useState("")
 
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+
   const [form, setForm] = useState({
     companyName: "",
     slug: "",
@@ -45,6 +48,38 @@ export default function NewTenantPage() {
     logo: "",
     seedDemoData: false,
   })
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Local preview
+    setLogoPreview(URL.createObjectURL(file))
+    setLogoUploading(true)
+
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch("/api/v1/admin/upload-logo", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || "Logo upload failed")
+        setLogoPreview(null)
+        return
+      }
+      setForm((prev) => ({ ...prev, logo: data.url }))
+    } catch {
+      setError("Logo upload failed")
+      setLogoPreview(null)
+    } finally {
+      setLogoUploading(false)
+    }
+  }
+
+  function removeLogo() {
+    setForm((prev) => ({ ...prev, logo: "" }))
+    setLogoPreview(null)
+  }
 
   function handlePlanChange(plan: string) {
     const defaults = TENANT_PLANS[plan as TenantPlan]
@@ -218,12 +253,39 @@ export default function NewTenantPage() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label>{t("tenants.logoUrl")}</Label>
-              <Input
-                value={form.logo}
-                onChange={(e) => setForm({ ...form, logo: e.target.value })}
-                placeholder="https://..."
-              />
+              <Label>{t("tenants.logo") || "Logo"}</Label>
+              {(logoPreview || form.logo) ? (
+                <div className="relative w-fit">
+                  <img
+                    src={logoPreview || form.logo}
+                    alt="Logo preview"
+                    className="h-16 max-w-[200px] object-contain rounded border border-border/50 bg-muted/30 p-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    className="absolute -top-2 -right-2 rounded-full bg-destructive text-destructive-foreground p-0.5 hover:bg-destructive/80"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  {logoUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-border/70 px-4 py-3 hover:bg-muted/30 transition-colors">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">PNG, JPG, SVG — max 2MB</span>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
           </div>
 

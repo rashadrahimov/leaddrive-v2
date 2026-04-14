@@ -96,7 +96,11 @@ export async function PUT(
   if (body.maxUsers !== undefined) updateData.maxUsers = body.maxUsers
   if (body.maxContacts !== undefined) updateData.maxContacts = body.maxContacts
   if (body.features !== undefined) updateData.features = typeof body.features === "string" ? body.features : JSON.stringify(body.features)
-  if (body.branding !== undefined) updateData.branding = typeof body.branding === "string" ? body.branding : JSON.stringify(body.branding)
+  if (body.branding !== undefined) {
+    updateData.branding = typeof body.branding === "string" ? body.branding : JSON.stringify(body.branding)
+    const brandingObj = typeof body.branding === "string" ? JSON.parse(body.branding) : body.branding
+    updateData.logo = brandingObj?.logo || null
+  }
   if (body.addons !== undefined) updateData.addons = body.addons
   if (body.isActive !== undefined) updateData.isActive = body.isActive
   if (body.serverType !== undefined) updateData.serverType = body.serverType
