@@ -10,6 +10,7 @@ import { MotionPage } from "@/components/ui/motion"
 import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
+  Mail, Send, MessageSquare,
 } from "lucide-react"
 
 interface ShadowAction {
@@ -53,6 +54,9 @@ export default function AiAutomationPage() {
   const [budget, setBudget] = useState<{ spent: number; limit: number; remaining: number } | null>(null)
   const [budgetLimit, setBudgetLimit] = useState("")
   const [savingBudget, setSavingBudget] = useState(false)
+  const [delivery, setDelivery] = useState({ telegramBotToken: "", telegramChatId: "", slackWebhookUrl: "", language: "ru" })
+  const [savingDelivery, setSavingDelivery] = useState(false)
+  const [deliverySaved, setDeliverySaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState<string | null>(null)
   const [reviewing, setReviewing] = useState<string | null>(null)
@@ -63,10 +67,11 @@ export default function AiAutomationPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [featuresRes, shadowRes, budgetRes] = await Promise.all([
+      const [featuresRes, shadowRes, budgetRes, deliveryRes] = await Promise.all([
         fetch("/api/v1/settings/ai-features", { headers }).then(r => r.json()).catch(() => null),
         fetch("/api/v1/ai-shadow-actions?status=pending&limit=20", { headers }).then(r => r.json()).catch(() => null),
         fetch("/api/v1/settings/ai-budget", { headers }).then(r => r.json()).catch(() => null),
+        fetch("/api/v1/settings/ai-delivery", { headers }).then(r => r.json()).catch(() => null),
       ])
 
       const orgFeatures: string[] = Array.isArray(featuresRes?.data?.features) ? featuresRes.data.features : []
@@ -86,6 +91,10 @@ export default function AiAutomationPage() {
       if (budgetRes?.data) {
         setBudget(budgetRes.data)
         setBudgetLimit(String(budgetRes.data.limit))
+      }
+
+      if (deliveryRes?.data) {
+        setDelivery(d => ({ ...d, ...deliveryRes.data }))
       }
     } catch {}
     setLoading(false)
@@ -120,6 +129,21 @@ export default function AiAutomationPage() {
       setBudget(prev => prev ? { ...prev, limit: val, remaining: Math.max(0, val - prev.spent) } : prev)
     } catch {}
     setSavingBudget(false)
+  }
+
+  const saveDelivery = async () => {
+    setSavingDelivery(true)
+    setDeliverySaved(false)
+    try {
+      await fetch("/api/v1/settings/ai-delivery", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(delivery),
+      })
+      setDeliverySaved(true)
+      setTimeout(() => setDeliverySaved(false), 3000)
+    } catch {}
+    setSavingDelivery(false)
   }
 
   const reviewAction = async (actionId: string, decision: "approve" | "reject") => {
@@ -207,6 +231,93 @@ export default function AiAutomationPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Delivery Channels */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Send className="h-4 w-4" /> {t("deliveryChannels")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">{t("deliveryChannelsDesc")}</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Email info */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/30">
+            <Mail className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium">Email</p>
+              <p className="text-xs text-muted-foreground">{t("emailDeliveryDesc")}</p>
+            </div>
+            <Badge variant="outline" className="ml-auto shrink-0 text-[10px]">{t("automatic")}</Badge>
+          </div>
+
+          {/* Telegram */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Send className="h-3.5 w-3.5 text-sky-500" />
+              <span className="text-sm font-medium">Telegram</span>
+              {delivery.telegramBotToken && delivery.telegramChatId && (
+                <Badge variant="outline" className="text-[10px] text-green-600 border-green-300">{t("configured")}</Badge>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                placeholder="Bot Token"
+                value={delivery.telegramBotToken}
+                onChange={e => setDelivery(d => ({ ...d, telegramBotToken: e.target.value }))}
+                className="h-8 text-xs border rounded px-2 bg-background"
+              />
+              <input
+                type="text"
+                placeholder="Chat ID"
+                value={delivery.telegramChatId}
+                onChange={e => setDelivery(d => ({ ...d, telegramChatId: e.target.value }))}
+                className="h-8 text-xs border rounded px-2 bg-background"
+              />
+            </div>
+          </div>
+
+          {/* Slack */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-3.5 w-3.5 text-purple-500" />
+              <span className="text-sm font-medium">Slack</span>
+              {delivery.slackWebhookUrl && (
+                <Badge variant="outline" className="text-[10px] text-green-600 border-green-300">{t("configured")}</Badge>
+              )}
+            </div>
+            <input
+              type="text"
+              placeholder="Webhook URL (https://hooks.slack.com/...)"
+              value={delivery.slackWebhookUrl}
+              onChange={e => setDelivery(d => ({ ...d, slackWebhookUrl: e.target.value }))}
+              className="h-8 w-full text-xs border rounded px-2 bg-background"
+            />
+          </div>
+
+          {/* Language */}
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">{t("briefingLanguage")}:</span>
+            <select
+              value={delivery.language}
+              onChange={e => setDelivery(d => ({ ...d, language: e.target.value }))}
+              className="h-8 text-xs border rounded px-2 bg-background"
+            >
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+              <option value="az">Azərbaycan</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={saveDelivery} disabled={savingDelivery}>
+              {savingDelivery ? "..." : t("save")}
+            </Button>
+            {deliverySaved && <span className="text-xs text-green-600">{t("saved")}</span>}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Feature Toggles */}
       <div className="space-y-6 mb-8">

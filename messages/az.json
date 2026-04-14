@@ -2740,7 +2740,14 @@
     "aiClassifying": "AI təsnif edir...",
     "aiCommentary": "AI Şərh",
     "generatingInsight": "Analitika yaradılır...",
-    "failedRetry": "Yükləmə xətası — yenidən cəhd edin"
+    "failedRetry": "Yükləmə xətası — yenidən cəhd edin",
+    "deliveryChannels": "Çatdırılma kanalları",
+    "deliveryChannelsDesc": "İcmalların və xəbərdarlıqların hara göndərildiyini konfiqurasiya edin",
+    "emailDeliveryDesc": "Bütün admin və manager istifadəçilərə avtomatik göndərilir",
+    "automatic": "Avtomatik",
+    "configured": "Konfiqurasiya edilib",
+    "briefingLanguage": "İcmal dili",
+    "saved": "Saxlandı!"
   },
   "dashboardSettings": {
     "title": "İdarə paneli parametrləri",

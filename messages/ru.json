@@ -2745,7 +2745,14 @@
     "aiClassifying": "AI классифицирует...",
     "aiCommentary": "AI Комментарий",
     "generatingInsight": "Генерация аналитики...",
-    "failedRetry": "Ошибка загрузки — нажмите для повтора"
+    "failedRetry": "Ошибка загрузки — нажмите для повтора",
+    "deliveryChannels": "Каналы доставки",
+    "deliveryChannelsDesc": "Настройте куда отправляются дайджесты и алерты",
+    "emailDeliveryDesc": "Отправляется всем admin и manager пользователям автоматически",
+    "automatic": "Автоматически",
+    "configured": "Настроено",
+    "briefingLanguage": "Язык дайджеста",
+    "saved": "Сохранено!"
   },
   "dashboardSettings": {
     "title": "Настройки дашборда",

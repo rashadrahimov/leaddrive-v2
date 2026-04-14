@@ -2745,7 +2745,14 @@
     "aiClassifying": "AI classifying...",
     "aiCommentary": "AI Commentary",
     "generatingInsight": "Generating insight...",
-    "failedRetry": "Failed to load — click to retry"
+    "failedRetry": "Failed to load — click to retry",
+    "deliveryChannels": "Delivery Channels",
+    "deliveryChannelsDesc": "Configure where daily briefing and alerts are delivered",
+    "emailDeliveryDesc": "Sent to all admin and manager users automatically",
+    "automatic": "Automatic",
+    "configured": "Configured",
+    "briefingLanguage": "Briefing language",
+    "saved": "Saved!"
   },
   "dashboardSettings": {
     "title": "Dashboard Settings",
