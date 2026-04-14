@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { checkAiBudget } from "@/lib/ai/budget"
+import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
 import { generateRevenueForecast } from "@/lib/ai/predictive"
 import { calculateChurnRisk } from "@/lib/ai/predictive"
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
         aiResponse: text.slice(0, 1000),
         promptTokens: inputTokens,
         completionTokens: outputTokens,
-        costUsd: (inputTokens * 0.001 + outputTokens * 0.005) / 1000,
+        costUsd: calculateAiCost("claude-haiku-4-5-20251001", inputTokens, outputTokens),
         model: "claude-haiku-4-5-20251001",
         agentType: "forecast_analyst",
         isCopilot: true,

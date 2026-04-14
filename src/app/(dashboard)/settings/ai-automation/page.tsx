@@ -54,6 +54,9 @@ export default function AiAutomationPage() {
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
   const [shadowTotal, setShadowTotal] = useState(0)
+  const [budget, setBudget] = useState<{ spent: number; limit: number; remaining: number } | null>(null)
+  const [budgetLimit, setBudgetLimit] = useState("")
+  const [savingBudget, setSavingBudget] = useState(false)
   const [loading, setLoading] = useState(true)
   const [toggling, setToggling] = useState<string | null>(null)
   const [reviewing, setReviewing] = useState<string | null>(null)
@@ -64,9 +67,10 @@ export default function AiAutomationPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [featuresRes, shadowRes] = await Promise.all([
+      const [featuresRes, shadowRes, budgetRes] = await Promise.all([
         fetch("/api/v1/settings/ai-features", { headers }).then(r => r.json()).catch(() => null),
         fetch("/api/v1/ai-shadow-actions?status=pending&limit=20", { headers }).then(r => r.json()).catch(() => null),
+        fetch("/api/v1/settings/ai-budget", { headers }).then(r => r.json()).catch(() => null),
       ])
 
       const orgFeatures: string[] = Array.isArray(featuresRes?.data?.features) ? featuresRes.data.features : []
@@ -75,6 +79,11 @@ export default function AiAutomationPage() {
       if (shadowRes?.data) {
         setShadowActions(shadowRes.data)
         setShadowTotal(shadowRes.pagination?.total || 0)
+      }
+
+      if (budgetRes?.data) {
+        setBudget(budgetRes.data)
+        setBudgetLimit(String(budgetRes.data.limit))
       }
     } catch {}
     setLoading(false)
@@ -94,6 +103,21 @@ export default function AiAutomationPage() {
       setFeatures(prev => prev.map(f => f.key === key ? { ...f, enabled: !f.enabled } : f))
     } catch {}
     setToggling(null)
+  }
+
+  const saveBudgetLimit = async () => {
+    const val = parseFloat(budgetLimit)
+    if (isNaN(val) || val <= 0) return
+    setSavingBudget(true)
+    try {
+      await fetch("/api/v1/settings/ai-budget", {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ limit: val }),
+      })
+      setBudget(prev => prev ? { ...prev, limit: val, remaining: Math.max(0, val - prev.spent) } : prev)
+    } catch {}
+    setSavingBudget(false)
   }
 
   const reviewAction = async (actionId: string, decision: "approve" | "reject") => {
@@ -141,6 +165,46 @@ export default function AiAutomationPage() {
           <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Refresh
         </Button>
       </div>
+
+      {/* Budget Card */}
+      {budget && (
+        <Card className="mb-6">
+          <CardContent className="pt-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-violet-500" /> AI Budget (Today)
+              </h3>
+              <Badge variant={budget.spent >= budget.limit ? "destructive" : budget.spent >= budget.limit * 0.8 ? "secondary" : "outline"} className="text-xs">
+                ${budget.spent.toFixed(3)} / ${budget.limit.toFixed(2)}
+              </Badge>
+            </div>
+            {/* Progress bar */}
+            <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  budget.spent >= budget.limit ? "bg-red-500" : budget.spent >= budget.limit * 0.8 ? "bg-amber-500" : "bg-emerald-500"
+                }`}
+                style={{ width: `${Math.min(100, (budget.spent / budget.limit) * 100)}%` }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground whitespace-nowrap">Daily limit: $</label>
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                value={budgetLimit}
+                onChange={e => setBudgetLimit(e.target.value)}
+                className="h-7 w-20 text-xs border rounded px-2 bg-background"
+              />
+              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={saveBudgetLimit} disabled={savingBudget}>
+                {savingBudget ? "..." : "Save"}
+              </Button>
+              <span className="text-[10px] text-muted-foreground ml-auto">Remaining: ${budget.remaining.toFixed(3)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Feature Toggles */}
       <div className="space-y-6 mb-8">

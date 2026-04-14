@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { checkAiBudget } from "@/lib/ai/budget"
+import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
 import { predictDealWin } from "@/lib/ai/predictive"
 import Anthropic from "@anthropic-ai/sdk"
@@ -33,8 +33,9 @@ export async function GET(req: NextRequest) {
     })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
 
-    // Get prediction
-    const prediction = await predictDealWin(dealId, orgId)
+    // Get prediction (graceful degradation if fails)
+    let prediction: any = { winProbability: 0, expectedCloseDate: null, riskFactors: [], positiveFactors: [], confidence: 0 }
+    try { prediction = await predictDealWin(dealId, orgId) } catch {}
 
     // Get recent activities
     const activities = await prisma.activity.findMany({
@@ -44,12 +45,12 @@ export async function GET(req: NextRequest) {
       select: { type: true, subject: true, createdAt: true },
     })
 
-    // Get recent comments
-    const comments = await prisma.comment.findMany({
-      where: { organizationId: orgId, dealId },
+    // Get recent notes (activity type=note for this deal)
+    const notes = await prisma.activity.findMany({
+      where: { organizationId: orgId, relatedType: "deal", relatedId: dealId, type: "note" },
       orderBy: { createdAt: "desc" },
       take: 3,
-      select: { content: true, createdAt: true },
+      select: { description: true, createdAt: true },
     })
 
     // Count total tasks for this deal
@@ -78,11 +79,11 @@ export async function GET(req: NextRequest) {
       },
       prediction: {
         winProbability: prediction.winProbability,
-        riskFactors: prediction.riskFactors.map(f => f.key),
-        positiveFactors: prediction.positiveFactors.map(f => f.key),
+        riskFactors: prediction.riskFactors.map((f: any) => f.key),
+        positiveFactors: prediction.positiveFactors.map((f: any) => f.key),
       },
       recentActivities: activities.map((a: any) => ({ type: a.type, subject: a.subject })),
-      recentComments: comments.map((c: any) => c.content?.slice(0, 100)),
+      recentNotes: notes.map((n: any) => n.description?.slice(0, 100)),
     }
 
     const anthropic = new Anthropic()
@@ -116,7 +117,7 @@ ${JSON.stringify(context)}`,
     // Log interaction
     const inputTokens = response.usage?.input_tokens || 0
     const outputTokens = response.usage?.output_tokens || 0
-    const cost = (inputTokens * 0.001 + outputTokens * 0.005) / 1000
+    const cost = calculateAiCost("claude-haiku-4-5-20251001", inputTokens, outputTokens)
 
     await prisma.aiInteractionLog.create({
       data: {

@@ -25,6 +25,7 @@
     "pricing": "Qiymətləndirmə",
     "reports": "Hesabatlar",
     "aiCenter": "Da Vinci Mərkəzi",
+    "aiAutomation": "AI Avtomatlaşdırma",
     "notifications": "Bildirişlər",
     "dashboardSettings": "Widget parametrləri",
     "pipelines": "Huni mərhələləri",
@@ -3796,7 +3797,17 @@
     "hintBudgetRemaining": "Qalan büdcə = Ümumi büdcə - Faktiki xərc",
     "hintColStatus": "Status: Planlaşdırma, Aktiv, Gözləmədə, Tamamlanıb, Ləğv edilib",
     "hintColCompletion": "İrəliləyiş faizi — layihənin nə qədəri tamamlanıb",
-    "hintColPriority": "Layihənin prioritet səviyyəsi"
+    "hintColPriority": "Layihənin prioritet səviyyəsi",
+    "export": "İxrac",
+    "prev": "Əvvəl",
+    "next": "Sonra",
+    "budgetProgress": "Büdcə irəliləyişi",
+    "total": "Cəmi",
+    "noTasks": "Tapşırıq tapılmadı",
+    "noMembers": "Hələ üzv yoxdur",
+    "noMilestones": "Hələ milestone yoxdur",
+    "role": "Rol",
+    "joined": "Qoşulub"
   },
   "budgeting": {
     "title": "Büdcələşdirmə",

@@ -12,7 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
-  Trophy, Activity, FileBarChart,
+  Trophy, Activity, FileBarChart, Bot,
 } from "lucide-react"
 import { useState } from "react"
 import { Logo } from "@/components/logo"
@@ -87,6 +87,7 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings/macros", icon: Keyboard, tKey: "macros", group: "Settings" },
   { module: "core", href: "/settings/field-permissions", icon: Shield, tKey: "fieldPermissions", group: "Settings" },
   { module: "core", href: "/settings/voip", icon: Phone, tKey: "voip", group: "Settings" },
+  { module: "ai", href: "/settings/ai-automation", icon: Bot, tKey: "aiAutomation", group: "Settings" },
   { module: "core", href: "/settings", icon: Settings, tKey: "settings", group: "Settings" },
 ]
 

@@ -25,6 +25,7 @@
     "pricing": "Ценообразование",
     "reports": "Отчёты",
     "aiCenter": "Da Vinci Центр",
+    "aiAutomation": "AI Автоматизация",
     "notifications": "Уведомления",
     "dashboardSettings": "Настройки виджетов",
     "pipelines": "Воронки",
@@ -3801,7 +3802,17 @@
     "hintBudgetRemaining": "Остаток бюджета = Бюджет - Факт. расходы",
     "hintColStatus": "Статус: Планирование, Активный, На паузе, Завершён, Отменён",
     "hintColCompletion": "Процент завершённости проекта",
-    "hintColPriority": "Уровень приоритета проекта"
+    "hintColPriority": "Уровень приоритета проекта",
+    "export": "Экспорт",
+    "prev": "Назад",
+    "next": "Далее",
+    "budgetProgress": "Прогресс бюджета",
+    "total": "Итого",
+    "noTasks": "Задачи не найдены",
+    "noMembers": "Участников пока нет",
+    "noMilestones": "Milestone-ов пока нет",
+    "role": "Роль",
+    "joined": "Присоединился"
   },
   "budgeting": {
     "title": "Бюджетирование",

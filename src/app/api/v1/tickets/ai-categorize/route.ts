@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
-import { checkAiBudget } from "@/lib/ai/budget"
+import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
 
@@ -69,7 +69,7 @@ ${input}`,
     // Log the interaction
     const inputTokens = response.usage?.input_tokens || 0
     const outputTokens = response.usage?.output_tokens || 0
-    const cost = (inputTokens * 0.001 + outputTokens * 0.005) / 1000
+    const cost = calculateAiCost("claude-haiku-4-5-20251001", inputTokens, outputTokens)
 
     await prisma.aiInteractionLog.create({
       data: {

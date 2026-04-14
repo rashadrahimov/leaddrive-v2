@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
-import { canRunAiAutomation } from "@/lib/ai/budget"
+import { canRunAiAutomation, calculateAiCost } from "@/lib/ai/budget"
 import Anthropic from "@anthropic-ai/sdk"
 
 const FEATURE_NAME = "ai_daily_briefing"
@@ -351,7 +351,7 @@ async function generateNarrative(orgId: string, data: BriefingData, lang: string
     // Log the interaction
     const inputTokens = response.usage?.input_tokens || 0
     const outputTokens = response.usage?.output_tokens || 0
-    const cost = (inputTokens * 0.001 + outputTokens * 0.005) / 1000
+    const cost = calculateAiCost("claude-haiku-4-5-20251001", inputTokens, outputTokens)
 
     await prisma.aiInteractionLog.create({
       data: {

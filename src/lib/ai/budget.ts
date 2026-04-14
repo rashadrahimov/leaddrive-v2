@@ -2,6 +2,23 @@ import { prisma } from "@/lib/prisma"
 
 const DEFAULT_DAILY_LIMIT_USD = 5.0
 
+// Model pricing per million tokens (USD)
+const MODEL_PRICING: Record<string, { input: number; output: number }> = {
+  "claude-haiku-4-5-20251001": { input: 1.0, output: 5.0 },
+  "claude-sonnet-4-5-20250929": { input: 3.0, output: 15.0 },
+  "claude-sonnet-4-20250514": { input: 3.0, output: 15.0 },
+  "claude-opus-4-6": { input: 15.0, output: 75.0 },
+}
+
+/**
+ * Calculate cost in USD for a given model + token usage.
+ * Centralised pricing — use this everywhere instead of inline formulas.
+ */
+export function calculateAiCost(model: string, inputTokens: number, outputTokens: number): number {
+  const pricing = MODEL_PRICING[model] || MODEL_PRICING["claude-haiku-4-5-20251001"]
+  return (inputTokens * pricing.input + outputTokens * pricing.output) / 1_000_000
+}
+
 /**
  * Check if organization has remaining AI budget for today.
  * Sums costUsd from AiInteractionLog for the current day.

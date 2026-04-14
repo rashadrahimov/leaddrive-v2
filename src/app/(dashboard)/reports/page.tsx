@@ -74,13 +74,15 @@ function ForecastNarrative() {
   const [narrative, setNarrative] = useState("")
   const [loading, setLoading] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(false)
 
   const load = () => {
     setLoading(true)
+    setError(false)
     fetch("/api/v1/reports/ai-narrative")
-      .then(r => r.json())
-      .then(res => { if (res.data?.narrative) setNarrative(res.data.narrative) })
-      .catch(() => {})
+      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(res => { if (res.data?.narrative) setNarrative(res.data.narrative); else setError(true) })
+      .catch(() => setError(true))
       .finally(() => { setLoading(false); setLoaded(true) })
   }
 
@@ -97,6 +99,14 @@ function ForecastNarrative() {
       <div className="flex items-center gap-1.5 mt-3 text-[11px] text-muted-foreground animate-pulse">
         <Sparkles className="h-3 w-3" /> Generating insight...
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <button onClick={load} className="flex items-center gap-1.5 mt-3 text-[11px] text-red-500 hover:text-red-600 transition-colors">
+        <Sparkles className="h-3 w-3" /> Failed to load — click to retry
+      </button>
     )
   }
 

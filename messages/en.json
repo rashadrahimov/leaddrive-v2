@@ -25,6 +25,7 @@
     "pricing": "Pricing",
     "reports": "Reports",
     "aiCenter": "Da Vinci Center",
+    "aiAutomation": "AI Automation",
     "notifications": "Notifications",
     "dashboardSettings": "Widget Settings",
     "pipelines": "Pipelines",
@@ -3801,7 +3802,17 @@
     "hintBudgetRemaining": "Remaining budget = Total Budget - Actual Cost",
     "hintColStatus": "Project status: Planning, Active, On Hold, Completed, Cancelled",
     "hintColCompletion": "Progress percentage — how much of the project is done",
-    "hintColPriority": "Project priority level"
+    "hintColPriority": "Project priority level",
+    "export": "Export",
+    "prev": "Prev",
+    "next": "Next",
+    "budgetProgress": "Budget Progress",
+    "total": "Total",
+    "noTasks": "No tasks match filters",
+    "noMembers": "No members yet",
+    "noMilestones": "No milestones yet",
+    "role": "Role",
+    "joined": "Joined"
   },
   "budgeting": {
     "title": "Budgeting",

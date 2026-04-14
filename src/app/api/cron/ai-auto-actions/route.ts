@@ -58,6 +58,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Execute approved shadow actions
+    const executedCount = await executeApprovedShadowActions(now)
+    results.executedApproved = executedCount
+
     return NextResponse.json({
       success: true,
       data: { ...results, timestamp: now.toISOString() },
@@ -382,4 +386,111 @@ async function runAutoPaymentReminder(orgId: string, now: Date, shadow: boolean)
   }
 
   return count
+}
+
+// ── Execute approved shadow actions ──
+
+async function executeApprovedShadowActions(now: Date): Promise<number> {
+  let executed = 0
+
+  const approved = await prisma.aiShadowAction.findMany({
+    where: { approved: true, reviewedAt: { not: null } },
+    orderBy: { createdAt: "asc" },
+    take: 50,
+  })
+
+  for (const action of approved) {
+    try {
+      const payload = action.payload as Record<string, any>
+
+      switch (action.actionType) {
+        case "create_task": {
+          // Check idempotency: don't create if task already exists
+          const existing = await prisma.task.findFirst({
+            where: {
+              organizationId: action.organizationId,
+              relatedType: action.entityType,
+              relatedId: action.entityId,
+              title: payload.title,
+              createdAt: { gte: new Date(now.getTime() - 7 * 86400000) },
+            },
+          })
+          if (!existing) {
+            await prisma.task.create({
+              data: {
+                organizationId: action.organizationId,
+                title: payload.title,
+                description: payload.description || "",
+                assignedTo: payload.assignedTo || "",
+                dueDate: new Date(now.getTime() + 2 * 86400000),
+                priority: payload.daysSinceActivity > 14 ? "high" : "medium",
+                status: "pending",
+                relatedType: action.entityType,
+                relatedId: action.entityId,
+                createdBy: "system",
+              },
+            })
+          }
+          break
+        }
+
+        case "send_template": {
+          await prisma.ticketComment.create({
+            data: {
+              ticketId: action.entityId,
+              comment: payload.message,
+              isInternal: false,
+              userId: null,
+            },
+          })
+          await prisma.ticket.updateMany({
+            where: { id: action.entityId, organizationId: action.organizationId },
+            data: { firstResponseAt: now, status: "in_progress" },
+          })
+          break
+        }
+
+        case "enroll_journey": {
+          if (!payload.contactId) break
+          const journey = await prisma.journey.findFirst({
+            where: {
+              organizationId: action.organizationId,
+              name: { contains: "payment" },
+              status: "active",
+            },
+          })
+          if (journey) {
+            const existing = await prisma.journeyEnrollment.findFirst({
+              where: { contactId: payload.contactId, journeyId: journey.id, status: "active" },
+            })
+            if (!existing) {
+              await prisma.journeyEnrollment.create({
+                data: {
+                  organizationId: action.organizationId,
+                  journeyId: journey.id,
+                  contactId: payload.contactId,
+                  status: "active",
+                  currentStepIndex: 0,
+                },
+              })
+            }
+          }
+          break
+        }
+      }
+
+      // Delete executed action (no longer needed)
+      await prisma.aiShadowAction.delete({ where: { id: action.id } })
+      executed++
+    } catch (err) {
+      console.error(`Failed to execute shadow action ${action.id}:`, err)
+      // Mark as failed by rejecting
+      await prisma.aiShadowAction.update({
+        where: { id: action.id },
+        data: { approved: false, reviewedAt: now },
+      })
+    }
+  }
+
+  return executed
 }
