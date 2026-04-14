@@ -54,6 +54,8 @@ export default function AiAutomationPage() {
   const orgId = (session?.user as any)?.organizationId
   const [toursReset, setToursReset] = useState(false)
   const [tipsReset, setTipsReset] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
+  const [demoResult, setDemoResult] = useState<string | null>(null)
   const [features, setFeatures] = useState<AiFeature[]>([])
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
   const [shadowTotal, setShadowTotal] = useState(0)
@@ -199,6 +201,30 @@ export default function AiAutomationPage() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => { localStorage.removeItem("leaddrive_dismissed_tips"); setTipsReset(true); setTimeout(() => setTipsReset(false), 3000) }}>
             {tipsReset ? "✓" : "↺"} {t("resetTips")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={demoLoading}
+            onClick={async () => {
+              if (!confirm("Load demo data? This will add sample companies, deals, tickets, invoices and more to your CRM for demonstration purposes.")) return
+              setDemoLoading(true)
+              setDemoResult(null)
+              try {
+                const res = await fetch("/api/v1/admin/demo-seed", { method: "POST", headers })
+                const data = await res.json()
+                if (data.success) {
+                  setDemoResult("✓")
+                  setTimeout(() => setDemoResult(null), 5000)
+                } else {
+                  setDemoResult("✗")
+                  setTimeout(() => setDemoResult(null), 5000)
+                }
+              } catch { setDemoResult("✗") }
+              setDemoLoading(false)
+            }}
+          >
+            {demoLoading ? "⏳" : demoResult || "🎬"} {t("loadDemo")}
           </Button>
           <Button variant="outline" size="sm" onClick={fetchData}>
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}
