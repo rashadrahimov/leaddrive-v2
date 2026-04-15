@@ -2833,7 +2833,10 @@
     "prodTitle": "Kataloq təkliflər və fakturalarda", "prodDesc": "Məhsulları bir dəfə əlavə edin — qiymətlər avtodolur.", "prodCta": "Məhsullar",
     "eventsTitle": "Hadisələr → Google Calendar", "eventsDesc": "İştirakçılar dəvət alır, sinxronizasiya avtomatik.", "eventsCta": "Hadisələr",
     "setValTitle": "Pipeline mərhələ validasiyası", "setValDesc": "\"Value olmadan Proposal-a keçmək olmaz\" — prosesi qoruyun.", "setValCta": "Pipeline",
-    "setPermTitle": "Sahələri rollara görə gizlədin", "setPermDesc": "Maaşları agentlərdən, sövdə dəyərini viewer-lərdən. Sahə üzrə.", "setPermCta": "Giriş"
+    "setPermTitle": "Sahələri rollara görə gizlədin", "setPermDesc": "Maaşları agentlərdən, sövdə dəyərini viewer-lərdən. Sahə üzrə.", "setPermCta": "Giriş",
+    "macroShortTitle": "Alt+1-9 tiketlərdə makro tətbiq edir", "macroShortDesc": "Qısayol düymələri təyin edin. Tiketi açın, Alt+1 basın — status dəyişir, cavab göndərilir, teq əlavə olunur. Bir düymə ilə.", "macroShortCta": "Tiketi açın",
+    "macroCatTitle": "Makrolar üçün xüsusi kateqoriyalar", "macroCatDesc": "Kateqoriya tablarının yanında dişli işarəsinə basın — yaradın, adını dəyişin, silin. Öz qaydanızla təşkil edin.", "macroCatCta": "İdarə edin",
+    "macroOrderTitle": "Əməliyyat sırası vacibdir", "macroOrderDesc": "Makro əməliyyatları yuxarıdan aşağıya icra olunur. Ox düymələri ilə sıranı dəyişin: əvvəlcə status, sonra cavab, sonra teq.", "macroOrderCta": "Redaktə edin"
   },
   "tour": {
     "dashboard": {
@@ -3064,7 +3067,18 @@
     "pipelines": { "headerTitle": "Satış prosesini dizayn edin", "headerDesc": "Mərhələlər və hər mərhələ üçün qazanma ehtimalı. Yeni sövdələrə default pipeline tətbiq olunur." },
     "users": { "listTitle": "Komandanız", "listDesc": "Rollar girişi idarə edir: admin > manager > agent. Bacarıqlar bilet təyinatına təsir edir.", "newTitle": "Üzv əlavə edin", "newDesc": "Rol, bacarıqlar, max bilet təyin edin. Admin/manager AI icmalları alacaq." },
     "slaPolicies": { "headerTitle": "Cavab standartları", "headerDesc": "Prioritetə görə cavab və həll müddəti. Pozulma → eskalasiya: bildiriş, prioritet artımı, yenidən təyinat." },
-    "macros": { "headerTitle": "Bir kliklik əməliyyatlar", "headerDesc": "Bilet agentləri üçün makrolar: status + şərh + təyinat bir klikdə. Sürət üçün qısayol düymələri." },
+    "macros": {
+      "headerTitle": "Bir kliklik əməliyyatlar",
+      "headerDesc": "Makrolar tiketə bir klikdə bir neçə əməliyyat tətbiq etməyə imkan verir: status dəyişmək, cavab əlavə etmək, teqlər təyin etmək — hamısı birdən.",
+      "filtersTitle": "Kateqoriyaya görə filtr",
+      "filtersDesc": "Sürətli axtarış üçün kateqoriya tablarından istifadə edin. Dişli işarəsinə basaraq kateqoriyaları əlavə edin, adını dəyişin və ya silin.",
+      "listTitle": "Makro kitabxananız",
+      "listDesc": "Hər kart makronun nə etdiyini göstərir. Rəngli etiketlər = əməliyyatlar. Redaktə üçün klikləyin. Keçid düyməsi ilə aktiv/deaktiv edin.",
+      "newTitle": "Yeni makro yaradın",
+      "newDesc": "Bura basın. Vizual quraşdırıcı — status/prioritet üçün açılan siyahılar, cavablar üçün mətn sahəsi. Nə yazacağınızı təxmin etməyə ehtiyac yoxdur.",
+      "shortcutsTitle": "Klaviatura qısayolları",
+      "shortcutsDesc": "Ən çox istifadə etdiyiniz makrolara Alt+1-dən Alt+9-a qədər təyin edin. Tiketi açın, düyməni basın — bütün əməliyyatlar dərhal tətbiq olunur."
+    },
     "channels": { "headerTitle": "Kanalları bağlayın", "headerDesc": "WhatsApp, Telegram, Facebook, email bağlayın. Mesajlar Inbox-a gəlir və avtomatik bilet yaradır." },
     "integrations": { "headerTitle": "CRM-i genişləndirin", "headerDesc": "Webhooks hadisələri xarici sistemlərə göndərir. API açarları digər tətbiqlərə giriş verir." },
     "customFields": { "headerTitle": "CRM-i özünüzə uyğunlaşdırın", "headerDesc": "İstənilən entity-yə sahə əlavə edin: mətn, rəqəm, tarix, dropdown. Formalarda və workflow şərtlərində görünür." },
@@ -5478,7 +5492,8 @@
     "placeholderDesc": "İstəyə bağlı təsvir",
     "manageCategories": "Kateqoriyaları idarə et",
     "newCategoryPlaceholder": "Yeni kateqoriya adı...",
-    "deleteCategoryHint": "Makrolar Ümumi kateqoriyaya köçürüləcək"
+    "deleteCategoryHint": "Makrolar Ümumi kateqoriyaya köçürüləcək",
+    "shortcutsHintTitle": "Klaviatura qısayolları"
   },
   "customer360": {
     "title": "Müştəri 360",

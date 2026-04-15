@@ -140,6 +140,11 @@ const TIPS: Record<string, Tip[]> = {
     { id: "settings-validation", titleKey: "setValTitle", descKey: "setValDesc", ctaKey: "setValCta", href: "/settings/pipelines" },
     { id: "settings-perms", titleKey: "setPermTitle", descKey: "setPermDesc", ctaKey: "setPermCta", href: "/settings/field-permissions" },
   ],
+  macros: [
+    { id: "macro-shortcuts", titleKey: "macroShortTitle", descKey: "macroShortDesc", ctaKey: "macroShortCta", href: "/tickets" },
+    { id: "macro-categories", titleKey: "macroCatTitle", descKey: "macroCatDesc", ctaKey: "macroCatCta", href: "/settings/macros" },
+    { id: "macro-order", titleKey: "macroOrderTitle", descKey: "macroOrderDesc", ctaKey: "macroOrderCta", href: "/settings/macros" },
+  ],
 }
 
 function getDismissed(): Set<string> {

@@ -267,6 +267,10 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
   ]},
   macros: { steps: [
     { targetId: "macros-header", titleKey: "headerTitle", descKey: "headerDesc" },
+    { targetId: "macros-filters", titleKey: "filtersTitle", descKey: "filtersDesc" },
+    { targetId: "macros-list", titleKey: "listTitle", descKey: "listDesc" },
+    { targetId: "macros-new", titleKey: "newTitle", descKey: "newDesc" },
+    { targetId: "macros-shortcuts", titleKey: "shortcutsTitle", descKey: "shortcutsDesc" },
   ]},
   channels: { steps: [
     { targetId: "channels-header", titleKey: "headerTitle", descKey: "headerDesc" },

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface MacroAction {
   type: string
@@ -500,13 +501,15 @@ export default function MacrosSettingsPage() {
           <p className="text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("description")} />
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true) }}>
+        <Button data-tour-id="macros-new" onClick={() => { resetForm(); setShowForm(true) }}>
           <Plus className="h-4 w-4 mr-1" /> {t("newMacro")}
         </Button>
       </div>
 
+      <DidYouKnow page="macros" className="mb-0" />
+
       {/* Category filter tabs + management */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div data-tour-id="macros-filters" className="flex items-center gap-1.5 flex-wrap">
         <button
           onClick={() => setFilterCategory("all")}
           className={cn(
@@ -658,7 +661,7 @@ export default function MacrosSettingsPage() {
           <p className="text-sm">{t("noCategoryMacros")}</p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div data-tour-id="macros-list" className="grid gap-3 sm:grid-cols-2">
           {filteredMacros.map(macro => (
             <div
               key={macro.id}
@@ -719,6 +722,24 @@ export default function MacrosSettingsPage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Keyboard shortcuts hint */}
+      {macros.some(m => m.shortcutKey) && (
+        <div data-tour-id="macros-shortcuts" className="flex items-center gap-3 px-4 py-3 rounded-lg border bg-muted/30 text-sm text-muted-foreground">
+          <Keyboard className="h-5 w-5 shrink-0" />
+          <div>
+            <span className="font-medium text-foreground">{t("shortcutsHintTitle")}</span>
+            {" — "}
+            {macros.filter(m => m.shortcutKey).map((m, i) => (
+              <span key={m.id}>
+                {i > 0 && ", "}
+                <kbd className="px-1 py-0.5 bg-background rounded text-[10px] font-mono border">{m.shortcutKey}</kbd>
+                {" "}{m.name}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

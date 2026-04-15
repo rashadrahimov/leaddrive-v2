@@ -2837,7 +2837,10 @@
     "prodTitle": "Products are used in offers & invoices", "prodDesc": "Add your product catalog once — reuse in proposals and invoices. Prices auto-fill.", "prodCta": "Open products",
     "eventsTitle": "Events sync with Google Calendar", "eventsDesc": "Create events → participants get invitations → synced to Google Calendar automatically.", "eventsCta": "Open events",
     "setValTitle": "Pipeline stages can require validation", "setValDesc": "'Can't move to Proposal without filling deal value' — protect your process.", "setValCta": "Configure pipeline",
-    "setPermTitle": "Hide fields from certain roles", "setPermDesc": "Field permissions: hide salaries from agents, restrict deal values to managers. Per-field, per-role.", "setPermCta": "Configure access"
+    "setPermTitle": "Hide fields from certain roles", "setPermDesc": "Field permissions: hide salaries from agents, restrict deal values to managers. Per-field, per-role.", "setPermCta": "Configure access",
+    "macroShortTitle": "Alt+1-9 applies macros in tickets", "macroShortDesc": "Assign keyboard shortcuts to macros. Open a ticket, press Alt+1 — status changes, reply sends, tag added. All in one keystroke.", "macroShortCta": "Open a ticket",
+    "macroCatTitle": "Custom categories for macros", "macroCatDesc": "Click the gear icon next to category tabs — create your own categories, rename or delete existing ones. Organize macros your way.", "macroCatCta": "Manage categories",
+    "macroOrderTitle": "Action order matters", "macroOrderDesc": "Macro actions execute top-to-bottom. Use the arrow buttons to reorder: set status first, then add reply, then tag.", "macroOrderCta": "Edit a macro"
   },
   "tour": {
     "dashboard": {
@@ -3092,7 +3095,15 @@
     },
     "macros": {
       "headerTitle": "One-Click Actions",
-      "headerDesc": "Create macros for ticket agents: change status + add comment + reassign in one click. Assign keyboard shortcuts for speed."
+      "headerDesc": "Macros let agents apply multiple actions to a ticket with one click: change status, add a reply, assign tags — all at once.",
+      "filtersTitle": "Filter by Category",
+      "filtersDesc": "Use category tabs to quickly find the right macro. Click the gear icon to add, rename, or delete custom categories.",
+      "listTitle": "Your Macro Library",
+      "listDesc": "Each card shows what the macro does at a glance. Colored pills = actions. Click any card to edit. Toggle the switch to enable/disable.",
+      "newTitle": "Create a New Macro",
+      "newDesc": "Click here to build a macro. Pick actions from the visual builder — dropdowns for status/priority, textarea for replies. No guessing what to type.",
+      "shortcutsTitle": "Keyboard Shortcuts",
+      "shortcutsDesc": "Assign Alt+1 through Alt+9 to your most-used macros. Open any ticket, press the shortcut — all actions apply instantly."
     },
     "channels": {
       "headerTitle": "Connect Your Channels",
@@ -5552,7 +5563,8 @@
     "placeholderDesc": "Optional description",
     "manageCategories": "Manage Categories",
     "newCategoryPlaceholder": "New category name...",
-    "deleteCategoryHint": "Macros will be moved to General"
+    "deleteCategoryHint": "Macros will be moved to General",
+    "shortcutsHintTitle": "Keyboard shortcuts"
   },
   "customer360": {
     "title": "Customer 360",
