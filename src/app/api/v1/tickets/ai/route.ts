@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import Anthropic from "@anthropic-ai/sdk"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 
 function getClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null
@@ -121,6 +122,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const piiMasker = new PiiMasker()
+
     const ticket = await prisma.ticket.findFirst({
       where: { id: ticketId, organizationId: orgId },
       include: { comments: { orderBy: { createdAt: "asc" } } },
@@ -133,10 +136,10 @@ export async function POST(req: NextRequest) {
       .map((c: any) => `[${c.isInternal ? "Internal" : "Customer"}] ${c.comment}`)
       .join("\n")
 
-    const context = `Ticket #${ticket.ticketNumber}: ${ticket.subject}
+    const context = piiMasker.mask(`Ticket #${ticket.ticketNumber}: ${ticket.subject}
 Status: ${ticket.status} | Priority: ${ticket.priority} | Category: ${ticket.category}
 Description: ${ticket.description || "No description"}
-Comments:\n${commentsText || "No comments yet"}`
+Comments:\n${commentsText || "No comments yet"}`)
 
     const client = getClient()
 
@@ -161,7 +164,7 @@ Comments:\n${commentsText || "No comments yet"}`
           system: systemPrompt,
           messages: [{ role: "user", content: context }],
         })
-        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        const text = piiMasker.unmask(msg.content[0].type === "text" ? msg.content[0].text : "")
         await logAiInteraction(orgId, `[ticket-reply] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({
           success: true,
@@ -183,7 +186,7 @@ Comments:\n${commentsText || "No comments yet"}`
           system: `Summarize this support ticket in 2-3 sentences. Include the main issue, current status, and any key actions taken. ALWAYS write in ${langName} language regardless of the ticket language.`,
           messages: [{ role: "user", content: context }],
         })
-        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        const text = piiMasker.unmask(msg.content[0].type === "text" ? msg.content[0].text : "")
         await logAiInteraction(orgId, `[ticket-summary] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({ success: true, data: { text } })
       }
@@ -202,7 +205,7 @@ Comments:\n${commentsText || "No comments yet"}`
           system: `Based on this support ticket, suggest 3-5 concrete next steps the support agent should take to resolve it. Write numbered steps. ALWAYS write in ${langName} language regardless of the ticket language.`,
           messages: [{ role: "user", content: context }],
         })
-        const text = msg.content[0].type === "text" ? msg.content[0].text : ""
+        const text = piiMasker.unmask(msg.content[0].type === "text" ? msg.content[0].text : "")
         await logAiInteraction(orgId, `[ticket-steps] ${ticket.subject}`, text, Date.now() - t0, "claude-haiku-4-5-20251001", msg.usage)
         return NextResponse.json({ success: true, data: { text } })
       }

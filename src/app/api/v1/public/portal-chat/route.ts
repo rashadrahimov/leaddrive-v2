@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getPortalUser } from "@/lib/portal-auth"
 import { sanitizeForPrompt } from "@/lib/sanitize"
 import Anthropic from "@anthropic-ai/sdk"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 
 const DEFAULT_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный движок техподдержки LeadDrive CRM.
 
@@ -444,17 +445,24 @@ export async function POST(req: NextRequest) {
         cleanMessages.unshift({ role: "user", content: message })
       }
 
+      // PII masking for portal chat
+      const piiMasker = new PiiMasker()
+      const maskedMessages = cleanMessages.map((m: any) => ({
+        ...m,
+        content: typeof m.content === "string" ? piiMasker.mask(m.content) : m.content,
+      }))
+
       const response = await client.messages.create({
         model,
         max_tokens: maxTokens,
         temperature,
         system: systemPrompt,
-        messages: cleanMessages,
+        messages: maskedMessages,
       })
 
       assistantContent = response.content
         .filter(block => block.type === "text")
-        .map(block => block.text)
+        .map(block => piiMasker.unmask(block.text))
         .join("")
 
       usage = response.usage

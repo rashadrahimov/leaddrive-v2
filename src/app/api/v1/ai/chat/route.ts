@@ -8,6 +8,7 @@ import { executeTool } from "@/lib/ai/tool-executor"
 import { predictDealWin } from "@/lib/ai/predictive"
 import { generateNextBestActions } from "@/lib/ai/next-best-action"
 import { routeToAgent } from "@/lib/ai/agent-router"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 
 function getClient(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null
@@ -145,8 +146,12 @@ Rules:
     let textReply = ""
     const toolsCalled: string[] = []
 
-    // Multi-turn tool use loop
-    let currentMessages = [...messages]
+    // PII masking — mask user messages before sending to LLM
+    const piiMasker = new PiiMasker()
+    let currentMessages = messages.map((m: any) => ({
+      ...m,
+      content: typeof m.content === "string" ? piiMasker.mask(m.content) : m.content,
+    }))
     const maxRounds = agentConfig?.maxToolRounds || MAX_TOOL_ROUNDS
     for (let round = 0; round < maxRounds; round++) {
       const response = await client.messages.create({
@@ -250,6 +255,9 @@ Rules:
     if (!textReply) {
       textReply = "Action completed."
     }
+
+    // PII unmask — restore original values in AI response
+    textReply = piiMasker.unmask(textReply)
 
     // Log interaction
     try {

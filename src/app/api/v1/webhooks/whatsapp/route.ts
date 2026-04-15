@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { sanitizeForPrompt, sanitizeLog } from "@/lib/sanitize"
 import Anthropic from "@anthropic-ai/sdk"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import { createHmac, timingSafeEqual } from "crypto"
 
 /**
@@ -532,19 +533,26 @@ async function handleAiAutoReply(
     const model = agentConfig?.model || "claude-haiku-4-5-20251001"
     const maxTokens = Math.min(agentConfig?.maxTokens || 512, 1024) // Keep short for WhatsApp
 
+    // PII masking for WhatsApp messages
+    const piiMasker = new PiiMasker()
+    const maskedMessages = cleanMessages.map((m: any) => ({
+      ...m,
+      content: typeof m.content === "string" ? piiMasker.mask(m.content) : m.content,
+    }))
+
     const startTime = Date.now()
     const response = await client.messages.create({
       model,
       max_tokens: maxTokens,
       temperature: agentConfig?.temperature ?? 0.7,
       system: systemPrompt,
-      messages: cleanMessages,
+      messages: maskedMessages,
     })
 
-    const rawReply = response.content
+    const rawReply = piiMasker.unmask(response.content
       .filter(block => block.type === "text")
       .map(block => block.text)
-      .join("")
+      .join(""))
 
     // Check for escalation/ticket markers BEFORE cleaning
     // Only use explicit Da Vinci markers — no regex guessing (was too aggressive, created tickets on every message)

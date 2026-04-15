@@ -4,6 +4,7 @@ import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
 import { predictDealWin } from "@/lib/ai/predictive"
 import Anthropic from "@anthropic-ai/sdk"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 
 /**
  * AI Deal Suggestions (Copilot mode)
@@ -86,6 +87,9 @@ export async function GET(req: NextRequest) {
       recentNotes: notes.map((n: any) => n.description?.slice(0, 100)),
     }
 
+    const piiMasker = new PiiMasker()
+    const maskedContext = piiMasker.mask(JSON.stringify(context))
+
     const anthropic = new Anthropic()
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -96,12 +100,12 @@ export async function GET(req: NextRequest) {
           content: `You are a CRM sales advisor. Based on this deal context, suggest 2-3 specific, actionable next steps. Return ONLY a JSON array of objects with fields: {"action": string, "reason": string, "priority": "high"|"medium"|"low", "type": "call"|"email"|"meeting"|"task"|"update_stage"}
 
 Context:
-${JSON.stringify(context)}`,
+${maskedContext}`,
         },
       ],
     })
 
-    const text = response.content[0]?.type === "text" ? response.content[0].text : ""
+    const text = piiMasker.unmask(response.content[0]?.type === "text" ? response.content[0].text : "")
 
     // Parse JSON array from response
     let suggestions: any[] = []
