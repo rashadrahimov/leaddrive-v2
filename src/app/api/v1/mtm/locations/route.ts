@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     today.setHours(0, 0, 0, 0)
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000)
 
-    // Get agents with latest location + today's route completion
+    // Get agents with recent locations (take last 5, pick best accuracy)
     const agents = await prisma.mtmAgent.findMany({
       where: { organizationId: orgId, status: "ACTIVE" },
       select: {
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         name: true,
         isOnline: true,
         lastSeenAt: true,
-        locations: { take: 1, orderBy: { recordedAt: "desc" } },
+        locations: { take: 5, orderBy: { recordedAt: "desc" } },
       },
     })
 
@@ -57,7 +57,14 @@ export async function GET(req: NextRequest) {
 
     // Determine field status per agent
     const agentLocations = agents.map((a: any) => {
-      const loc = a.locations[0] || null
+      // Pick best location: prefer accurate recent position over inaccurate one
+      // From last 5 positions, find the most accurate one within last 10 minutes
+      // Fall back to most recent if none are within 10 minutes
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000)
+      const recentLocs = a.locations.filter((l: any) => l.recordedAt >= tenMinAgo)
+      const loc = recentLocs.length > 0
+        ? recentLocs.reduce((best: any, l: any) => (!best || (l.accuracy && best.accuracy && l.accuracy < best.accuracy) ? l : best), null)
+        : a.locations[0] || null
       const route = routeMap[a.id]
       const isCheckedIn = checkedInAgents.has(a.id)
 
