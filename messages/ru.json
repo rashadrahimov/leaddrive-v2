@@ -5480,7 +5480,10 @@
     "onboarding": "Онбординг",
     "sales": "Продажи",
     "placeholderName": "напр. Быстрое закрытие, Эскалация менеджеру",
-    "placeholderDesc": "Необязательное описание"
+    "placeholderDesc": "Необязательное описание",
+    "manageCategories": "Управление категориями",
+    "newCategoryPlaceholder": "Название новой категории...",
+    "deleteCategoryHint": "Макросы будут перемещены в Общие"
   },
   "customer360": {
     "title": "Клиент 360",

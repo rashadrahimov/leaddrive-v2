@@ -14,7 +14,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import {
   Plus, Trash2, Zap, GripVertical, MessageSquare, Tag, UserCheck,
   ArrowRightCircle, Flag, ChevronDown, ChevronUp, Hash, StickyNote,
-  Keyboard, AlertCircle, X
+  Keyboard, AlertCircle, X, Pencil, Check, FolderPlus, Settings2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
@@ -51,14 +51,24 @@ const ACTION_TYPES = [
   { value: "remove_tag", tKey: "removeTag", icon: X, group: "tag" },
 ] as const
 
-const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"] as const
+const DEFAULT_CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
 
-const CATEGORY_COLORS: Record<string, string> = {
-  general: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  billing: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  technical: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  onboarding: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  sales: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+const PALETTE = [
+  "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+  "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+  "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+  "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+]
+
+function getCategoryColor(category: string, allCategories: string[]): string {
+  const idx = allCategories.indexOf(category)
+  return PALETTE[idx >= 0 ? idx % PALETTE.length : 0]
 }
 
 function getActionIcon(type: string) {
@@ -327,6 +337,12 @@ export default function MacrosSettingsPage() {
   const [shortcutKey, setShortcutKey] = useState("")
   const [actions, setActions] = useState<MacroAction[]>([])
 
+  // Category management state
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+  const [editingCategory, setEditingCategory] = useState<string | null>(null)
+  const [editingCategoryName, setEditingCategoryName] = useState("")
+
   const fetchMacros = async () => {
     try {
       const res = await fetch("/api/v1/ticket-macros", { headers })
@@ -336,6 +352,77 @@ export default function MacrosSettingsPage() {
   }
 
   useEffect(() => { fetchMacros() }, [session])
+
+  // Category management functions
+  const addCategory = () => {
+    const trimmed = newCategoryName.trim().toLowerCase()
+    if (!trimmed || mergedCategories.includes(trimmed)) return
+    const updated = [...customCategories, trimmed]
+    localStorage.setItem(`macro-categories-${orgId}`, JSON.stringify(updated))
+    setCustomCategories(updated)
+    setNewCategoryName("")
+  }
+
+  const renameCategory = async (oldName: string, newName: string) => {
+    const trimmed = newName.trim().toLowerCase()
+    if (!trimmed || trimmed === oldName) {
+      setEditingCategory(null)
+      return
+    }
+    // Update all macros with this category
+    const toUpdate = macros.filter(m => m.category === oldName)
+    for (const macro of toUpdate) {
+      await fetch(`/api/v1/ticket-macros/${macro.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ category: trimmed }),
+      })
+    }
+    // Update localStorage
+    const updated = customCategories.map(c => c === oldName ? trimmed : c)
+    // If renaming a default category, add the new name as custom
+    if (DEFAULT_CATEGORIES.includes(oldName) && !updated.includes(trimmed)) {
+      updated.push(trimmed)
+    }
+    const deduped = [...new Set(updated)]
+    localStorage.setItem(`macro-categories-${orgId}`, JSON.stringify(deduped))
+    setCustomCategories(deduped)
+    setEditingCategory(null)
+    if (filterCategory === oldName) setFilterCategory(trimmed)
+    fetchMacros()
+  }
+
+  const deleteCategory = async (catName: string) => {
+    // Move all macros in this category to "general"
+    const toUpdate = macros.filter(m => m.category === catName)
+    for (const macro of toUpdate) {
+      await fetch(`/api/v1/ticket-macros/${macro.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ category: "general" }),
+      })
+    }
+    const updated = customCategories.filter(c => c !== catName)
+    localStorage.setItem(`macro-categories-${orgId}`, JSON.stringify(updated))
+    setCustomCategories(updated)
+    if (filterCategory === catName) setFilterCategory("all")
+    fetchMacros()
+  }
+
+  // Include localStorage custom categories in allCategories
+  const [customCategories, setCustomCategories] = useState<string[]>([])
+  useEffect(() => {
+    if (orgId) {
+      const stored = JSON.parse(localStorage.getItem(`macro-categories-${orgId}`) || "[]")
+      setCustomCategories(stored)
+    }
+  }, [orgId, macros])
+
+  const mergedCategories = Array.from(new Set([
+    ...DEFAULT_CATEGORIES,
+    ...customCategories,
+    ...macros.map(m => m.category),
+  ]))
 
   const resetForm = () => {
     setName("")
@@ -418,38 +505,135 @@ export default function MacrosSettingsPage() {
         </Button>
       </div>
 
-      {/* Category filter tabs */}
-      {macros.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setFilterCategory("all")}
-            className={cn(
-              "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-              filterCategory === "all"
-                ? "bg-foreground text-background border-foreground"
-                : "bg-card hover:bg-muted border-border"
-            )}
-          >
-            {tc("all")} ({macros.length})
-          </button>
-          {CATEGORIES.map(cat => {
-            const count = macros.filter(m => m.category === cat).length
-            if (count === 0) return null
-            return (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize",
-                  filterCategory === cat
-                    ? "bg-foreground text-background border-foreground"
-                    : cn("hover:opacity-80 border-transparent", CATEGORY_COLORS[cat])
-                )}
-              >
-                {t(cat as any)} ({count})
-              </button>
-            )
-          })}
+      {/* Category filter tabs + management */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <button
+          onClick={() => setFilterCategory("all")}
+          className={cn(
+            "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+            filterCategory === "all"
+              ? "bg-foreground text-background border-foreground"
+              : "bg-card hover:bg-muted border-border"
+          )}
+        >
+          {tc("all")} ({macros.length})
+        </button>
+        {mergedCategories.map(cat => {
+          const count = macros.filter(m => m.category === cat).length
+          return (
+            <button
+              key={cat}
+              onClick={() => setFilterCategory(cat)}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize",
+                filterCategory === cat
+                  ? "bg-foreground text-background border-foreground"
+                  : cn("hover:opacity-80 border-transparent", getCategoryColor(cat, mergedCategories))
+              )}
+            >
+              {cat} {count > 0 && `(${count})`}
+            </button>
+          )
+        })}
+        <button
+          onClick={() => setShowCategoryManager(!showCategoryManager)}
+          className={cn(
+            "px-2 py-1.5 rounded-full text-xs border transition-colors",
+            showCategoryManager
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card hover:bg-muted border-border text-muted-foreground"
+          )}
+          title={t("manageCategories")}
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Category manager panel */}
+      {showCategoryManager && (
+        <div className="border rounded-lg p-4 bg-card space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{t("manageCategories")}</h3>
+            <button onClick={() => setShowCategoryManager(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Existing categories */}
+          <div className="space-y-1.5">
+            {mergedCategories.map(cat => {
+              const count = macros.filter(m => m.category === cat).length
+              const isEditing = editingCategory === cat
+              const isDefault = cat === "general"
+
+              return (
+                <div key={cat} className="flex items-center gap-2 group">
+                  <span className={cn("w-3 h-3 rounded-full shrink-0", getCategoryColor(cat, mergedCategories))} />
+                  {isEditing ? (
+                    <div className="flex items-center gap-1.5 flex-1">
+                      <Input
+                        value={editingCategoryName}
+                        onChange={e => setEditingCategoryName(e.target.value)}
+                        className="h-7 text-sm flex-1"
+                        autoFocus
+                        onKeyDown={e => {
+                          if (e.key === "Enter") renameCategory(cat, editingCategoryName)
+                          if (e.key === "Escape") setEditingCategory(null)
+                        }}
+                      />
+                      <button
+                        onClick={() => renameCategory(cat, editingCategoryName)}
+                        className="p-1 rounded hover:bg-emerald-50 text-emerald-600 dark:hover:bg-emerald-900/20"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setEditingCategory(null)}
+                        className="p-1 rounded hover:bg-muted text-muted-foreground"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-sm capitalize flex-1">{cat}</span>
+                      <span className="text-xs text-muted-foreground">{count}</span>
+                      <button
+                        onClick={() => { setEditingCategory(cat); setEditingCategoryName(cat) }}
+                        className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground transition-opacity"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      {!isDefault && (
+                        <button
+                          onClick={() => deleteCategory(cat)}
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-red-50 text-red-400 hover:text-red-600 dark:hover:bg-red-900/20 transition-opacity"
+                          title={count > 0 ? t("deleteCategoryHint") : undefined}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Add new category */}
+          <div className="flex items-center gap-2 pt-1 border-t">
+            <FolderPlus className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Input
+              value={newCategoryName}
+              onChange={e => setNewCategoryName(e.target.value)}
+              placeholder={t("newCategoryPlaceholder")}
+              className="h-7 text-sm flex-1"
+              onKeyDown={e => { if (e.key === "Enter") addCategory() }}
+            />
+            <Button size="sm" variant="outline" onClick={addCategory} disabled={!newCategoryName.trim()} className="h-7 text-xs">
+              {tc("add")}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -509,8 +693,8 @@ export default function MacrosSettingsPage() {
 
               {/* Category + usage */}
               <div className="flex items-center gap-2 mb-3">
-                <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium capitalize", CATEGORY_COLORS[macro.category])}>
-                  {t(macro.category as any)}
+                <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium capitalize", getCategoryColor(macro.category, mergedCategories))}>
+                  {macro.category}
                 </span>
                 {macro.usageCount > 0 && (
                   <span className="text-[10px] text-muted-foreground">
@@ -570,9 +754,9 @@ export default function MacrosSettingsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">{t("category")}</Label>
-                  <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1">
-                    {CATEGORIES.map(c => (
-                      <option key={c} value={c}>{t(c as any)}</option>
+                  <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1 capitalize">
+                    {mergedCategories.map(c => (
+                      <option key={c} value={c} className="capitalize">{c}</option>
                     ))}
                   </Select>
                 </div>

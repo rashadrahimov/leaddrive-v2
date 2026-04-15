@@ -5475,7 +5475,10 @@
     "onboarding": "Onborninq",
     "sales": "Satış",
     "placeholderName": "məs. Sürətli bağlama, Menecerə eskalasiya",
-    "placeholderDesc": "İstəyə bağlı təsvir"
+    "placeholderDesc": "İstəyə bağlı təsvir",
+    "manageCategories": "Kateqoriyaları idarə et",
+    "newCategoryPlaceholder": "Yeni kateqoriya adı...",
+    "deleteCategoryHint": "Makrolar Ümumi kateqoriyaya köçürüləcək"
   },
   "customer360": {
     "title": "Müştəri 360",

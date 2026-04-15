@@ -5549,7 +5549,10 @@
     "onboarding": "Onboarding",
     "sales": "Sales",
     "placeholderName": "e.g. Quick Close, Escalate to Manager",
-    "placeholderDesc": "Optional description"
+    "placeholderDesc": "Optional description",
+    "manageCategories": "Manage Categories",
+    "newCategoryPlaceholder": "New category name...",
+    "deleteCategoryHint": "Macros will be moved to General"
   },
   "customer360": {
     "title": "Customer 360",
