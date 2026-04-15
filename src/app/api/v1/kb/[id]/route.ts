@@ -52,6 +52,14 @@ export async function PUT(
       where: { id, organizationId: orgId },
       include: { category: true },
     })
+
+    // Re-embed on update (non-blocking)
+    if (updated && (updated.status === "published")) {
+      import("@/lib/ai/embeddings").then(({ embedKbArticle }) =>
+        embedKbArticle(id, orgId, updated.title, updated.content || "")
+      ).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, data: updated })
   } catch (e) {
     console.error(e)

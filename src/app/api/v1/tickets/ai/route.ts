@@ -78,8 +78,19 @@ async function findSimilarResolvedTickets(orgId: string, subject: string, catego
     }).join("\n\n")
 }
 
-// Search KB articles by keyword relevance
+// Search KB articles — vector search first, fallback to keyword
 async function findRelevantKbArticles(orgId: string, query: string, limit = 3): Promise<string> {
+  // Try vector search first (pgvector)
+  try {
+    const { searchKbByVector } = await import("@/lib/ai/embeddings")
+    const vectorResults = await searchKbByVector(orgId, query, limit)
+    if (vectorResults.length > 0 && vectorResults[0].similarity > 0.3) {
+      return "\n\n--- KNOWLEDGE BASE ARTICLES (semantic match) ---\n" +
+        vectorResults.map((r, i) => `[Article ${i + 1}] (${Math.round(r.similarity * 100)}% match)\n${r.content?.substring(0, 800) || ""}`).join("\n\n")
+    }
+  } catch { /* vector search not available, fallback to text */ }
+
+  // Fallback: keyword search
   const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3)
   if (keywords.length === 0) return ""
 

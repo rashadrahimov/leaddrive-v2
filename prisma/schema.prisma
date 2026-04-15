@@ -1325,6 +1325,19 @@ model AiPendingAction {
   @@map("ai_pending_actions")
 }
 
+model KbEmbedding {
+  id           String                    @id @default(cuid())
+  organizationId String
+  articleId    String                    @unique
+  content      String                    // text that was embedded
+  embedding    Unsupported("vector(1536)")
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@index([organizationId])
+  @@map("kb_embeddings")
+}
+
 model AiShadowAction {
   id             String   @id @default(cuid())
   organizationId String

@@ -65,6 +65,14 @@ export async function POST(req: NextRequest) {
     const article = await prisma.kbArticle.create({
       data: { organizationId: orgId, ...parsed.data },
     })
+
+    // Auto-embed for vector search (non-blocking)
+    if (parsed.data.status === "published") {
+      import("@/lib/ai/embeddings").then(({ embedKbArticle }) =>
+        embedKbArticle(article.id, orgId, parsed.data.title, parsed.data.content || "")
+      ).catch(() => {})
+    }
+
     return NextResponse.json({ success: true, data: article }, { status: 201 })
   } catch (e) {
     console.error(e)
