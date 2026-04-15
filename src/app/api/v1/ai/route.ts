@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
@@ -158,6 +159,8 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
   if (!client) return sentimentFallback(contextName, contactNames, activities)
 
   try {
+    const piiMasker = new PiiMasker()
+    const maskedContextBlock = piiMasker.mask(contextBlock)
     const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -166,11 +169,12 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       system: `You are an Da Vinci analyst for LeadDrive CRM. Analyze client data and provide a sentiment assessment. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
-        content: `Analyze the sentiment of the relationship with the client based on data:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${langName} (2-3 sentences)"}`,
+        content: `Analyze the sentiment of the relationship with the client based on data:\n\n${maskedContextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${langName} (2-3 sentences)"}`,
       }],
     })
 
     let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = piiMasker.unmask(text)
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
     await logAiCall(orgId, `[sentiment] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
@@ -201,6 +205,8 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
   if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website, langName)
 
   try {
+    const piiMasker = new PiiMasker()
+    const maskedContextBlock = piiMasker.mask(contextBlock)
     const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -209,11 +215,12 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       system: `You are an Da Vinci assistant for LeadDrive CRM. Generate smart tasks for sales managers. Consider client context. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
-        content: `Based on the client data, generate 4 tasks for the manager:\n\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
+        content: `Based on the client data, generate 4 tasks for the manager:\n\n${maskedContextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
       }],
     })
 
     let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = piiMasker.unmask(text)
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
     await logAiCall(orgId, `[tasks] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
@@ -298,16 +305,19 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
       ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — the user wants you to naturally weave this idea into the email (do NOT copy-paste it literally, rephrase it elegantly and make it part of the message flow): "${instructions}"\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`
       : `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars)", "textType": "SMS", "tone": "${tone}"}`
 
+    const piiMasker = new PiiMasker()
+    const maskedPrompt = piiMasker.mask(prompt)
     const t0 = Date.now()
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
       system: `You are an Da Vinci copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: LeadDrive Inc. All text content MUST be in ${langName}.`,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: maskedPrompt }],
     })
 
     let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = piiMasker.unmask(text)
     // Strip markdown code fences if Claude wraps response in ```json ... ```
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)

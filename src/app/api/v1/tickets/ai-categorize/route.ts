@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 /**
@@ -27,7 +28,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const anthropic = new Anthropic()
-    const input = `Subject: ${(subject || "").slice(0, 200)}\nDescription: ${(description || "").slice(0, 500)}`
+    const piiMasker = new PiiMasker()
+    const input = piiMasker.mask(`Subject: ${(subject || "").slice(0, 200)}\nDescription: ${(description || "").slice(0, 500)}`)
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",

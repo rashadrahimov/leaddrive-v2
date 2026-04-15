@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { canRunAiAutomation, calculateAiCost } from "@/lib/ai/budget"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 const FEATURE_NAME = "ai_daily_briefing"
@@ -336,7 +337,8 @@ async function generateNarrative(orgId: string, data: BriefingData, lang: string
   try {
     const anthropic = new Anthropic()
 
-    const dataSnapshot = JSON.stringify({
+    const piiMasker = new PiiMasker()
+    const dataSnapshot = piiMasker.mask(JSON.stringify({
       staleDeals: data.staleDeals,
       slaAtRisk: data.slaAtRisk,
       hotLeads: data.hotLeads,
@@ -346,7 +348,7 @@ async function generateNarrative(orgId: string, data: BriefingData, lang: string
       newDealsToday: data.newDealsToday,
       wonDealsToday: data.wonDealsToday,
       wonRevenueToday: data.wonRevenueToday,
-    })
+    }))
 
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
@@ -359,8 +361,9 @@ async function generateNarrative(orgId: string, data: BriefingData, lang: string
       ],
     })
 
-    const text =
+    const rawText =
       response.content[0]?.type === "text" ? response.content[0].text : null
+    const text = rawText ? piiMasker.unmask(rawText) : null
 
     // Log the interaction
     const inputTokens = response.usage?.input_tokens || 0

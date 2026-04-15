@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { DEFAULT_CURRENCY } from "@/lib/constants"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 const MODEL = process.env.MANAGER_MODEL || "claude-sonnet-4-5-20250929"
@@ -114,13 +115,15 @@ Use professional CRM analyst style with data-driven insights. Be specific about 
 
   try {
     const client = new Anthropic()
+    const piiMasker = new PiiMasker()
+    const maskedPrompt = piiMasker.mask(prompt)
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 2048,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: maskedPrompt }],
     })
 
-    const analysis = msg.content[0].type === "text" ? msg.content[0].text : ""
+    const analysis = piiMasker.unmask(msg.content[0].type === "text" ? msg.content[0].text : "")
     return NextResponse.json({ success: true, data: { analysis } })
   } catch (e: any) {
     console.error("Da Vinci deals analysis error:", e)

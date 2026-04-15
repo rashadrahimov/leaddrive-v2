@@ -146,8 +146,24 @@ Rules:
     let textReply = ""
     const toolsCalled: string[] = []
 
-    // PII masking — mask user messages before sending to LLM
+    // PII masking — load known names from CRM, mask messages + system prompt
     const piiMasker = new PiiMasker()
+    try {
+      const contacts = await prisma.contact.findMany({
+        where: { organizationId: orgId },
+        select: { fullName: true },
+        take: 200,
+      })
+      const companies = await prisma.company.findMany({
+        where: { organizationId: orgId },
+        select: { name: true },
+        take: 100,
+      })
+      piiMasker.addKnownNames(contacts.map((c: any) => c.fullName).filter(Boolean))
+      piiMasker.addKnownCompanies(companies.map((c: any) => c.name).filter(Boolean))
+    } catch { /* non-critical */ }
+
+    const maskedSystemPrompt = piiMasker.mask(systemPrompt)
     let currentMessages = messages.map((m: any) => ({
       ...m,
       content: typeof m.content === "string" ? piiMasker.mask(m.content) : m.content,
@@ -157,7 +173,7 @@ Rules:
       const response = await client.messages.create({
         model: agentConfig?.model || "claude-sonnet-4-20250514",
         max_tokens: agentConfig?.maxTokens || 1024,
-        system: systemPrompt,
+        system: maskedSystemPrompt,
         tools: tools.length > 0 ? tools : undefined,
         messages: currentMessages,
       })
@@ -218,7 +234,7 @@ Rules:
           toolResults.push({
             type: "tool_result",
             tool_use_id: toolBlock.id,
-            content: JSON.stringify({ success: true, ...result.data }),
+            content: piiMasker.mask(JSON.stringify({ success: true, ...result.data })),
           })
         } else {
           allActions.push({
@@ -231,7 +247,7 @@ Rules:
           toolResults.push({
             type: "tool_result",
             tool_use_id: toolBlock.id,
-            content: JSON.stringify({ success: false, error: result.error }),
+            content: piiMasker.mask(JSON.stringify({ success: false, error: result.error })),
             is_error: true,
           })
         }

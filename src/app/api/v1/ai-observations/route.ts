@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 export async function POST(req: NextRequest) {
@@ -83,6 +84,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, data: { observations: [], fallback: true } })
     }
 
+    const piiMasker = new PiiMasker()
+    const maskedDataContext = piiMasker.mask(dataContext)
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
@@ -90,12 +93,12 @@ export async function POST(req: NextRequest) {
       system: `Ты — Da Vinci, аналитик IT-аутсорсинговой компании. Анализируй финансовые данные и давай практичные наблюдения. Отвечай ТОЛЬКО валидным JSON без markdown.`,
       messages: [{
         role: "user",
-        content: `Данные компании:\n${dataContext}\n\n${tabPrompts[tab] || tabPrompts.analytics}\n\nОтветь JSON массивом:\n[{"type": "insight"|"warning"|"opportunity", "title": "краткий заголовок (3-5 слов)", "description": "описание на 1-2 предложения с конкретными цифрами из данных"}]`,
+        content: `Данные компании:\n${maskedDataContext}\n\n${tabPrompts[tab] || tabPrompts.analytics}\n\nОтветь JSON массивом:\n[{"type": "insight"|"warning"|"opportunity", "title": "краткий заголовок (3-5 слов)", "description": "описание на 1-2 предложения с конкретными цифрами из данных"}]`,
       }],
     })
 
-    const text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
-    const observations = JSON.parse(text)
+    const rawText = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    const observations = JSON.parse(piiMasker.unmask(rawText))
 
     return NextResponse.json({ success: true, data: { observations } })
   } catch (error) {

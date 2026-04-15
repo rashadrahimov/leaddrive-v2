@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 function getGrade(score: number): string {
@@ -105,6 +106,8 @@ ${deals.length > 0
 `.trim()
 
   try {
+    const piiMasker = new PiiMasker()
+    const maskedLeadContext = piiMasker.mask(leadContext)
     const response = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 500,
@@ -112,7 +115,7 @@ ${deals.length > 0
         role: "user",
         content: `You are a CRM lead scoring Da Vinci for an IT outsourcing company. Analyze this lead and provide a quality score.
 
-${leadContext}
+${maskedLeadContext}
 
 IMPORTANT: The "reasoning" field MUST be written in ${LANG_NAMES[locale] || "English"} language. Do NOT use English if the requested language is different.
 
@@ -132,8 +135,8 @@ Respond ONLY with valid JSON (no markdown, no explanation outside JSON):
       }],
     })
 
-    const text = response.content[0].type === "text" ? response.content[0].text : ""
-    const parsed = JSON.parse(text)
+    const rawText = response.content[0].type === "text" ? response.content[0].text : ""
+    const parsed = JSON.parse(piiMasker.unmask(rawText))
     return {
       score: Math.min(100, Math.max(0, parsed.score || 0)),
       factors: parsed.factors || {},

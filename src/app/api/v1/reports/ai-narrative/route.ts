@@ -4,6 +4,7 @@ import { checkAiBudget, calculateAiCost } from "@/lib/ai/budget"
 import { prisma } from "@/lib/prisma"
 import { generateRevenueForecast } from "@/lib/ai/predictive"
 import { calculateChurnRisk } from "@/lib/ai/predictive"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 /**
@@ -61,18 +62,20 @@ export async function GET(req: NextRequest) {
     }
 
     const anthropic = new Anthropic()
+    const piiMasker = new PiiMasker()
+    const maskedContext = piiMasker.mask(JSON.stringify(context))
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 250,
       messages: [
         {
           role: "user",
-          content: `You are a CRM revenue analyst. Write a concise 2-3 sentence forecast commentary based on this data. Focus on: expected revenue, key risks, and one actionable recommendation. No headers, no bullet points — just plain text paragraphs. Keep it under 80 words.\n\nData:\n${JSON.stringify(context)}`,
+          content: `You are a CRM revenue analyst. Write a concise 2-3 sentence forecast commentary based on this data. Focus on: expected revenue, key risks, and one actionable recommendation. No headers, no bullet points — just plain text paragraphs. Keep it under 80 words.\n\nData:\n${maskedContext}`,
         },
       ],
     })
 
-    const text = response.content[0]?.type === "text" ? response.content[0].text : ""
+    const text = piiMasker.unmask(response.content[0]?.type === "text" ? response.content[0].text : "")
 
     // Log
     const inputTokens = response.usage?.input_tokens || 0

@@ -4,6 +4,7 @@ import { getOrgId } from "@/lib/api-auth"
 import { prisma } from "@/lib/prisma"
 import { loadAndCompute } from "@/lib/cost-model/db"
 import { resolveCostModelKey } from "@/lib/budgeting/cost-model-map"
+import { PiiMasker } from "@/lib/ai/pii-masker"
 import Anthropic from "@anthropic-ai/sdk"
 
 const narrativeSchema = z.object({
@@ -114,13 +115,16 @@ ${varianceLines || "Нет существенных отклонений"}
 
   try {
     const client = new Anthropic()
+    const piiMasker = new PiiMasker()
+    const maskedPrompt = piiMasker.mask(prompt)
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
+      messages: [{ role: "user", content: maskedPrompt }],
     })
 
-    const narrative = msg.content[0].type === "text" ? msg.content[0].text : ""
+    const rawNarrative = msg.content[0].type === "text" ? msg.content[0].text : ""
+    const narrative = piiMasker.unmask(rawNarrative)
     return NextResponse.json({ success: true, data: { narrative } })
   } catch (e: any) {
     console.error("Da Vinci narrative error:", e)
