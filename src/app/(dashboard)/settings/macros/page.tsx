@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
-import { Plus, Trash2, Zap, GripVertical } from "lucide-react"
+import {
+  Plus, Trash2, Zap, GripVertical, MessageSquare, Tag, UserCheck,
+  ArrowRightCircle, Flag, ChevronDown, ChevronUp, Hash, StickyNote,
+  Keyboard, AlertCircle, X
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { PageDescription } from "@/components/page-description"
 import { useAutoTour } from "@/components/tour/tour-provider"
@@ -31,17 +38,273 @@ interface TicketMacro {
   sortOrder: number
 }
 
-const ACTION_TYPE_KEYS = [
-  { value: "set_status", tKey: "setStatus" },
-  { value: "set_priority", tKey: "setPriority" },
-  { value: "add_comment", tKey: "addReply" },
-  { value: "add_internal_note", tKey: "addInternalNote" },
-  { value: "add_tag", tKey: "addTag" },
-  { value: "remove_tag", tKey: "removeTag" },
-  { value: "set_assignee", tKey: "setAssignee" },
-]
+const TICKET_STATUSES = ["new", "in_progress", "waiting", "resolved", "closed"] as const
+const TICKET_PRIORITIES = ["low", "medium", "high", "critical"] as const
 
-const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"]
+const ACTION_TYPES = [
+  { value: "set_status", tKey: "setStatus", icon: ArrowRightCircle, group: "ticket" },
+  { value: "set_priority", tKey: "setPriority", icon: Flag, group: "ticket" },
+  { value: "set_assignee", tKey: "setAssignee", icon: UserCheck, group: "ticket" },
+  { value: "add_comment", tKey: "addReply", icon: MessageSquare, group: "message" },
+  { value: "add_internal_note", tKey: "addInternalNote", icon: StickyNote, group: "message" },
+  { value: "add_tag", tKey: "addTag", icon: Tag, group: "tag" },
+  { value: "remove_tag", tKey: "removeTag", icon: X, group: "tag" },
+] as const
+
+const CATEGORIES = ["general", "billing", "technical", "onboarding", "sales"] as const
+
+const CATEGORY_COLORS: Record<string, string> = {
+  general: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  billing: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+  technical: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  onboarding: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+  sales: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+}
+
+function getActionIcon(type: string) {
+  const found = ACTION_TYPES.find(a => a.value === type)
+  return found?.icon || Zap
+}
+
+function ActionPill({ action, t }: { action: MacroAction; t: (key: string) => string }) {
+  const Icon = getActionIcon(action.type)
+  const actionDef = ACTION_TYPES.find(a => a.value === action.type)
+  const label = actionDef ? t(actionDef.tKey as any) : action.type
+
+  let displayValue = action.value
+  if (action.value.length > 30) {
+    displayValue = action.value.slice(0, 30) + "..."
+  }
+
+  const colorClass = actionDef?.group === "ticket"
+    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+    : actionDef?.group === "message"
+    ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
+    : "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/20 dark:text-violet-300 dark:border-violet-800"
+
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs border", colorClass)}>
+      <Icon className="h-3 w-3 shrink-0" />
+      <span className="font-medium">{label}</span>
+      {displayValue && <span className="opacity-70">: {displayValue}</span>}
+    </span>
+  )
+}
+
+function ActionValueInput({
+  action, onChange, t, tc
+}: {
+  action: MacroAction
+  onChange: (value: string) => void
+  t: (key: string) => string
+  tc: (key: string) => string
+}) {
+  switch (action.type) {
+    case "set_status":
+      return (
+        <Select value={action.value} onChange={e => onChange(e.target.value)} className="flex-1">
+          <option value="">{t("selectStatus")}</option>
+          {TICKET_STATUSES.map(s => (
+            <option key={s} value={s}>{t(`status_${s}` as any)}</option>
+          ))}
+        </Select>
+      )
+    case "set_priority":
+      return (
+        <Select value={action.value} onChange={e => onChange(e.target.value)} className="flex-1">
+          <option value="">{t("selectPriority")}</option>
+          {TICKET_PRIORITIES.map(p => (
+            <option key={p} value={p}>{t(`priority_${p}` as any)}</option>
+          ))}
+        </Select>
+      )
+    case "set_assignee":
+      return (
+        <Input
+          value={action.value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={t("assigneePlaceholder")}
+          className="flex-1"
+        />
+      )
+    case "add_comment":
+    case "add_internal_note":
+      return (
+        <Textarea
+          value={action.value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={action.type === "add_comment" ? t("replyPlaceholder") : t("notePlaceholder")}
+          className="flex-1 min-h-[60px]"
+          rows={2}
+        />
+      )
+    case "add_tag":
+    case "remove_tag":
+      return (
+        <Input
+          value={action.value}
+          onChange={e => onChange(e.target.value)}
+          placeholder={t("tagPlaceholder")}
+          className="flex-1"
+        />
+      )
+    default:
+      return (
+        <Input
+          value={action.value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="..."
+          className="flex-1"
+        />
+      )
+  }
+}
+
+function ActionBuilder({
+  actions, setActions, t, tc
+}: {
+  actions: MacroAction[]
+  setActions: (actions: MacroAction[]) => void
+  t: (key: string) => string
+  tc: (key: string) => string
+}) {
+  const addAction = (type: string) => {
+    setActions([...actions, { type, value: "" }])
+  }
+
+  const updateType = (index: number, type: string) => {
+    const next = [...actions]
+    next[index] = { type, value: "" }
+    setActions(next)
+  }
+
+  const updateValue = (index: number, value: string) => {
+    const next = [...actions]
+    next[index] = { ...next[index], value }
+    setActions(next)
+  }
+
+  const removeAction = (index: number) => {
+    setActions(actions.filter((_, i) => i !== index))
+  }
+
+  const moveAction = (index: number, direction: "up" | "down") => {
+    const next = [...actions]
+    const target = direction === "up" ? index - 1 : index + 1
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target], next[index]]
+    setActions(next)
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">{t("actionsLabel")}</Label>
+        <span className="text-xs text-muted-foreground">{t("actionsHint")}</span>
+      </div>
+
+      {actions.length === 0 && (
+        <div className="border border-dashed rounded-lg p-6 text-center text-muted-foreground">
+          <Zap className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p className="text-sm">{t("noActions")}</p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {actions.map((action, i) => {
+          const Icon = getActionIcon(action.type)
+          const actionDef = ACTION_TYPES.find(a => a.value === action.type)
+
+          return (
+            <div key={i} className="group border rounded-lg p-3 bg-card hover:border-primary/30 transition-colors">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono text-muted-foreground w-5 text-center">{i + 1}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveAction(i, "up")}
+                    disabled={i === 0}
+                    className="p-0.5 rounded hover:bg-muted disabled:opacity-20"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveAction(i, "down")}
+                    disabled={i === actions.length - 1}
+                    className="p-0.5 rounded hover:bg-muted disabled:opacity-20"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+                <Select
+                  value={action.type}
+                  onChange={e => updateType(i, e.target.value)}
+                  className="h-8 text-sm font-medium flex-1"
+                >
+                  <optgroup label={t("groupTicket")}>
+                    {ACTION_TYPES.filter(a => a.group === "ticket").map(at => (
+                      <option key={at.value} value={at.value}>{t(at.tKey as any)}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t("groupMessage")}>
+                    {ACTION_TYPES.filter(a => a.group === "message").map(at => (
+                      <option key={at.value} value={at.value}>{t(at.tKey as any)}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={t("groupTag")}>
+                    {ACTION_TYPES.filter(a => a.group === "tag").map(at => (
+                      <option key={at.value} value={at.value}>{t(at.tKey as any)}</option>
+                    ))}
+                  </optgroup>
+                </Select>
+                <button
+                  type="button"
+                  onClick={() => removeAction(i)}
+                  className="p-1 rounded hover:bg-red-50 text-red-400 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="ml-7">
+                <ActionValueInput action={action} onChange={v => updateValue(i, v)} t={t} tc={tc} />
+                {!action.value.trim() && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {t("valueRequired")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Add action button with quick picks */}
+      <div className="border border-dashed rounded-lg p-2">
+        <p className="text-xs text-muted-foreground mb-2 px-1">{t("addActionLabel")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {ACTION_TYPES.map(at => {
+            const Icon = at.icon
+            return (
+              <button
+                key={at.value}
+                type="button"
+                onClick={() => addAction(at.value)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border bg-card hover:bg-muted transition-colors"
+              >
+                <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                {t(at.tKey as any)}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function MacrosSettingsPage() {
   const { data: session } = useSession()
@@ -55,13 +318,14 @@ export default function MacrosSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
+  const [filterCategory, setFilterCategory] = useState<string>("all")
 
   // Form state
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("general")
   const [shortcutKey, setShortcutKey] = useState("")
-  const [actions, setActions] = useState<MacroAction[]>([{ type: "add_comment", value: "" }])
+  const [actions, setActions] = useState<MacroAction[]>([])
 
   const fetchMacros = async () => {
     try {
@@ -78,7 +342,7 @@ export default function MacrosSettingsPage() {
     setDescription("")
     setCategory("general")
     setShortcutKey("")
-    setActions([{ type: "add_comment", value: "" }])
+    setActions([])
     setEditId(null)
   }
 
@@ -88,12 +352,12 @@ export default function MacrosSettingsPage() {
     setDescription(macro.description || "")
     setCategory(macro.category)
     setShortcutKey(macro.shortcutKey || "")
-    setActions(macro.actions || [{ type: "add_comment", value: "" }])
+    setActions(macro.actions || [])
     setShowForm(true)
   }
 
   const handleSave = async () => {
-    if (!name.trim() || actions.length === 0) return
+    if (!name.trim()) return
     const validActions = actions.filter(a => a.value.trim())
     if (validActions.length === 0) return
 
@@ -132,11 +396,20 @@ export default function MacrosSettingsPage() {
     fetchMacros()
   }
 
+  const filteredMacros = filterCategory === "all"
+    ? macros
+    : macros.filter(m => m.category === filterCategory)
+
+  const hasValidActions = actions.filter(a => a.value.trim()).length > 0
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 data-tour-id="macros-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="macros" /></h1>
+          <h1 data-tour-id="macros-header" className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            {t("title")} <TourReplayButton tourId="macros" />
+          </h1>
           <p className="text-muted-foreground">{t("subtitle")}</p>
           <PageDescription text={t("description")} />
         </div>
@@ -145,133 +418,189 @@ export default function MacrosSettingsPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="animate-pulse space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-muted rounded-lg" />)}
-        </div>
-      ) : macros.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>{t("noMacros")}</p>
-        </div>
-      ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium">Name</th>
-                <th className="text-left px-4 py-2 font-medium">Category</th>
-                <th className="text-left px-4 py-2 font-medium">Shortcut</th>
-                <th className="text-left px-4 py-2 font-medium">Actions</th>
-                <th className="text-right px-4 py-2 font-medium">Uses</th>
-                <th className="text-right px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {macros.map(macro => (
-                <tr key={macro.id} className="border-t hover:bg-muted/30 cursor-pointer" onClick={() => openEdit(macro)}>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{macro.name}</div>
-                    {macro.description && <div className="text-xs text-muted-foreground">{macro.description}</div>}
-                  </td>
-                  <td className="px-4 py-3 capitalize">{macro.category}</td>
-                  <td className="px-4 py-3">
-                    {macro.shortcutKey && <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">{macro.shortcutKey}</kbd>}
-                  </td>
-                  <td className="px-4 py-3">{(macro.actions as MacroAction[]).length} actions</td>
-                  <td className="px-4 py-3 text-right">{macro.usageCount}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={e => { e.stopPropagation(); toggleActive(macro.id, !macro.isActive) }}
-                      className={cn("text-xs px-2 py-0.5 rounded-full border", macro.isActive ? "bg-green-50 text-green-600 border-green-200" : "bg-muted text-muted-foreground")}
-                    >
-                      {macro.isActive ? tc("active") : tc("inactive")}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button size="icon" variant="ghost" onClick={e => { e.stopPropagation(); handleDelete(macro.id) }} className="h-7 w-7 text-red-500">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Category filter tabs */}
+      {macros.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            onClick={() => setFilterCategory("all")}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+              filterCategory === "all"
+                ? "bg-foreground text-background border-foreground"
+                : "bg-card hover:bg-muted border-border"
+            )}
+          >
+            {tc("all")} ({macros.length})
+          </button>
+          {CATEGORIES.map(cat => {
+            const count = macros.filter(m => m.category === cat).length
+            if (count === 0) return null
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilterCategory(cat)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors capitalize",
+                  filterCategory === cat
+                    ? "bg-foreground text-background border-foreground"
+                    : cn("hover:opacity-80 border-transparent", CATEGORY_COLORS[cat])
+                )}
+              >
+                {t(cat as any)} ({count})
+              </button>
+            )
+          })}
         </div>
       )}
 
-      {/* Macro Form Dialog */}
+      {/* Macros list */}
+      {loading ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-40 bg-muted rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : macros.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <Zap className="h-14 w-14 mx-auto mb-4 opacity-20" />
+          <p className="text-lg font-medium mb-1">{t("noMacros")}</p>
+          <p className="text-sm mb-4">{t("noMacrosHint")}</p>
+          <Button variant="outline" onClick={() => { resetForm(); setShowForm(true) }}>
+            <Plus className="h-4 w-4 mr-1" /> {t("createFirst")}
+          </Button>
+        </div>
+      ) : filteredMacros.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-sm">{t("noCategoryMacros")}</p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {filteredMacros.map(macro => (
+            <div
+              key={macro.id}
+              onClick={() => openEdit(macro)}
+              className={cn(
+                "group relative border rounded-xl p-4 cursor-pointer transition-all hover:shadow-md hover:border-primary/30",
+                !macro.isActive && "opacity-60"
+              )}
+            >
+              {/* Top row: name + switch */}
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-semibold text-sm truncate">{macro.name}</h3>
+                    {macro.shortcutKey && (
+                      <kbd className="shrink-0 px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono border">
+                        {macro.shortcutKey}
+                      </kbd>
+                    )}
+                  </div>
+                  {macro.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-1">{macro.description}</p>
+                  )}
+                </div>
+                <div className="shrink-0 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  <Switch
+                    checked={macro.isActive}
+                    onCheckedChange={checked => toggleActive(macro.id, checked)}
+                  />
+                </div>
+              </div>
+
+              {/* Category + usage */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium capitalize", CATEGORY_COLORS[macro.category])}>
+                  {t(macro.category as any)}
+                </span>
+                {macro.usageCount > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {t("usedTimes", { count: macro.usageCount })}
+                  </span>
+                )}
+              </div>
+
+              {/* Action pills preview */}
+              <div className="flex flex-wrap gap-1">
+                {(macro.actions as MacroAction[]).map((action, i) => (
+                  <ActionPill key={i} action={action} t={t} />
+                ))}
+              </div>
+
+              {/* Delete button (on hover) */}
+              <button
+                onClick={e => { e.stopPropagation(); handleDelete(macro.id) }}
+                className="absolute top-2 right-12 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 hover:text-red-600 transition-all"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Dialog */}
       <Dialog open={showForm} onOpenChange={v => { setShowForm(v); if (!v) resetForm() }}>
         <DialogHeader>
           <DialogTitle>{editId ? t("editMacro") : t("newMacro")}</DialogTitle>
         </DialogHeader>
-        <DialogContent className="max-h-[70vh] overflow-y-auto">
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-3">
+        <DialogContent className="max-h-[75vh] overflow-y-auto">
+          <div className="space-y-5">
+            {/* Basic info section */}
+            <div className="space-y-3">
               <div>
-                <Label>{t("name")}</Label>
-                <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("placeholderName")} />
+                <Label className="text-sm font-medium">{t("name")} *</Label>
+                <Input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder={t("placeholderName")}
+                  className="mt-1"
+                />
               </div>
+
               <div>
-                <Label>{t("category")}</Label>
-                <Select value={category} onChange={e => setCategory(e.target.value)}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{t(c as any)}</option>)}
-                </Select>
+                <Label className="text-sm font-medium">{t("description2")}</Label>
+                <Input
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  placeholder={t("placeholderDesc")}
+                  className="mt-1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium">{t("category")}</Label>
+                  <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1">
+                    {CATEGORIES.map(c => (
+                      <option key={c} value={c}>{t(c as any)}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Keyboard className="h-3.5 w-3.5" />
+                    {t("shortcutKey")}
+                  </Label>
+                  <Select value={shortcutKey} onChange={e => setShortcutKey(e.target.value)} className="mt-1">
+                    <option value="">{t("none")}</option>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+                      <option key={n} value={`Alt+${n}`}>Alt+{n}</option>
+                    ))}
+                  </Select>
+                </div>
               </div>
             </div>
-            <div>
-              <Label>{t("description2")}</Label>
-              <Input value={description} onChange={e => setDescription(e.target.value)} placeholder={t("placeholderDesc")} />
-            </div>
-            <div>
-              <Label>{t("shortcutKey")}</Label>
-              <Select value={shortcutKey} onChange={e => setShortcutKey(e.target.value)}>
-                <option value="">{t("none")}</option>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-                  <option key={n} value={`Alt+${n}`}>Alt+{n}</option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>{t("actions")}</Label>
-              <div className="space-y-2 mt-2">
-                {actions.map((action, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <Select value={action.type} onChange={e => {
-                      const next = [...actions]
-                      next[i] = { ...next[i], type: e.target.value }
-                      setActions(next)
-                    }} className="w-40 shrink-0">
-                      {ACTION_TYPE_KEYS.map(at => <option key={at.value} value={at.value}>{t(at.tKey as any)}</option>)}
-                    </Select>
-                    <Input
-                      value={action.value}
-                      onChange={e => {
-                        const next = [...actions]
-                        next[i] = { ...next[i], value: e.target.value }
-                        setActions(next)
-                      }}
-                      placeholder={action.type.startsWith("set_") ? "Value..." : "Text..."}
-                      className="flex-1"
-                    />
-                    {actions.length > 1 && (
-                      <Button size="icon" variant="ghost" onClick={() => setActions(actions.filter((_, j) => j !== i))} className="h-9 w-9 text-red-500">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" onClick={() => setActions([...actions, { type: "add_comment", value: "" }])} className="text-xs text-primary hover:underline">
-                  {t("addAction")}
-                </button>
-              </div>
-            </div>
+
+            {/* Divider */}
+            <div className="border-t" />
+
+            {/* Actions builder */}
+            <ActionBuilder actions={actions} setActions={setActions} t={t} tc={tc} />
           </div>
         </DialogContent>
         <DialogFooter>
           <Button variant="outline" onClick={() => { setShowForm(false); resetForm() }}>{tc("cancel")}</Button>
-          <Button onClick={handleSave} disabled={!name.trim()}>
+          <Button onClick={handleSave} disabled={!name.trim() || !hasValidActions}>
             {editId ? t("saveChanges") : t("createMacro")}
           </Button>
         </DialogFooter>
