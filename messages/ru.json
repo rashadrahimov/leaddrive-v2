@@ -2755,7 +2755,10 @@
     "briefingLanguage": "Язык дайджеста",
     "saved": "Сохранено!",
     "resetTours": "Сбросить туры",
-    "resetTips": "Сбросить подсказки"
+    "resetTips": "Сбросить подсказки",
+    "approve": "Одобрить",
+    "approveAll": "Одобрить все",
+    "rejectAll": "Отклонить все"
   },
   "tips": {
     "prefix": "А знаете ли вы?",

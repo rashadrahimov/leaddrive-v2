@@ -2755,7 +2755,10 @@
     "briefingLanguage": "Briefing language",
     "saved": "Saved!",
     "resetTours": "Reset Tours",
-    "resetTips": "Reset Tips"
+    "resetTips": "Reset Tips",
+    "approve": "Approve",
+    "approveAll": "Approve all",
+    "rejectAll": "Reject all"
   },
   "tips": {
     "prefix": "Did you know?",

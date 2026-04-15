@@ -2750,7 +2750,10 @@
     "briefingLanguage": "İcmal dili",
     "saved": "Saxlandı!",
     "resetTours": "Turları sıfırla",
-    "resetTips": "Məsləhətləri sıfırla"
+    "resetTips": "Məsləhətləri sıfırla",
+    "approve": "Təsdiq et",
+    "approveAll": "Hamısını təsdiq et",
+    "rejectAll": "Hamısını rədd et"
   },
   "tips": {
     "prefix": "Bilirdinizmi?",
