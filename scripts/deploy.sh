@@ -50,7 +50,7 @@ ssh root@$SERVER "
   rm -rf .next/standalone/public/public &&
   cp -a public/. .next/standalone/public/ &&
   echo \"  wallpapers: \$(ls .next/standalone/public/wallpapers/ 2>/dev/null | wc -l) files\" &&
-  pm2 restart leaddrive-cloud
+  pm2 restart leaddrive-v2
   pm2 save
 "
 ok "Static copied & PM2 restarted"
