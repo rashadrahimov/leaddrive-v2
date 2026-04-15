@@ -1330,7 +1330,7 @@ model KbEmbedding {
   organizationId String
   articleId    String                    @unique
   content      String                    // text that was embedded
-  embedding    Unsupported("vector(1536)")
+  embedding    Unsupported("vector(512)")
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
 

@@ -7,7 +7,7 @@ CREATE TABLE "kb_embeddings" (
     "organizationId" TEXT NOT NULL,
     "articleId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "embedding" vector(1536) NOT NULL,
+    "embedding" vector(512) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 

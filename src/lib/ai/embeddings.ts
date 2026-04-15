@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk"
 import { prisma } from "@/lib/prisma"
 
 const EMBEDDING_MODEL = "voyage-3" // Anthropic's embedding model via Voyage AI
-const EMBEDDING_DIMENSIONS = 1536
+const EMBEDDING_DIMENSIONS = 512
 
 /**
  * Generate embedding vector for text using Voyage AI (Anthropic's embedding partner).
