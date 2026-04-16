@@ -65,6 +65,21 @@ export default function MtmMapPage() {
   // Keep ref in sync for polling closure
   useEffect(() => { selectedAgentRef.current = selectedAgent }, [selectedAgent])
 
+  const fetchAgentRoute = useCallback(async (agentId: string) => {
+    try {
+      const today = new Date().toISOString().split("T")[0]
+      const res = await fetch(`/api/v1/mtm/routes?agentId=${agentId}&date=${today}`, {
+        headers: orgId ? { "x-organization-id": String(orgId) } : ({} as Record<string, string>),
+      })
+      const r = await res.json()
+      if (r.success && r.data?.routes?.length > 0) {
+        setAgentRoute(r.data.routes[0])
+      } else {
+        setAgentRoute(null)
+      }
+    } catch { setAgentRoute(null) }
+  }, [orgId])
+
   const fetchLocations = useCallback(() => {
     fetch("/api/v1/mtm/locations", {
       headers: orgId ? { "x-organization-id": String(orgId) } : ({} as Record<string, string>),
@@ -91,21 +106,6 @@ export default function MtmMapPage() {
     const interval = setInterval(fetchLocations, 15000)
     return () => clearInterval(interval)
   }, [fetchLocations])
-
-  const fetchAgentRoute = useCallback(async (agentId: string) => {
-    try {
-      const today = new Date().toISOString().split("T")[0]
-      const res = await fetch(`/api/v1/mtm/routes?agentId=${agentId}&date=${today}`, {
-        headers: orgId ? { "x-organization-id": String(orgId) } : ({} as Record<string, string>),
-      })
-      const r = await res.json()
-      if (r.success && r.data?.routes?.length > 0) {
-        setAgentRoute(r.data.routes[0])
-      } else {
-        setAgentRoute(null)
-      }
-    } catch { setAgentRoute(null) }
-  }, [orgId])
 
   const handleAgentClick = (agentId: string) => {
     if (selectedAgent === agentId) {
