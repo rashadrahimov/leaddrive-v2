@@ -9,7 +9,11 @@ import { useTranslations } from "next-intl"
 // Direct Unlayer integration — bypasses react-email-editor wrapper
 // which has stale module-level closure issues with Next.js dynamic + React 19
 
-const UNLAYER_SCRIPT_URL = "https://editor.unlayer.com/embed.js?2"
+// Self-hosted copy first (ad-blockers block editor.unlayer.com), CDN fallback
+const UNLAYER_SCRIPT_URLS = [
+  "/vendor/unlayer-embed.js",
+  "https://editor.unlayer.com/embed.js?2",
+]
 
 const MERGE_TAGS = {
   client_name: { name: "Client Name", value: "{{client_name}}" },
@@ -24,22 +28,19 @@ const MERGE_TAGS = {
   year: { name: "Year", value: "{{year}}" },
 }
 
-/** Load Unlayer embed script once — with retry and proper state tracking */
+/** Load Unlayer embed script once — tries self-hosted first, then CDN fallback */
 let unlayerLoadPromise: Promise<void> | null = null
 
-function loadUnlayerScriptOnce(): Promise<void> {
+function tryLoadScript(url: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
-    // Already loaded from a previous page visit
+    // Already loaded
     if (typeof window !== "undefined" && (window as any).unlayer) {
       resolve()
       return
     }
 
-    // Remove any stale script tags (from failed attempts or HMR)
-    document.querySelectorAll(`script[src*="editor.unlayer.com"]`).forEach(el => el.remove())
-
     const script = document.createElement("script")
-    script.src = UNLAYER_SCRIPT_URL
+    script.src = url
     script.async = true
 
     script.onload = () => {
@@ -52,42 +53,42 @@ function loadUnlayerScriptOnce(): Promise<void> {
           resolve()
         } else if (attempts > 50) { // 5 seconds
           clearInterval(check)
-          reject(new Error("Unlayer global not available after script load"))
+          script.remove()
+          reject(new Error(`Unlayer global not available after loading ${url}`))
         }
       }, 100)
     }
 
     script.onerror = () => {
-      reject(new Error("Failed to load Unlayer embed script"))
+      script.remove()
+      reject(new Error(`Failed to load script: ${url}`))
     }
 
     document.head.appendChild(script)
   })
 }
 
-function loadUnlayerScript(retries = 3, delay = 1500): Promise<void> {
-  // Return cached promise if already loading/loaded
+function loadUnlayerScript(): Promise<void> {
   if (unlayerLoadPromise) return unlayerLoadPromise
 
   unlayerLoadPromise = (async () => {
+    // Remove stale script tags from previous attempts
+    document.querySelectorAll(`script[src*="unlayer"]`).forEach(el => el.remove())
+
     let lastError: Error | null = null
-    for (let i = 0; i < retries; i++) {
+    for (const url of UNLAYER_SCRIPT_URLS) {
       try {
-        await loadUnlayerScriptOnce()
+        await tryLoadScript(url)
         return
       } catch (err: any) {
         lastError = err
-        if (i < retries - 1) {
-          await new Promise(r => setTimeout(r, delay * (i + 1)))
-        }
+        console.warn(`[Unlayer] ${url} failed, trying next...`)
       }
     }
     throw lastError || new Error("Failed to load Unlayer embed script")
   })()
 
-  // Reset on failure so retry is possible on next mount
   unlayerLoadPromise.catch(() => { unlayerLoadPromise = null })
-
   return unlayerLoadPromise
 }
 
