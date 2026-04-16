@@ -5,6 +5,58 @@ import { useEffect, useRef, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle, useMap } from "react-leaflet"
 import L from "leaflet"
 
+// --- Tile Provider Failover System ---
+const GOOGLE_TILES = {
+  url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+  subdomains: "0123",
+  attribution: "&copy; Google Maps",
+}
+
+const ERROR_THRESHOLD = 5
+const ERROR_WINDOW_MS = 30_000 // 30 seconds
+
+// SmartTileLayer — Google Maps tiles with limit detection
+function SmartTileLayer({ onLimitReached }: { onLimitReached: (limited: boolean) => void }) {
+  const map = useMap()
+  const errorCountRef = useRef(0)
+  const windowStartRef = useRef(Date.now())
+
+  useEffect(() => {
+    const onTileError = () => {
+      const now = Date.now()
+      if (now - windowStartRef.current > ERROR_WINDOW_MS) {
+        errorCountRef.current = 0
+        windowStartRef.current = now
+      }
+      errorCountRef.current++
+      if (errorCountRef.current >= ERROR_THRESHOLD) {
+        onLimitReached(true)
+      }
+    }
+    const onTileLoad = () => {
+      errorCountRef.current = 0
+      onLimitReached(false)
+    }
+
+    map.on("tileerror", onTileError)
+    map.on("tileload", onTileLoad)
+    return () => {
+      map.off("tileerror", onTileError)
+      map.off("tileload", onTileLoad)
+    }
+  }, [map, onLimitReached])
+
+  return (
+    <TileLayer
+      attribution={GOOGLE_TILES.attribution}
+      url={GOOGLE_TILES.url}
+      subdomains={GOOGLE_TILES.subdomains}
+      maxZoom={19}
+      keepBuffer={4}
+    />
+  )
+}
+
 // Force Leaflet to recalculate container size after mount and on resize
 function InvalidateSize() {
   const map = useMap()
@@ -86,6 +138,7 @@ interface Props {
 export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
+  const [tileLimited, setTileLimited] = useState(false)
 
   // Measure container and pass exact pixel dimensions to MapContainer.
   // Uses aggressive retries because CSS calc() height may not be applied on first paint.
@@ -138,57 +191,79 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
   return (
     <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
       {dimensions ? (
-        <MapContainer
-          key={`${dimensions.width}x${dimensions.height}`}
-          center={center}
-          zoom={12}
-          style={{ height: dimensions.height, width: dimensions.width }}
-          preferCanvas={true}
-        >
-          <InvalidateSize />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            subdomains="abc"
-            maxZoom={19}
-            keepBuffer={4}
-          />
-          {/* Replay track line */}
-          {replayPositions.length > 1 && (
-            <Polyline positions={replayPositions} color="#f59e0b" weight={3} opacity={0.8} dashArray="6 4" />
+        <div style={{ position: "relative", height: dimensions.height, width: dimensions.width }}>
+          <MapContainer
+            key={`${dimensions.width}x${dimensions.height}`}
+            center={center}
+            zoom={12}
+            style={{ height: "100%", width: "100%" }}
+            preferCanvas={true}
+          >
+            <InvalidateSize />
+            <SmartTileLayer onLimitReached={setTileLimited} />
+            {/* Replay track line */}
+            {replayPositions.length > 1 && (
+              <Polyline positions={replayPositions} color="#f59e0b" weight={3} opacity={0.8} dashArray="6 4" />
+            )}
+            {/* Agent markers */}
+            {agents.map((agent) => (
+              <Marker
+                key={agent.agentId}
+                position={[agent.latitude, agent.longitude]}
+                icon={createAgentIcon(agent.fieldStatus || (agent.isOnline ? "ON_ROAD" : "OFFLINE"), agent.name?.charAt(0)?.toUpperCase())}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <div className="font-semibold">{agent.name}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {statusLabels[agent.fieldStatus || "OFFLINE"] || "Unknown"}
+                      {agent.speed ? ` | ${agent.speed.toFixed(1)} km/h` : ""}
+                      {agent.battery ? ` | ${agent.battery}%` : ""}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      Last update: {new Date(agent.recordedAt).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+            {/* Geofence circles around each agent */}
+            {showGeofence && agents.map((agent) => (
+              <LeafletCircle
+                key={`gf-${agent.agentId}`}
+                center={[agent.latitude, agent.longitude]}
+                radius={geofenceRadius}
+                pathOptions={{ color: statusColors[agent.fieldStatus || "OFFLINE"], fillOpacity: 0.1, weight: 1, dashArray: "4 4" }}
+              />
+            ))}
+          </MapContainer>
+          {tileLimited && (
+            <div style={{
+              position: "absolute", inset: 0, zIndex: 1000,
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)",
+              borderRadius: 8,
+            }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#0B0B1E", marginBottom: 6 }}>
+                Map limit reached
+              </div>
+              <div style={{ fontSize: 13, color: "#64748b", textAlign: "center", maxWidth: 340, lineHeight: 1.5 }}>
+                The map tile service has temporarily reached its usage limit. The map will automatically resume when the limit resets. Agent tracking continues in the background.
+              </div>
+              <button
+                onClick={() => { setTileLimited(false); window.location.reload() }}
+                style={{
+                  marginTop: 16, padding: "8px 20px", borderRadius: 8,
+                  background: "#6C63FF", color: "#fff", border: "none",
+                  fontSize: 13, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                Try again
+              </button>
+            </div>
           )}
-          {/* Agent markers */}
-          {agents.map((agent) => (
-            <Marker
-              key={agent.agentId}
-              position={[agent.latitude, agent.longitude]}
-              icon={createAgentIcon(agent.fieldStatus || (agent.isOnline ? "ON_ROAD" : "OFFLINE"), agent.name?.charAt(0)?.toUpperCase())}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold">{agent.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {statusLabels[agent.fieldStatus || "OFFLINE"] || "Unknown"}
-                    {agent.speed ? ` | ${agent.speed.toFixed(1)} km/h` : ""}
-                    {agent.battery ? ` | ${agent.battery}%` : ""}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-1">
-                    Last update: {new Date(agent.recordedAt).toLocaleTimeString()}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-          {/* Geofence circles around each agent */}
-          {showGeofence && agents.map((agent) => (
-            <LeafletCircle
-              key={`gf-${agent.agentId}`}
-              center={[agent.latitude, agent.longitude]}
-              radius={geofenceRadius}
-              pathOptions={{ color: statusColors[agent.fieldStatus || "OFFLINE"], fillOpacity: 0.1, weight: 1, dashArray: "4 4" }}
-            />
-          ))}
-        </MapContainer>
+        </div>
       ) : (
         <div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14, gap: 8 }}>
           <div>🗺️</div>
