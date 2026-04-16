@@ -87,35 +87,42 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
 
-  // Measure container and pass exact pixel dimensions to MapContainer
-  // This avoids the "height: 100%" inheritance chain that breaks Leaflet
+  // Measure container and pass exact pixel dimensions to MapContainer.
+  // Uses aggressive retries because CSS calc() height may not be applied on first paint.
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
 
+    let stopped = false
+
     const measure = () => {
+      if (stopped) return
       const { width, height } = el.getBoundingClientRect()
-      if (width > 100 && height > 100) {
+      if (width > 50 && height > 50) {
         setDimensions({ width: Math.floor(width), height: Math.floor(height) })
       }
     }
 
-    // Measure immediately
+    // Immediate + staggered retries until CSS layout is ready
     measure()
+    const t1 = setTimeout(measure, 50)
+    const t2 = setTimeout(measure, 150)
+    const t3 = setTimeout(measure, 400)
+    const t4 = setTimeout(measure, 900)
+    const t5 = setTimeout(measure, 2000)
 
-    // Re-measure on resize
+    // Keep watching for resizes (sidebar collapse, window resize)
     let observer: ResizeObserver | null = null
     if (typeof ResizeObserver !== "undefined") {
       observer = new ResizeObserver(() => measure())
       observer.observe(el)
     }
 
-    // Fallback
-    const fallback = setTimeout(measure, 300)
-
     return () => {
+      stopped = true
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3)
+      clearTimeout(t4); clearTimeout(t5)
       observer?.disconnect()
-      clearTimeout(fallback)
     }
   }, [])
 
@@ -131,12 +138,21 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
   return (
     <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
       {dimensions ? (
-        <MapContainer center={center} zoom={12} style={{ height: dimensions.height, width: dimensions.width }}>
+        <MapContainer
+          key={`${dimensions.width}x${dimensions.height}`}
+          center={center}
+          zoom={12}
+          style={{ height: dimensions.height, width: dimensions.width }}
+          preferCanvas={true}
+        >
           <InvalidateSize />
+          {/* Primary: OpenStreetMap (reliable, no rate limits) */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            subdomains="abcd"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            subdomains="abc"
+            maxZoom={19}
+            keepBuffer={4}
           />
           {/* Replay track line */}
           {replayPositions.length > 1 && (
@@ -175,8 +191,9 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
           ))}
         </MapContainer>
       ) : (
-        <div style={{ height: "100%", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14 }}>
-          Loading map...
+        <div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14, gap: 8 }}>
+          <div>🗺️</div>
+          <div>Preparing map...</div>
         </div>
       )}
     </div>
