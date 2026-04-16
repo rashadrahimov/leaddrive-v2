@@ -87,7 +87,7 @@ function FullScreenMap({ latitude, longitude, onChange, onClose }: Props & { onC
 
         {/* Map */}
         <div style={{ flex: 1 }}>
-          <MapContainer center={center} zoom={hasPosition ? 16 : 13} style={{ height: "100%", width: "100%" }}>
+          <MapContainer center={center} zoom={hasPosition ? 16 : 13} style={{ height: "100%", width: "100%" }} crs={L.CRS.EPSG3395}>
             <TileLayer
               attribution='&copy; <a href="https://yandex.com/maps">Yandex</a>'
               url="https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU&apikey=518fab30-740f-48fe-b3ee-83c2abb74562"

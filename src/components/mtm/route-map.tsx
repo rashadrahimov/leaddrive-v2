@@ -91,7 +91,7 @@ export default function MtmRouteMap({ points }: Props) {
   return (
     <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
       {ready ? (
-        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
+        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }} crs={L.CRS.EPSG3395}>
           <InvalidateSize />
           <TileLayer
             attribution='&copy; <a href="https://yandex.com/maps">Yandex</a>'

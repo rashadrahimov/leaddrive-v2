@@ -144,6 +144,7 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
           zoom={12}
           style={{ height: dimensions.height, width: dimensions.width }}
           preferCanvas={true}
+          crs={L.CRS.EPSG3395}
         >
           <InvalidateSize />
           {/* Yandex Maps tiles */}
