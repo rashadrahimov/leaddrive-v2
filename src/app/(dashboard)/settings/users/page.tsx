@@ -93,6 +93,7 @@ function UserFormDialog({
 }) {
   const isEdit = !!editUser
   const tc = useTranslations("common")
+  const ts = useTranslations("settings")
   const [form, setForm] = useState<UserFormData>({
     name: "", email: "", password: "", role: "viewer",
     phone: "", department: "", isActive: true,
