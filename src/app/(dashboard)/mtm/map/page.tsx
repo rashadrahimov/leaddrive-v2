@@ -225,19 +225,27 @@ export default function MtmMapPage() {
               ) : (
                 filteredAgents.map(agent => {
                   const cfg = statusConfig[agent.fieldStatus] || statusConfig.OFFLINE
+                  const isOnline = agent.fieldStatus !== "OFFLINE"
+                  const avatarBg = isOnline ? "bg-blue-500 text-white" : "bg-muted text-muted-foreground"
                   return (
                     <div key={agent.agentId} className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[10px] font-semibold flex-shrink-0">
-                        {agent.name?.charAt(0)?.toUpperCase()}
+                      <div className="relative flex-shrink-0">
+                        <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold ${avatarBg}`}>
+                          {agent.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        {isOnline && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-medium flex items-center gap-1 truncate">
-                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${cfg.dotClass}`} />
+                        <div className="text-xs font-medium truncate">
                           {agent.name}
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                          {agent.routeCompletion > 0 && <span><Navigation className="h-2 w-2 inline" /> {agent.routeCompletion}%</span>}
-                          {agent.speed != null && agent.speed > 0 && <span>{agent.speed.toFixed(0)} km/h</span>}
+                        <div className="flex items-center gap-1.5 text-[10px]">
+                          <span className={`inline-flex items-center gap-0.5 ${isOnline ? "text-green-600 font-medium" : "text-muted-foreground"}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotClass}`} />
+                            {cfg.label}
+                          </span>
+                          {agent.speed != null && agent.speed > 0 && <span className="text-muted-foreground">{agent.speed.toFixed(0)} km/h</span>}
+                          {agent.routeCompletion > 0 && <span className="text-muted-foreground"><Navigation className="h-2 w-2 inline" /> {agent.routeCompletion}%</span>}
                         </div>
                       </div>
                       <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0" onClick={() => handleReplay(agent.agentId)} title="Replay">
