@@ -62,7 +62,7 @@ function buildCsp(nonce: string, allowSameOriginFrame = false) {
     "img-src 'self' data: blob: https:",
     "media-src 'self'",
     "font-src 'self' data:",
-    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} ${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://tile.openstreetmap.de https://unpkg.com`,
+    `connect-src 'self' ${process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"} ${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"} https://api.anthropic.com https://accounts.google.com https://login.microsoftonline.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://tile.openstreetmap.de https://core-renderer-tiles.maps.yandex.net https://unpkg.com`,
     "form-action 'self' https://accounts.google.com https://login.microsoftonline.com",
     "frame-src 'self' https://editor.unlayer.com https://*.unlayer.com",
     allowSameOriginFrame ? "frame-ancestors 'self'" : "frame-ancestors 'none'",

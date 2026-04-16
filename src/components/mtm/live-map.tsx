@@ -146,10 +146,10 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
           preferCanvas={true}
         >
           <InvalidateSize />
-          {/* Primary: OpenStreetMap (reliable, no rate limits) */}
+          {/* Yandex Maps tiles */}
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://yandex.com/maps">Yandex</a>'
+            url="https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU&apikey=518fab30-740f-48fe-b3ee-83c2abb74562"
             subdomains="abc"
             maxZoom={19}
             keepBuffer={4}
