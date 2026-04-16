@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, requireAuth, isAuthError } from "@/lib/api-auth"
 
 const DEFAULT_SETTINGS: Record<string, any> = {
   gpsInterval: 30, // seconds
@@ -32,7 +32,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const orgId = await getOrgId(req)
+  const auth = await requireAuth(req)
+  if (isAuthError(auth)) return auth
+
+  const ALLOWED_ROLES = ["admin", "manager", "superadmin"]
+  if (!ALLOWED_ROLES.includes(auth.role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const orgId = auth.orgId
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   try {

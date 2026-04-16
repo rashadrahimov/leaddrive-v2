@@ -29,17 +29,33 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const body = await req.json()
-    const data: any = {
-      agentId: body.agentId,
-      customerId: body.customerId,
-      notes: body.notes || null,
-    }
+    const data: any = {}
+    if (body.agentId) data.agentId = body.agentId
+    if (body.customerId) data.customerId = body.customerId
+    if (body.notes !== undefined) data.notes = body.notes || null
     if (body.status) data.status = body.status
-    if (body.status === "CHECKED_OUT" && !body.checkOutAt) {
-      data.checkOutAt = new Date()
+
+    // Handle check-out: save checkout GPS + auto-set checkOutAt + calculate duration
+    if (body.status === "CHECKED_OUT") {
+      if (!body.checkOutAt) data.checkOutAt = new Date()
+      // Save checkout GPS to checkOutLat/Lng (NOT checkInLat/Lng)
+      if (body.latitude != null) data.checkOutLat = parseFloat(body.latitude)
+      if (body.longitude != null) data.checkOutLng = parseFloat(body.longitude)
+
+      // Calculate visit duration in minutes
+      const visit = await prisma.mtmVisit.findFirst({
+        where: { id, organizationId: orgId },
+        select: { checkInAt: true },
+      })
+      if (visit?.checkInAt) {
+        const checkOut = data.checkOutAt || new Date()
+        data.duration = Math.round((checkOut.getTime() - visit.checkInAt.getTime()) / 60000)
+      }
+    } else {
+      // Non-checkout update: lat/lng goes to checkInLat/Lng
+      if (body.latitude != null) data.checkInLat = parseFloat(body.latitude)
+      if (body.longitude != null) data.checkInLng = parseFloat(body.longitude)
     }
-    if (body.latitude) data.checkInLat = parseFloat(body.latitude)
-    if (body.longitude) data.checkInLng = parseFloat(body.longitude)
 
     const updated = await prisma.mtmVisit.updateMany({
       where: { id, organizationId: orgId },

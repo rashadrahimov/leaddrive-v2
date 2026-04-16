@@ -21,14 +21,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "file and agentId are required" }, { status: 400 })
     }
 
+    // Validate file size — max 10MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 })
+    }
+
+    // Validate file extension
+    const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "heic"]
+    const ext = (file.name?.split(".").pop() || "").toLowerCase()
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return NextResponse.json({ error: "Invalid file type" }, { status: 400 })
+    }
+
     // Save file to public/uploads/mtm-photos/
     const uploadDir = path.join(process.cwd(), "public", "uploads", "mtm-photos")
     await mkdir(uploadDir, { recursive: true })
 
-    const ext = file.name?.split(".").pop() || "jpg"
     const fileName = `${Date.now()}-${agentId.slice(-6)}.${ext}`
     const filePath = path.join(uploadDir, fileName)
     const buffer = Buffer.from(await file.arrayBuffer())
+
+    // Validate file content via magic numbers
+    if (buffer.length >= 4) {
+      const isJpeg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF
+      const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47
+
+      if ((ext === "jpg" || ext === "jpeg") && !isJpeg) {
+        return NextResponse.json({ error: "Invalid file type" }, { status: 400 })
+      }
+      if (ext === "png" && !isPng) {
+        return NextResponse.json({ error: "Invalid file type" }, { status: 400 })
+      }
+    }
     await writeFile(filePath, buffer)
 
     const url = `/uploads/mtm-photos/${fileName}`

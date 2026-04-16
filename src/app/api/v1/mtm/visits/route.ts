@@ -133,18 +133,15 @@ export async function POST(req: NextRequest) {
     // Auto-update route point: mark as VISITED + update route counters
     if (agentId && customerId) {
       try {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-
-        // Find today's route point for this agent+customer
+        // Find the most recent active route point for this agent+customer
+        // Look for routes that are PLANNED or IN_PROGRESS (not just today's date)
         const routePoint = await prisma.mtmRoutePoint.findFirst({
           where: {
             customerId,
             status: "PENDING",
-            route: { agentId, organizationId: orgId, date: { gte: today, lt: tomorrow } },
+            route: { agentId, organizationId: orgId, status: { in: ["PLANNED", "IN_PROGRESS"] } },
           },
+          orderBy: { route: { date: "desc" } },
           select: { id: true, routeId: true },
         })
 
