@@ -4034,6 +4034,10 @@
       "dealStuckFollowup": {
         "name": "Dayanmış sövdələşmə üçün xatırlatma",
         "description": "Sövdələşmə danışıqlar mərhələsində ilişib qalarsa xatırlatma tapşırığı yarat."
+      },
+      "missedCallSms": {
+        "name": "Buraxılmış zəngdən sonra SMS",
+        "description": "Daxil olan zəng cavabsız qalanda zəng edənə avtomatik SMS göndər və geri zəng tapşırığı yarat."
       }
     }
   },

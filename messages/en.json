@@ -4105,6 +4105,10 @@
       "dealStuckFollowup": {
         "name": "Follow up on stuck deals",
         "description": "Create a reminder task when a deal sits in negotiation too long."
+      },
+      "missedCallSms": {
+        "name": "SMS after missed call",
+        "description": "Auto-send an SMS to the caller and create a callback task when an inbound call is missed."
       }
     }
   },

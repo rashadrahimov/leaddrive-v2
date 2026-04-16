@@ -4,6 +4,7 @@ import { isPrivateUrl } from "@/lib/url-validation"
 import { fireWebhooks } from "@/lib/webhooks"
 import { sendSlackNotification, formatGenericNotification } from "@/lib/slack"
 import { sendEmail } from "@/lib/email"
+import { sendSms } from "@/lib/sms"
 
 // Whitelist of fields that workflow actions are allowed to update per entity type
 const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
@@ -204,6 +205,23 @@ async function executeAction(
         }).catch(err => console.error(`[Workflow] send_email failed:`, err))
       } else {
         console.warn(`[Workflow] send_email skipped — no recipient for ${entityType} ${entity.id}`)
+      }
+      break
+    }
+
+    case "send_sms": {
+      const recipientPhone = config.to
+        || (entity as any).phone
+        || (entity as any).fromNumber
+        || (entity as any).toNumber
+      if (recipientPhone) {
+        const message = (config.message || config.body || `[LeadDrive] Notification for ${entityType}`)
+          .toString()
+          .replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => String((entity as any)[k] ?? ""))
+        sendSms({ to: recipientPhone, message, organizationId: orgId })
+          .catch(err => console.error(`[Workflow] send_sms failed:`, err))
+      } else {
+        console.warn(`[Workflow] send_sms skipped — no phone for ${entityType} ${entity.id}`)
       }
       break
     }

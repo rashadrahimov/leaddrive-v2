@@ -164,6 +164,30 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
       },
     ],
   },
+  {
+    id: "missed-call-sms",
+    nameKey: "items.missedCallSms.name",
+    descriptionKey: "items.missedCallSms.description",
+    category: "operations",
+    icon: "PhoneMissed",
+    entityType: "call",
+    triggerEvent: "missed",
+    conditions: {},
+    actions: [
+      {
+        actionType: "send_sms",
+        actionConfig: {
+          message: "Sorry we missed your call. We'll get back to you shortly. — LeadDrive team",
+        },
+        actionOrder: 0,
+      },
+      {
+        actionType: "create_task",
+        actionConfig: { title: "Call back missed caller", priority: "medium" },
+        actionOrder: 1,
+      },
+    ],
+  },
 ]
 
 export function getTemplateById(id: string): WorkflowTemplate | undefined {

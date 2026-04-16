@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   UserPlus, Users, Trophy, Ticket, AlertTriangle, Clock,
-  ArrowLeft, Sparkles, ChevronRight,
+  ArrowLeft, Sparkles, ChevronRight, PhoneMissed,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,6 +31,7 @@ const ICONS: Record<string, LucideIcon> = {
   Ticket,
   AlertTriangle,
   Clock,
+  PhoneMissed,
 }
 
 const CATEGORY_STYLES: Record<string, string> = {

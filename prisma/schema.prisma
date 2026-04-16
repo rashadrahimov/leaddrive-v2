@@ -3256,6 +3256,24 @@ model CallLog {
   @@map("call_logs")
 }
 
+/// SMS OTP codes — used for login 2FA, phone verification, sensitive action confirmation.
+/// Codes are stored hashed (bcrypt). Each code is single-use and time-limited.
+model OtpCode {
+  id             String    @id @default(cuid())
+  organizationId String?   // nullable for public/pre-auth flows (e.g. phone verification during signup)
+  phone          String    // E.164 format recommended
+  codeHash       String    // bcrypt hash of the numeric code
+  purpose        String    // "login" | "2fa" | "verification" | "sensitive_action"
+  attempts       Int       @default(0)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([phone, purpose])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
 // --- Task 5: Custom Report Builder ---
 
 model SavedReport {

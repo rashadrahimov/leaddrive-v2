@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { trackContactEvent } from "@/lib/contact-events"
+import { executeWorkflows } from "@/lib/workflow-engine"
 
 // POST — Twilio status callback (public endpoint, no auth required)
 export async function POST(req: NextRequest) {
@@ -56,6 +57,24 @@ export async function POST(req: NextRequest) {
     }
 
     await prisma.callLog.update({ where: { callSid }, data: updateData })
+
+    // Fire missed-call workflow trigger (e.g. auto-SMS to caller).
+    // Only for inbound calls that weren't answered.
+    if (status === "no-answer" && callLog.direction === "inbound") {
+      const updated = await prisma.callLog.findUnique({ where: { callSid } })
+      if (updated) {
+        executeWorkflows(callLog.organizationId, "call", "missed", {
+          id: updated.id,
+          direction: updated.direction,
+          fromNumber: updated.fromNumber,
+          toNumber: updated.toNumber,
+          phone: updated.fromNumber, // alias so send_sms picks it up
+          contactId: updated.contactId,
+          status: updated.status,
+          duration: updated.duration,
+        }).catch(err => console.error("[call.missed workflow]", err))
+      }
+    }
 
     return new Response("<Response/>", { headers: { "Content-Type": "text/xml" } })
   } catch (e) {
