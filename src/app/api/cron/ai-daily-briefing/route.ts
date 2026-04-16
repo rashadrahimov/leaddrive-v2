@@ -40,60 +40,81 @@ export async function POST(req: NextRequest) {
       const briefing = await collectBriefingData(org.id, now)
       if (!briefing.hasContent) continue
 
-      // Detect org language from settings, default to Russian
       const orgSettings = (org.settings as Record<string, any>) || {}
-      const lang = orgSettings.language || orgSettings.locale || "ru"
+      const orgLang = orgSettings.language || orgSettings.locale || "ru"
 
-      const narrative = await generateNarrative(org.id, briefing, lang)
-      if (!narrative) continue
-
-      // Send to all admin/manager users in org
+      // Fetch recipients with per-user language preference
       const recipients = await prisma.user.findMany({
         where: {
           organizationId: org.id,
           role: { in: ["admin", "manager"] },
           isActive: true,
         },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, preferredLanguage: true },
       })
 
+      // Group recipients by effective language
+      const byLang = new Map<string, typeof recipients>()
       for (const user of recipients) {
-        // In-app notification
-        await createNotification({
-          organizationId: org.id,
-          userId: user.id,
-          type: "info",
-          title: "Daily AI Briefing",
-          message: narrative,
-          entityType: "briefing",
-        })
+        const lang = user.preferredLanguage || orgLang
+        const group = byLang.get(lang) || []
+        group.push(user)
+        byLang.set(lang, group)
+      }
 
-        // Email delivery
-        if (user.email) {
-          try {
-            const { sendEmail } = await import("@/lib/email")
-            await sendEmail({
-              to: user.email,
-              subject: `📊 Daily AI Briefing — ${org.name}`,
-              html: formatBriefingEmail(narrative, org.name, user.name || ""),
-              organizationId: org.id,
-            })
-          } catch { /* non-critical — email config may not be set */ }
+      // Generate one narrative per unique language
+      const narrativeByLang = new Map<string, string>()
+      for (const lang of byLang.keys()) {
+        const narrative = await generateNarrative(org.id, briefing, lang)
+        if (narrative) narrativeByLang.set(lang, narrative)
+      }
+
+      if (narrativeByLang.size === 0) continue
+
+      // Deliver to each user in their preferred language
+      for (const [lang, users] of byLang.entries()) {
+        const narrative = narrativeByLang.get(lang)
+        if (!narrative) continue
+
+        for (const user of users) {
+          // In-app notification
+          await createNotification({
+            organizationId: org.id,
+            userId: user.id,
+            type: "info",
+            title: "Daily AI Briefing",
+            message: narrative,
+            entityType: "briefing",
+          })
+
+          // Email delivery
+          if (user.email) {
+            try {
+              const { sendEmail } = await import("@/lib/email")
+              await sendEmail({
+                to: user.email,
+                subject: `📊 Daily AI Briefing — ${org.name}`,
+                html: formatBriefingEmail(narrative, org.name, user.name || ""),
+                organizationId: org.id,
+              })
+            } catch { /* non-critical — email config may not be set */ }
+          }
         }
       }
 
-      // Slack delivery (if configured)
-      if (orgSettings.slackWebhookUrl) {
+      // Slack delivery — org language (shared channel)
+      const slackNarrative = narrativeByLang.get(orgLang) || narrativeByLang.values().next().value
+      if (orgSettings.slackWebhookUrl && slackNarrative) {
         try {
           const { sendSlackNotification } = await import("@/lib/slack")
           await sendSlackNotification(orgSettings.slackWebhookUrl, {
-            text: `*Daily AI Briefing*\n${narrative}`,
+            text: `*Daily AI Briefing*\n${slackNarrative}`,
           })
         } catch { /* non-critical */ }
       }
 
-      // Telegram delivery (if configured)
-      if (orgSettings.telegramBotToken && orgSettings.telegramChatId) {
+      // Telegram delivery — org language (shared channel)
+      if (orgSettings.telegramBotToken && orgSettings.telegramChatId && slackNarrative) {
         try {
           const tgUrl = `https://api.telegram.org/bot${orgSettings.telegramBotToken}/sendMessage`
           await fetch(tgUrl, {
@@ -101,7 +122,7 @@ export async function POST(req: NextRequest) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               chat_id: orgSettings.telegramChatId,
-              text: `📊 *Daily AI Briefing*\n\n${narrative}`,
+              text: `📊 *Daily AI Briefing*\n\n${slackNarrative}`,
               parse_mode: "Markdown",
             }),
           })

@@ -131,6 +131,7 @@
     "back": "Geri",
     "next": "İrəli",
     "replayTour": "Turu təkrarla",
+    "done": "Hazır",
     "submit": "Göndər",
     "update": "Yenilə",
     "actions": "Əməliyyatlar",
@@ -2166,6 +2167,9 @@
     "roleColor": "Rəng",
     "pageDescription": "Sistem parametrləri: istifadəçilər, rollar, inteqrasiyalar və CRM davranışı",
     "hintUsers": "CRM istifadəçi hesablarını, rolları və giriş icazələrini idarə edin",
+    "briefingLanguage": "İcmal dili",
+    "briefingLanguageDesc": "Gündəlik AI icmalının dili. Təşkilatın standart dilini istifadə etmək üçün boş buraxın.",
+    "useOrgDefault": "Təşkilat standartı",
     "hintRoles": "Hər CRM modulu üçün istifadəçi rollarını və icazələrini müəyyən edin",
     "hintSecurity": "İki faktorlu autentifikasiya, parol siyasətləri və təhlükəsizlik parametrləri",
     "hintCurrencies": "Çoxvalyutalı sövdələşmələr üçün valyutaları və məzənnələri konfiqurasiya edin",
@@ -3654,7 +3658,10 @@
     "mergeMonth": "Ay",
     "mergeYear": "İl",
     "previewDesktop": "Kompüter",
-    "previewMobile": "Mobil"
+    "previewMobile": "Mobil",
+    "editorFailedToLoad": "Redaktor yüklənmədi",
+    "retry": "Təkrarla",
+    "reloadPage": "Səhifəni yenilə"
   },
   "emailLog": {
     "title": "Email Jurnalı",

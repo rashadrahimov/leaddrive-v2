@@ -27,11 +27,8 @@ const MERGE_TAGS = {
 /** Load Unlayer embed script once — with retry and proper state tracking */
 let unlayerLoadPromise: Promise<void> | null = null
 
-function loadUnlayerScript(): Promise<void> {
-  // Return cached promise if already loading/loaded
-  if (unlayerLoadPromise) return unlayerLoadPromise
-
-  unlayerLoadPromise = new Promise<void>((resolve, reject) => {
+function loadUnlayerScriptOnce(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     // Already loaded from a previous page visit
     if (typeof window !== "undefined" && (window as any).unlayer) {
       resolve()
@@ -61,14 +58,34 @@ function loadUnlayerScript(): Promise<void> {
     }
 
     script.onerror = () => {
-      unlayerLoadPromise = null // Allow retry
       reject(new Error("Failed to load Unlayer embed script"))
     }
 
     document.head.appendChild(script)
   })
+}
 
-  // Reset on failure so retry is possible
+function loadUnlayerScript(retries = 3, delay = 1500): Promise<void> {
+  // Return cached promise if already loading/loaded
+  if (unlayerLoadPromise) return unlayerLoadPromise
+
+  unlayerLoadPromise = (async () => {
+    let lastError: Error | null = null
+    for (let i = 0; i < retries; i++) {
+      try {
+        await loadUnlayerScriptOnce()
+        return
+      } catch (err: any) {
+        lastError = err
+        if (i < retries - 1) {
+          await new Promise(r => setTimeout(r, delay * (i + 1)))
+        }
+      }
+    }
+    throw lastError || new Error("Failed to load Unlayer embed script")
+  })()
+
+  // Reset on failure so retry is possible on next mount
   unlayerLoadPromise.catch(() => { unlayerLoadPromise = null })
 
   return unlayerLoadPromise
@@ -96,6 +113,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
+    const [retryCount, setRetryCount] = useState(0)
     const destroyedRef = useRef(false)
 
     // Initialize Unlayer editor directly
@@ -172,7 +190,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
         setReady(false)
       }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [retryCount])
 
     // Load design when designJson changes after init
     useEffect(() => {
@@ -264,15 +282,27 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
           {error && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-destructive/5">
               <div className="text-center">
-                <p className="text-sm text-destructive font-medium">Editor failed to load</p>
+                <p className="text-sm text-destructive font-medium">{t("editorFailedToLoad")}</p>
                 <p className="text-xs text-muted-foreground mt-1">{error}</p>
-                <button
-                  type="button"
-                  className="mt-3 text-xs text-primary underline"
-                  onClick={() => window.location.reload()}
-                >
-                  Reload page
-                </button>
+                <div className="flex items-center justify-center gap-3 mt-3">
+                  <button
+                    type="button"
+                    className="text-xs text-primary underline font-medium"
+                    onClick={() => {
+                      unlayerLoadPromise = null
+                      setRetryCount(c => c + 1)
+                    }}
+                  >
+                    {t("retry")}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline"
+                    onClick={() => window.location.reload()}
+                  >
+                    {t("reloadPage")}
+                  </button>
+                </div>
               </div>
             </div>
           )}

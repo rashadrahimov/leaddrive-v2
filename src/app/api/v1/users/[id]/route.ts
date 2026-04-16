@@ -17,6 +17,7 @@ const updateUserSchema = z.object({
   skills: z.array(z.string()).optional(),
   maxTickets: z.number().int().min(1).max(100).optional(),
   isAvailable: z.boolean().optional(),
+  preferredLanguage: z.enum(["ru", "en", "az"]).nullable().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         phone: true, department: true, isActive: true,
         lastLogin: true, loginCount: true, totpEnabled: true,
         skills: true, maxTickets: true, isAvailable: true,
-        createdAt: true, updatedAt: true,
+        preferredLanguage: true, createdAt: true, updatedAt: true,
       },
     })
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -94,6 +95,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (parsed.data.skills !== undefined) updateData.skills = parsed.data.skills
     if (parsed.data.maxTickets !== undefined) updateData.maxTickets = parsed.data.maxTickets
     if (parsed.data.isAvailable !== undefined) updateData.isAvailable = parsed.data.isAvailable
+    if (parsed.data.preferredLanguage !== undefined) updateData.preferredLanguage = parsed.data.preferredLanguage
 
     const user = await prisma.user.update({
       where: { id },
@@ -101,7 +103,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       select: {
         id: true, name: true, email: true, role: true,
         phone: true, department: true, isActive: true, totpEnabled: true, require2fa: true,
-        skills: true, maxTickets: true, isAvailable: true, createdAt: true,
+        skills: true, maxTickets: true, isAvailable: true, preferredLanguage: true, createdAt: true,
       },
     })
 

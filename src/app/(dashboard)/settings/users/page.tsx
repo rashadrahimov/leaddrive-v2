@@ -35,6 +35,7 @@ interface User {
   skills: string[]
   maxTickets: number
   isAvailable: boolean
+  preferredLanguage: string | null
   createdAt: string
 }
 
@@ -77,6 +78,7 @@ interface UserFormData {
   isActive: boolean
   skills: string
   maxTickets: number
+  preferredLanguage: string
 }
 
 function UserFormDialog({
@@ -94,7 +96,7 @@ function UserFormDialog({
   const [form, setForm] = useState<UserFormData>({
     name: "", email: "", password: "", role: "viewer",
     phone: "", department: "", isActive: true,
-    skills: "", maxTickets: 20,
+    skills: "", maxTickets: 20, preferredLanguage: "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -111,6 +113,7 @@ function UserFormDialog({
         isActive: editUser?.isActive ?? true,
         skills: editUser?.skills?.join(", ") || "",
         maxTickets: editUser?.maxTickets || 20,
+        preferredLanguage: editUser?.preferredLanguage || "",
       })
       setError("")
     }
@@ -132,6 +135,7 @@ function UserFormDialog({
         isActive: form.isActive,
         skills,
         maxTickets: form.maxTickets,
+        preferredLanguage: form.preferredLanguage || null,
       }
       if (!isEdit) {
         payload.password = form.password
@@ -202,6 +206,19 @@ function UserFormDialog({
               <Label htmlFor="phone">Телефон</Label>
               <Input id="phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
             </div>
+            {/* Briefing language preference */}
+            {isEdit && (
+              <div>
+                <Label htmlFor="preferredLanguage">{ts("briefingLanguage")}</Label>
+                <Select value={form.preferredLanguage} onChange={e => setForm(f => ({ ...f, preferredLanguage: e.target.value }))}>
+                  <option value="">{ts("useOrgDefault")}</option>
+                  <option value="ru">Русский</option>
+                  <option value="en">English</option>
+                  <option value="az">Azərbaycan</option>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">{ts("briefingLanguageDesc")}</p>
+              </div>
+            )}
             {/* Support agent settings — only shown when editing */}
             {isEdit && (
               <>

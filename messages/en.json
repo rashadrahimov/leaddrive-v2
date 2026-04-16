@@ -131,6 +131,7 @@
     "back": "Back",
     "next": "Next",
     "replayTour": "Replay tour",
+    "done": "Done",
     "submit": "Submit",
     "update": "Update",
     "actions": "Actions",
@@ -2171,6 +2172,9 @@
     "roleColor": "Color",
     "pageDescription": "System settings: configure users, roles, integrations and CRM behavior",
     "hintUsers": "Manage CRM user accounts, roles and access permissions",
+    "briefingLanguage": "Briefing language",
+    "briefingLanguageDesc": "Language for the daily AI briefing. Leave empty to use the organization default.",
+    "useOrgDefault": "Organization default",
     "hintRoles": "Define user roles and their permissions for each CRM module",
     "hintSecurity": "Two-factor authentication, password policies and security settings",
     "hintCurrencies": "Configure currencies and exchange rates for multi-currency deals",
@@ -3725,7 +3729,10 @@
     "mergeMonth": "Month",
     "mergeYear": "Year",
     "previewDesktop": "Desktop",
-    "previewMobile": "Mobile"
+    "previewMobile": "Mobile",
+    "editorFailedToLoad": "Editor failed to load",
+    "retry": "Retry",
+    "reloadPage": "Reload page"
   },
   "emailLog": {
     "title": "Email Log",

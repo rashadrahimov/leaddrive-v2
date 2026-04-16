@@ -149,6 +149,7 @@ model User {
   skills         String[]  @default([])
   maxTickets     Int       @default(20)
   isAvailable    Boolean   @default(true)
+  preferredLanguage String? // "ru" | "en" | "az" — null = use org default
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
