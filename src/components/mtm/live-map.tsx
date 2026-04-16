@@ -5,75 +5,11 @@ import { useEffect, useRef, useState } from "react"
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle as LeafletCircle, useMap } from "react-leaflet"
 import L from "leaflet"
 
-// --- Tile Provider Failover System ---
-const GOOGLE_TILES = {
-  url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
-  subdomains: "0123",
-  attribution: "&copy; Google Maps",
-}
-
-const ERROR_THRESHOLD = 5
-const ERROR_WINDOW_MS = 30_000 // 30 seconds
-
-// SmartTileLayer — Google Maps tiles with limit detection
-// Detects both tileerror events AND broken/empty tiles (503 returns tiny error image)
-function SmartTileLayer({ onLimitReached }: { onLimitReached: (limited: boolean) => void }) {
-  const map = useMap()
-  const errorCountRef = useRef(0)
-  const successCountRef = useRef(0)
-  const windowStartRef = useRef(Date.now())
-
-  useEffect(() => {
-    const countError = () => {
-      const now = Date.now()
-      if (now - windowStartRef.current > ERROR_WINDOW_MS) {
-        errorCountRef.current = 0
-        successCountRef.current = 0
-        windowStartRef.current = now
-      }
-      errorCountRef.current++
-      if (errorCountRef.current >= ERROR_THRESHOLD) {
-        onLimitReached(true)
-      }
-    }
-
-    const onTileError = () => countError()
-
-    // Check for broken tiles: 503 may return a tiny error image instead of real tile
-    const onTileLoad = (e: any) => {
-      const img = e.tile as HTMLImageElement | undefined
-      if (img && img.naturalWidth > 0 && img.naturalWidth < 10) {
-        // Google returns a tiny 1x1 or similar error image on 503
-        countError()
-      } else {
-        successCountRef.current++
-        // Only clear limit if we get enough real successes
-        if (successCountRef.current >= 3) {
-          errorCountRef.current = 0
-          onLimitReached(false)
-        }
-      }
-    }
-
-    map.on("tileerror", onTileError)
-    map.on("tileload", onTileLoad)
-    return () => {
-      map.off("tileerror", onTileError)
-      map.off("tileload", onTileLoad)
-    }
-  }, [map, onLimitReached])
-
-  return (
-    <TileLayer
-      attribution={GOOGLE_TILES.attribution}
-      url={GOOGLE_TILES.url}
-      subdomains={GOOGLE_TILES.subdomains}
-      maxZoom={19}
-      keepBuffer={4}
-      // @ts-ignore — force Leaflet to fire tileerror on HTTP errors
-      crossOrigin=""
-    />
-  )
+// --- Tile Provider ---
+// OpenStreetMap — free, no API key, no rate limits, always works
+const OSM_TILES = {
+  url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }
 
 // Force Leaflet to recalculate container size after mount and on resize
@@ -205,7 +141,6 @@ interface Props {
 export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100, plannedRoute = [], focusAgentId = null, etaSeconds = null }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
-  const [tileLimited, setTileLimited] = useState(false)
 
   // Measure container and pass exact pixel dimensions to MapContainer.
   // Uses aggressive retries because CSS calc() height may not be applied on first paint.
@@ -267,7 +202,11 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
             preferCanvas={true}
           >
             <InvalidateSize />
-            <SmartTileLayer onLimitReached={setTileLimited} />
+            <TileLayer
+              attribution={OSM_TILES.attribution}
+              url={OSM_TILES.url}
+              maxZoom={19}
+            />
             {focusAgentId && <FocusAgent agentId={focusAgentId} agents={agents} />}
             {/* Planned route polyline + stop markers */}
             {plannedRoute.length > 1 && (
@@ -342,32 +281,6 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
               />
             ))}
           </MapContainer>
-          {tileLimited && (
-            <div style={{
-              position: "absolute", inset: 0, zIndex: 1000,
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-              background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)",
-              borderRadius: 8,
-            }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#0B0B1E", marginBottom: 6 }}>
-                Map limit reached
-              </div>
-              <div style={{ fontSize: 13, color: "#64748b", textAlign: "center", maxWidth: 340, lineHeight: 1.5 }}>
-                The map tile service has temporarily reached its usage limit. The map will automatically resume when the limit resets. Agent tracking continues in the background.
-              </div>
-              <button
-                onClick={() => { setTileLimited(false); window.location.reload() }}
-                style={{
-                  marginTop: 16, padding: "8px 20px", borderRadius: 8,
-                  background: "#6C63FF", color: "#fff", border: "none",
-                  fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                Try again
-              </button>
-            </div>
-          )}
         </div>
       ) : (
         <div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: 14, gap: 8 }}>

@@ -116,10 +116,10 @@ export async function GET(req: NextRequest) {
       offline: agentLocations.filter((a) => a.fieldStatus === "OFFLINE").length,
     }
 
-    // Recent events for live feed (visits + location pings today)
+    // Recent events for live feed — only meaningful actions (visits, alerts)
     const recentVisits = await prisma.mtmVisit.findMany({
       where: { organizationId: orgId, checkInAt: { gte: today } },
-      take: 10,
+      take: 15,
       orderBy: { checkInAt: "desc" },
       include: {
         agent: { select: { name: true } },
@@ -135,24 +135,24 @@ export async function GET(req: NextRequest) {
       time: v.status === "CHECKED_IN" ? v.checkInAt : v.checkOutAt || v.checkInAt,
     }))
 
-    // Also include recent GPS pings as feed events (when no visits exist)
-    const recentPings = await prisma.mtmAgentLocation.findMany({
-      where: { organizationId: orgId, recordedAt: { gte: today } },
-      take: 15,
-      orderBy: { recordedAt: "desc" },
+    // Recent alerts (route deviation, late start, etc.)
+    const recentAlerts = await prisma.mtmAlert.findMany({
+      where: { organizationId: orgId, createdAt: { gte: today } },
+      take: 10,
+      orderBy: { createdAt: "desc" },
       include: { agent: { select: { name: true } } },
     })
 
-    const pingEvents = recentPings.map((p: any) => ({
-      id: `loc-${p.id}`,
-      type: "LOCATION",
-      agent: p.agent.name,
-      customer: `${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}`,
-      time: p.recordedAt,
+    const alertEvents = recentAlerts.map((a: any) => ({
+      id: `alert-${a.id}`,
+      type: "ALERT",
+      agent: a.agent?.name || "System",
+      customer: a.title,
+      time: a.createdAt,
     }))
 
-    // Merge: visits first, then pings, max 15
-    const liveFeed = [...visitEvents, ...pingEvents]
+    // Merge: visits + alerts, sorted by time, max 15
+    const liveFeed = [...visitEvents, ...alertEvents]
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 15)
 
