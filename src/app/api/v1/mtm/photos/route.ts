@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
+import { writeMtmAudit } from "@/lib/mtm-audit"
 
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -69,6 +70,17 @@ export async function POST(req: NextRequest) {
         longitude,
       },
     })
+
+    // Audit log — non-blocking
+    writeMtmAudit({
+      organizationId: orgId,
+      agentId,
+      action: "PHOTO_UPLOAD",
+      entity: "photo",
+      entityId: photo.id,
+      newData: { visitId, category, url, latitude, longitude },
+      req,
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, data: photo }, { status: 201 })
   } catch (e: any) {

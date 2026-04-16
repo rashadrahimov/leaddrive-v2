@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
+import { writeMtmAudit } from "@/lib/mtm-audit"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const orgId = await getOrgId(req)
@@ -43,6 +44,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     })
     if (updated.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 })
+
+    // Audit log for task completion — non-blocking
+    if (body.status === "COMPLETED" && body.agentId) {
+      writeMtmAudit({
+        organizationId: orgId,
+        agentId: body.agentId,
+        action: "TASK_COMPLETE",
+        entity: "task",
+        entityId: id,
+        newData: { title: body.title, customerId: body.customerId },
+        req,
+      }).catch(() => {})
+    }
+
     return NextResponse.json({ success: true })
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Failed to update" }, { status: 400 })

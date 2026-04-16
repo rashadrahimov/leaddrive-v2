@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { calculateDistance } from "@/lib/geo-utils"
+import { writeMtmAudit } from "@/lib/mtm-audit"
 
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
@@ -174,6 +175,17 @@ export async function POST(req: NextRequest) {
         }
       } catch {} // non-blocking — visit already created
     }
+
+    // Audit log — non-blocking
+    writeMtmAudit({
+      organizationId: orgId,
+      agentId,
+      action: "CHECK_IN",
+      entity: "visit",
+      entityId: visit.id,
+      newData: { customerId, latitude, longitude, notes },
+      req,
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, data: visit }, { status: 201 })
   } catch (e: any) {

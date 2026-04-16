@@ -153,5 +153,100 @@ export async function register() {
 
       console.log("[Finance Cron] Starting deadline checker — every 6h (first run in 5min)")
     }
+
+    // MTM auto-checkout cron — runs every 15 minutes
+    if (!globalObj.__mtmAutoCheckoutCronStarted) {
+      globalObj.__mtmAutoCheckoutCronStarted = true
+      const MTM_INTERVAL = 15 * 60 * 1000 // 15 minutes
+      const MTM_FIRST_RUN = 2 * 60 * 1000 // 2 min after start
+
+      const runMtmAutoCheckout = async () => {
+        try {
+          const { PrismaClient } = require("@prisma/client")
+          const prisma = new PrismaClient()
+          const now = new Date()
+          const orgs = await prisma.organization.findMany({ select: { id: true } })
+
+          let totalAutoCheckedOut = 0
+
+          for (const org of orgs) {
+            // Get autoCheckoutMinutes setting (default 120)
+            const settingRow = await prisma.mtmSetting.findFirst({
+              where: { organizationId: org.id, key: "autoCheckoutMinutes" },
+              select: { value: true },
+            })
+            const autoCheckoutMinutes =
+              settingRow?.value != null ? Number(settingRow.value) : 120
+
+            const cutoff = new Date(now.getTime() - autoCheckoutMinutes * 60 * 1000)
+
+            // Find stale checked-in visits
+            const staleVisits = await prisma.mtmVisit.findMany({
+              where: {
+                organizationId: org.id,
+                status: "CHECKED_IN",
+                checkInAt: { lt: cutoff },
+              },
+              include: {
+                customer: { select: { name: true } },
+              },
+            })
+
+            for (const visit of staleVisits) {
+              const duration = Math.round(
+                (now.getTime() - visit.checkInAt.getTime()) / 60000
+              )
+
+              // Auto-checkout the visit
+              await prisma.mtmVisit.update({
+                where: { id: visit.id },
+                data: {
+                  status: "CHECKED_OUT",
+                  checkOutAt: now,
+                  duration,
+                },
+              })
+
+              // Create LONG_BREAK alert
+              await prisma.mtmAlert.create({
+                data: {
+                  organizationId: org.id,
+                  agentId: visit.agentId,
+                  type: "LONG_BREAK",
+                  category: "WARNING",
+                  title: `Auto-checkout: ${visit.customer?.name || "Unknown"}`,
+                  description: `Visit exceeded ${duration} minutes (limit: ${autoCheckoutMinutes} min)`,
+                  metadata: {
+                    visitId: visit.id,
+                    customerId: visit.customerId,
+                    checkInAt: visit.checkInAt.toISOString(),
+                    autoCheckoutMinutes,
+                    actualDuration: duration,
+                  },
+                },
+              }).catch(() => {}) // non-blocking
+
+              totalAutoCheckedOut++
+            }
+          }
+
+          await prisma.$disconnect()
+          if (totalAutoCheckedOut > 0) {
+            console.log(
+              `[MTM Cron] Auto-checked-out ${totalAutoCheckedOut} stale visit(s)`
+            )
+          }
+        } catch (err: any) {
+          console.error("[MTM Cron] Error:", err.message)
+        }
+      }
+
+      setTimeout(() => {
+        runMtmAutoCheckout()
+        setInterval(runMtmAutoCheckout, MTM_INTERVAL)
+      }, MTM_FIRST_RUN)
+
+      console.log("[MTM Cron] Starting auto-checkout — every 15min (first run in 2min)")
+    }
   }
 }
