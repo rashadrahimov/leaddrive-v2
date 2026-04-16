@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { PageDescription } from "@/components/page-description"
 import { Button } from "@/components/ui/button"
 import dynamic from "next/dynamic"
+import { calculateDistance } from "@/lib/geo-utils"
+import type { RouteStop } from "@/components/mtm/live-map"
 import {
   MapPin, RefreshCw, Clock, WifiOff, Navigation,
   Radio, AlertTriangle, Play, Eye, EyeOff, Circle, Flame,
@@ -55,7 +57,13 @@ export default function MtmMapPage() {
   const [replayTrack, setReplayTrack] = useState<any[]>([])
   const [showGeofence, setShowGeofence] = useState(false)
   const [showHeatmap, setShowHeatmap] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
+  const [agentRoute, setAgentRoute] = useState<any>(null)
+  const selectedAgentRef = useRef<string | null>(null)
   const orgId = session?.user?.organizationId
+
+  // Keep ref in sync for polling closure
+  useEffect(() => { selectedAgentRef.current = selectedAgent }, [selectedAgent])
 
   const fetchLocations = useCallback(() => {
     fetch("/api/v1/mtm/locations", {
@@ -71,14 +79,47 @@ export default function MtmMapPage() {
         }
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [orgId])
+      .finally(() => {
+        setLoading(false)
+        // Refresh selected agent's route silently
+        if (selectedAgentRef.current) fetchAgentRoute(selectedAgentRef.current)
+      })
+  }, [orgId, fetchAgentRoute])
 
   useEffect(() => {
     fetchLocations()
     const interval = setInterval(fetchLocations, 15000)
     return () => clearInterval(interval)
   }, [fetchLocations])
+
+  const fetchAgentRoute = useCallback(async (agentId: string) => {
+    try {
+      const today = new Date().toISOString().split("T")[0]
+      const res = await fetch(`/api/v1/mtm/routes?agentId=${agentId}&date=${today}`, {
+        headers: orgId ? { "x-organization-id": String(orgId) } : ({} as Record<string, string>),
+      })
+      const r = await res.json()
+      if (r.success && r.data?.routes?.length > 0) {
+        setAgentRoute(r.data.routes[0])
+      } else {
+        setAgentRoute(null)
+      }
+    } catch { setAgentRoute(null) }
+  }, [orgId])
+
+  const handleAgentClick = (agentId: string) => {
+    if (selectedAgent === agentId) {
+      // Deselect
+      setSelectedAgent(null)
+      setAgentRoute(null)
+      setReplayAgent(null)
+      setReplayTrack([])
+    } else {
+      setSelectedAgent(agentId)
+      fetchAgentRoute(agentId)
+      handleReplay(agentId)
+    }
+  }
 
   const handleReplay = async (agentId: string) => {
     try {
@@ -103,6 +144,38 @@ export default function MtmMapPage() {
   })
 
   const mapAgents = filteredAgents.filter(a => a.latitude && a.longitude)
+
+  // Transform route points to RouteStop[] for the map
+  const routeStops: RouteStop[] = useMemo(() => {
+    if (!agentRoute?.points) return []
+    const points = [...agentRoute.points].sort((a: any, b: any) => a.orderIndex - b.orderIndex)
+    const firstPendingIdx = points.findIndex((p: any) => p.status === "PENDING")
+    return points
+      .filter((p: any) => p.customer?.latitude != null && p.customer?.longitude != null)
+      .map((p: any, _: number, arr: any[]) => ({
+        orderIndex: p.orderIndex,
+        status: p.status === "VISITED" ? "VISITED" as const :
+                p.status === "SKIPPED" ? "SKIPPED" as const :
+                p.orderIndex === firstPendingIdx ? "NEXT" as const : "PENDING" as const,
+        latitude: p.customer.latitude,
+        longitude: p.customer.longitude,
+        name: p.customer.name,
+        address: p.customer.address,
+        visitedAt: p.visitedAt,
+      }))
+  }, [agentRoute])
+
+  // ETA calculation: distance to next stop / speed
+  const etaSeconds = useMemo(() => {
+    if (!selectedAgent || !routeStops.length) return null
+    const nextStop = routeStops.find(s => s.status === "NEXT")
+    if (!nextStop) return null
+    const agent = agents.find(a => a.agentId === selectedAgent)
+    if (!agent?.latitude || !agent?.longitude) return null
+    const distMeters = calculateDistance(agent.latitude, agent.longitude, nextStop.latitude, nextStop.longitude)
+    const speedKmh = (agent.speed && agent.speed > 2) ? agent.speed : 30 // fallback 30 km/h
+    return Math.round((distMeters / 1000) / speedKmh * 3600)
+  }, [selectedAgent, routeStops, agents])
 
   return (
     <div className="space-y-3">
@@ -157,7 +230,14 @@ export default function MtmMapPage() {
           {loading ? (
             <div className="h-full flex items-center justify-center text-muted-foreground text-sm">Loading map...</div>
           ) : (
-            <MtmLiveMap agents={mapAgents} replayTrack={replayAgent ? replayTrack : []} showGeofence={showGeofence} />
+            <MtmLiveMap
+              agents={mapAgents}
+              replayTrack={replayAgent ? replayTrack : []}
+              showGeofence={showGeofence}
+              plannedRoute={routeStops}
+              focusAgentId={selectedAgent}
+              etaSeconds={etaSeconds}
+            />
           )}
         </div>
 
@@ -231,8 +311,9 @@ export default function MtmMapPage() {
                   const cfg = statusConfig[agent.fieldStatus] || statusConfig.OFFLINE
                   const isOnline = agent.fieldStatus !== "OFFLINE"
                   const avatarBg = isOnline ? "bg-blue-500 text-white" : "bg-muted text-muted-foreground"
+                  const isSelected = selectedAgent === agent.agentId
                   return (
-                    <div key={agent.agentId} className="flex items-center gap-2">
+                    <div key={agent.agentId} className={`flex items-center gap-2 rounded-lg p-1 cursor-pointer transition-colors ${isSelected ? "bg-blue-50 dark:bg-blue-950/30 ring-1 ring-blue-200 dark:ring-blue-800" : "hover:bg-muted/50"}`} onClick={() => handleAgentClick(agent.agentId)}>
                       <div className="relative flex-shrink-0">
                         <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold ${avatarBg}`}>
                           {agent.name?.charAt(0)?.toUpperCase()}
@@ -250,9 +331,12 @@ export default function MtmMapPage() {
                           </span>
                           {agent.speed != null && agent.speed > 0 && <span className="text-muted-foreground">{agent.speed.toFixed(0)} km/h</span>}
                           {agent.routeCompletion > 0 && <span className="text-muted-foreground"><Navigation className="h-2 w-2 inline" /> {agent.routeCompletion}%</span>}
+                          {isSelected && etaSeconds != null && etaSeconds > 0 && (
+                            <span className="text-blue-600 font-medium">ETA {etaSeconds < 60 ? "<1m" : etaSeconds < 3600 ? `${Math.round(etaSeconds / 60)}m` : `${(etaSeconds / 3600).toFixed(1)}h`}</span>
+                          )}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0" onClick={() => handleReplay(agent.agentId)} title="Replay">
+                      <Button variant="ghost" size="icon" className="h-5 w-5 flex-shrink-0" onClick={(e) => { e.stopPropagation(); handleAgentClick(agent.agentId) }} title="Show route">
                         <Play className="h-2.5 w-2.5" />
                       </Button>
                     </div>

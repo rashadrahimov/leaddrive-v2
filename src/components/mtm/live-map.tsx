@@ -128,14 +128,62 @@ const statusLabels: Record<string, string> = {
   OFFLINE: "Offline",
 }
 
+export interface RouteStop {
+  orderIndex: number
+  status: "VISITED" | "PENDING" | "SKIPPED" | "NEXT"
+  latitude: number
+  longitude: number
+  name: string
+  address?: string
+  visitedAt?: string
+}
+
+const stopColors: Record<string, string> = {
+  VISITED: "#22c55e",
+  NEXT: "#6C63FF",
+  PENDING: "#94a3b8",
+  SKIPPED: "#f59e0b",
+}
+
+const createStopIcon = (num: number, status: string) =>
+  L.divIcon({
+    className: "custom-stop-marker",
+    html: `<div style="
+      width: 26px; height: 26px; border-radius: 50%;
+      background: ${stopColors[status] || stopColors.PENDING};
+      border: 2.5px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 11px; font-weight: 800;
+    ">${num}</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
+  })
+
+// Auto-focus map on a specific agent when selected
+function FocusAgent({ agentId, agents }: { agentId: string | null; agents: AgentLocation[] }) {
+  const map = useMap()
+  const prevId = useRef<string | null>(null)
+  useEffect(() => {
+    if (!agentId || agentId === prevId.current) return
+    prevId.current = agentId
+    const agent = agents.find(a => a.agentId === agentId)
+    if (agent) map.setView([agent.latitude, agent.longitude], 14, { animate: true })
+  }, [agentId, agents, map])
+  return null
+}
+
 interface Props {
   agents: AgentLocation[]
   replayTrack?: Array<{ latitude: number; longitude: number; recordedAt: string }>
   showGeofence?: boolean
   geofenceRadius?: number // meters, default 100
+  plannedRoute?: RouteStop[]
+  focusAgentId?: string | null
+  etaSeconds?: number | null
 }
 
-export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100 }: Props) {
+export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = false, geofenceRadius = 100, plannedRoute = [], focusAgentId = null, etaSeconds = null }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<{ width: number; height: number } | null>(null)
   const [tileLimited, setTileLimited] = useState(false)
@@ -201,9 +249,39 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
           >
             <InvalidateSize />
             <SmartTileLayer onLimitReached={setTileLimited} />
-            {/* Replay track line */}
+            {focusAgentId && <FocusAgent agentId={focusAgentId} agents={agents} />}
+            {/* Planned route polyline + stop markers */}
+            {plannedRoute.length > 1 && (
+              <Polyline
+                positions={plannedRoute.map(s => [s.latitude, s.longitude] as [number, number])}
+                color="#6C63FF"
+                weight={3}
+                opacity={0.5}
+                dashArray="8 6"
+              />
+            )}
+            {plannedRoute.map((stop) => (
+              <Marker
+                key={`stop-${stop.orderIndex}`}
+                position={[stop.latitude, stop.longitude]}
+                icon={createStopIcon(stop.orderIndex + 1, stop.status)}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <div className="font-semibold">{stop.name}</div>
+                    {stop.address && <div className="text-xs text-muted-foreground">{stop.address}</div>}
+                    <div className="text-xs mt-1" style={{ color: stopColors[stop.status] }}>
+                      {stop.status === "VISITED" ? `Visited ${stop.visitedAt ? new Date(stop.visitedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}` :
+                       stop.status === "NEXT" ? "Next stop" :
+                       stop.status === "SKIPPED" ? "Skipped" : "Pending"}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+            {/* Actual GPS track (blue) */}
             {replayPositions.length > 1 && (
-              <Polyline positions={replayPositions} color="#f59e0b" weight={3} opacity={0.8} dashArray="6 4" />
+              <Polyline positions={replayPositions} color="#3b82f6" weight={3} opacity={0.7} />
             )}
             {/* Agent markers */}
             {agents.map((agent) => (
@@ -220,6 +298,14 @@ export default function MtmLiveMap({ agents, replayTrack = [], showGeofence = fa
                       {agent.speed ? ` | ${agent.speed.toFixed(1)} km/h` : ""}
                       {agent.battery ? ` | ${agent.battery}%` : ""}
                     </div>
+                    {focusAgentId === agent.agentId && agent.routeCompletion != null && (
+                      <div className="text-xs mt-1" style={{ color: "#6C63FF", fontWeight: 600 }}>
+                        Route: {agent.routeCompletion}% complete
+                        {etaSeconds != null && etaSeconds > 0 && (
+                          <span className="text-muted-foreground font-normal"> | ETA {etaSeconds < 60 ? "<1 min" : etaSeconds < 3600 ? `${Math.round(etaSeconds / 60)} min` : `${(etaSeconds / 3600).toFixed(1)} h`}</span>
+                        )}
+                      </div>
+                    )}
                     <div className="text-[10px] text-muted-foreground mt-1">
                       Last update: {new Date(agent.recordedAt).toLocaleTimeString()}
                     </div>
