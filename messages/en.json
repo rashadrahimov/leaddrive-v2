@@ -4062,7 +4062,51 @@
     "tooltipToggleActive": "Toggle active",
     "tooltipDelete": "Delete workflow",
     "actionAutoAssign": "Auto assign",
-    "withCondition": "condition"
+    "withCondition": "condition",
+    "browseTemplates": "Browse templates"
+  },
+  "workflowTemplates": {
+    "title": "Workflow Templates",
+    "subtitle": "Start from a ready-made automation and customize later",
+    "backToWorkflows": "Back to workflows",
+    "useTemplate": "Use template",
+    "applying": "Applying...",
+    "appliedSuccess": "Template applied. Opening workflow...",
+    "applyFailed": "Failed to apply template",
+    "empty": "No templates available",
+    "actionsCount": "actions",
+    "categories": {
+      "sales": "Sales",
+      "support": "Support",
+      "marketing": "Marketing",
+      "operations": "Operations"
+    },
+    "items": {
+      "welcomeNewLead": {
+        "name": "Welcome new lead",
+        "description": "Send a friendly welcome email when a new lead is created."
+      },
+      "autoAssignLead": {
+        "name": "Auto-assign new leads",
+        "description": "Round-robin assign leads to sales reps and notify them."
+      },
+      "dealWonThankYou": {
+        "name": "Thank you on deal won",
+        "description": "Send a thank-you email and create a kickoff task when a deal is marked as won."
+      },
+      "newTicketAcknowledge": {
+        "name": "Acknowledge new ticket",
+        "description": "Send an auto-reply confirming the ticket was received."
+      },
+      "highPriorityAlert": {
+        "name": "High priority ticket alert",
+        "description": "Notify the team in-app and on Slack when a ticket is marked high priority."
+      },
+      "dealStuckFollowup": {
+        "name": "Follow up on stuck deals",
+        "description": "Create a reminder task when a deal sits in negotiation too long."
+      }
+    }
   },
   "billing": {
     "title": "Plans & Subscription",

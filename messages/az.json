@@ -3991,7 +3991,51 @@
     "tooltipToggleActive": "Aktiv/deaktiv et",
     "tooltipDelete": "Prosesi sil",
     "actionAutoAssign": "Avtotəyinat",
-    "withCondition": "şərt"
+    "withCondition": "şərt",
+    "browseTemplates": "Şablonlar"
+  },
+  "workflowTemplates": {
+    "title": "Avtomatlaşdırma şablonları",
+    "subtitle": "Hazır ssenaridən başlayın və sonra fərdiləşdirin",
+    "backToWorkflows": "Avtomatlaşdırmalara qayıt",
+    "useTemplate": "Şablonu istifadə et",
+    "applying": "Tətbiq olunur...",
+    "appliedSuccess": "Şablon tətbiq edildi. Avtomatlaşdırma açılır...",
+    "applyFailed": "Şablon tətbiq edilə bilmədi",
+    "empty": "Şablon mövcud deyil",
+    "actionsCount": "əməliyyat",
+    "categories": {
+      "sales": "Satış",
+      "support": "Dəstək",
+      "marketing": "Marketinq",
+      "operations": "Əməliyyatlar"
+    },
+    "items": {
+      "welcomeNewLead": {
+        "name": "Yeni lidi qarşıla",
+        "description": "Yeni lid yaradıldıqda salamlama e-poçtu göndər."
+      },
+      "autoAssignLead": {
+        "name": "Lidləri avtomatik təyin et",
+        "description": "Yeni lidləri satış menecerləri arasında növbə ilə paylayır və onları xəbərdar edir."
+      },
+      "dealWonThankYou": {
+        "name": "Sövdələşmə qazanılanda təşəkkür",
+        "description": "Sövdələşmə qazanılanda təşəkkür e-poçtu göndər və kickoff tapşırığı yarat."
+      },
+      "newTicketAcknowledge": {
+        "name": "Yeni bileti təsdiqlə",
+        "description": "Biletin qəbul edildiyi barədə müştəriyə avtocavab göndər."
+      },
+      "highPriorityAlert": {
+        "name": "Yüksək prioritet bildirişi",
+        "description": "Yüksək prioritetli bilet üçün komandanı tətbiqdə və Slack-də xəbərdar et."
+      },
+      "dealStuckFollowup": {
+        "name": "Dayanmış sövdələşmə üçün xatırlatma",
+        "description": "Sövdələşmə danışıqlar mərhələsində ilişib qalarsa xatırlatma tapşırığı yarat."
+      }
+    }
   },
   "billing": {
     "title": "Tariflər və abunəlik",
