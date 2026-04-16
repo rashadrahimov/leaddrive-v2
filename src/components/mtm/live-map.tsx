@@ -273,6 +273,7 @@ export default function MtmLiveMap({
         style={{ position: "absolute", inset: 0 }}
         defaultCenter={defaultCenter}
         defaultZoom={12}
+        mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID"}
         disableDefaultUI={false}
         gestureHandling="greedy"
         mapTypeControl={false}
