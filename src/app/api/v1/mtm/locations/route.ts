@@ -116,8 +116,8 @@ export async function GET(req: NextRequest) {
       offline: agentLocations.filter((a) => a.fieldStatus === "OFFLINE").length,
     }
 
-    // Recent events for live feed (last 10 visits/check-ins today)
-    const recentEvents = await prisma.mtmVisit.findMany({
+    // Recent events for live feed (visits + location pings today)
+    const recentVisits = await prisma.mtmVisit.findMany({
       where: { organizationId: orgId, checkInAt: { gte: today } },
       take: 10,
       orderBy: { checkInAt: "desc" },
@@ -127,13 +127,34 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    const liveFeed = recentEvents.map((v: any) => ({
+    const visitEvents = recentVisits.map((v: any) => ({
       id: v.id,
       type: v.status === "CHECKED_IN" ? "CHECK_IN" : "CHECK_OUT",
       agent: v.agent.name,
       customer: v.customer.name,
       time: v.status === "CHECKED_IN" ? v.checkInAt : v.checkOutAt || v.checkInAt,
     }))
+
+    // Also include recent GPS pings as feed events (when no visits exist)
+    const recentPings = await prisma.mtmAgentLocation.findMany({
+      where: { organizationId: orgId, recordedAt: { gte: today } },
+      take: 15,
+      orderBy: { recordedAt: "desc" },
+      include: { agent: { select: { name: true } } },
+    })
+
+    const pingEvents = recentPings.map((p: any) => ({
+      id: `loc-${p.id}`,
+      type: "LOCATION",
+      agent: p.agent.name,
+      customer: `${p.latitude.toFixed(4)}, ${p.longitude.toFixed(4)}`,
+      time: p.recordedAt,
+    }))
+
+    // Merge: visits first, then pings, max 15
+    const liveFeed = [...visitEvents, ...pingEvents]
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      .slice(0, 15)
 
     return NextResponse.json({
       success: true,

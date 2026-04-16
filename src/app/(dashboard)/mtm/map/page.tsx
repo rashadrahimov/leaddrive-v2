@@ -201,10 +201,14 @@ export default function MtmMapPage() {
                 <div className="space-y-1.5 max-h-[150px] overflow-y-auto">
                   {liveFeed.map(evt => (
                     <div key={evt.id} className="text-[10px] flex items-start gap-1.5">
-                      <span className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${evt.type === "CHECK_IN" ? "bg-green-500" : "bg-blue-500"}`} />
+                      <span className={`mt-0.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${evt.type === "CHECK_IN" ? "bg-green-500" : evt.type === "LOCATION" ? "bg-blue-400" : "bg-blue-500"}`} />
                       <div>
                         <span className="font-medium">{evt.agent}</span>
-                        <span className="text-muted-foreground"> → {evt.customer}</span>
+                        {evt.type === "LOCATION" ? (
+                          <span className="text-muted-foreground"> 📍 GPS ping</span>
+                        ) : (
+                          <span className="text-muted-foreground"> → {evt.customer}</span>
+                        )}
                         <div className="text-muted-foreground">{new Date(evt.time).toLocaleTimeString()}</div>
                       </div>
                     </div>
