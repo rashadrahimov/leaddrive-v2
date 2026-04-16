@@ -76,7 +76,7 @@
   },
   "devDependencies": {
     "@swc/helpers": "^0.5.20",
-    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.11",
