@@ -16,16 +16,19 @@ const ERROR_THRESHOLD = 5
 const ERROR_WINDOW_MS = 30_000 // 30 seconds
 
 // SmartTileLayer — Google Maps tiles with limit detection
+// Detects both tileerror events AND broken/empty tiles (503 returns tiny error image)
 function SmartTileLayer({ onLimitReached }: { onLimitReached: (limited: boolean) => void }) {
   const map = useMap()
   const errorCountRef = useRef(0)
+  const successCountRef = useRef(0)
   const windowStartRef = useRef(Date.now())
 
   useEffect(() => {
-    const onTileError = () => {
+    const countError = () => {
       const now = Date.now()
       if (now - windowStartRef.current > ERROR_WINDOW_MS) {
         errorCountRef.current = 0
+        successCountRef.current = 0
         windowStartRef.current = now
       }
       errorCountRef.current++
@@ -33,9 +36,23 @@ function SmartTileLayer({ onLimitReached }: { onLimitReached: (limited: boolean)
         onLimitReached(true)
       }
     }
-    const onTileLoad = () => {
-      errorCountRef.current = 0
-      onLimitReached(false)
+
+    const onTileError = () => countError()
+
+    // Check for broken tiles: 503 may return a tiny error image instead of real tile
+    const onTileLoad = (e: any) => {
+      const img = e.tile as HTMLImageElement | undefined
+      if (img && img.naturalWidth > 0 && img.naturalWidth < 10) {
+        // Google returns a tiny 1x1 or similar error image on 503
+        countError()
+      } else {
+        successCountRef.current++
+        // Only clear limit if we get enough real successes
+        if (successCountRef.current >= 3) {
+          errorCountRef.current = 0
+          onLimitReached(false)
+        }
+      }
     }
 
     map.on("tileerror", onTileError)
@@ -53,6 +70,8 @@ function SmartTileLayer({ onLimitReached }: { onLimitReached: (limited: boolean)
       subdomains={GOOGLE_TILES.subdomains}
       maxZoom={19}
       keepBuffer={4}
+      // @ts-ignore — force Leaflet to fire tileerror on HTTP errors
+      crossOrigin=""
     />
   )
 }
