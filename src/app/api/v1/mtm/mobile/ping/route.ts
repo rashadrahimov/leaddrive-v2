@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { requireMobileAuth } from "@/lib/mobile-auth"
 
 /**
  * GET /api/v1/mtm/mobile/ping
@@ -29,5 +30,26 @@ export async function GET() {
         version: "2.0",
       },
     })
+  }
+}
+
+/**
+ * POST /api/v1/mtm/mobile/ping
+ * Heartbeat — keeps agent online status updated.
+ * Called every 60s from mobile app while logged in.
+ */
+export async function POST(req: NextRequest) {
+  const auth = requireMobileAuth(req)
+  if (auth instanceof NextResponse) return auth
+
+  try {
+    await prisma.mtmAgent.update({
+      where: { id: auth.agentId },
+      data: { isOnline: true, lastSeenAt: new Date() },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ success: true })
   }
 }
