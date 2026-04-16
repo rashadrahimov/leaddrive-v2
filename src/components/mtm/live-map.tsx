@@ -270,10 +270,9 @@ export default function MtmLiveMap({
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        style={{ width: "100%", height: "100%" }}
+        style={{ position: "absolute", inset: 0 }}
         defaultCenter={defaultCenter}
         defaultZoom={12}
-        mapId="leaddrive-mtm-map"
         disableDefaultUI={false}
         gestureHandling="greedy"
         mapTypeControl={false}
