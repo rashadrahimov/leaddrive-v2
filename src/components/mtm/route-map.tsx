@@ -91,11 +91,11 @@ export default function MtmRouteMap({ points }: Props) {
   return (
     <div ref={containerRef} style={{ height: "100%", width: "100%", minHeight: 400 }}>
       {ready ? (
-        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }} crs={L.CRS.EPSG3395}>
+        <MapContainer center={center} zoom={13} style={{ height: "100%", width: "100%" }}>
           <InvalidateSize />
           <TileLayer
-            attribution='&copy; <a href="https://yandex.com/maps">Yandex</a>'
-            url="https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU&apikey=518fab30-740f-48fe-b3ee-83c2abb74562"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             subdomains="abcd"
           />
           {/* Route line */}
