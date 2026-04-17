@@ -1,5 +1,15 @@
 import type { SmsProvider, SmsProviderSettings, SmsSendParams, SmsSendResult } from "./types"
-import { randomUUID } from "node:crypto"
+
+/**
+ * Web Crypto UUID — works in both Node 19+ and the Edge runtime, no module import
+ * needed. Falls back to a timestamp-based ID on the unlikely chance `crypto`
+ * isn't exposed (e.g. very old runtimes).
+ */
+function webUuid(): string {
+  const c = (globalThis as any).crypto
+  if (c && typeof c.randomUUID === "function") return c.randomUUID()
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
 
 /**
  * ATL SMS (Azerbaijan) — HTTPS POST with XML body.
@@ -61,7 +71,7 @@ function normalizePhone(phone: string): string {
  * Uses crypto.randomUUID to avoid Date.now collisions during high-parallel sends.
  */
 function generateControlId(): string {
-  return randomUUID().replace(/-/g, "").slice(0, 32)
+  return webUuid().replace(/-/g, "").slice(0, 32)
 }
 
 const ATL_ERROR_MESSAGES: Record<string, string> = {
