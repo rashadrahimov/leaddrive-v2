@@ -30,6 +30,7 @@
     "dashboardSettings": "Widget parametrləri",
     "pipelines": "Huni mərhələləri",
     "workflows": "İş axınları",
+    "workflowTemplates": "Avtomatlaşdırma şablonları",
     "users": "İstifadəçilər",
     "smtp": "SMTP",
     "events": "Tədbirlər",
@@ -398,6 +399,7 @@
   },
   "leads": {
     "title": "Lidlər",
+    "detailNotFound": "Lid tapılmadı",
     "newLead": "Yeni lid",
     "avgScore": "Ort. bal",
     "hotLeads": "İsti lidlər",
@@ -726,6 +728,7 @@
   },
   "dashboard": {
     "title": "İdarə paneli",
+    "activeDealsCount": "aktiv sövdə",
     "companies": "Şirkətlər",
     "contacts": "Kontaktlar",
     "activeDeals": "Aktiv müqavilələr",
@@ -2120,6 +2123,9 @@
     "orgPlan": "Cari tarif",
     "orgMaxUsers": "Maks. istifadəçilər",
     "orgMaxContacts": "Maks. kontaktlar",
+    "financeNotifications": "Ödəniş bildirişləri",
+    "financeNotificationsDesc": "Telegram, e-poçt və tətbiqdaxili ödəniş xəbərdarlıqları",
+    "hintFinanceNotifications": "Maliyyə bildirişləri üçün kanalları və son tarixləri konfiqurasiya edin",
     "smtp": "SMTP Parametrləri",
     "smtpDesc": "Email göndərməni konfiqurasiya edin",
     "users": "İstifadəçilər",

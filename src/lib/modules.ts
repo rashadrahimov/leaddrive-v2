@@ -3,6 +3,7 @@ export type ModuleId =
   | "tickets" | "knowledge-base" | "portal" | "campaigns" | "omnichannel"
   | "journeys" | "workflows" | "profitability" | "budgeting" | "ai" | "reports"
   | "currencies" | "custom-fields" | "events" | "projects" | "mtm" | "voip"
+  | "sms-otp"
 
 interface ModuleDefinition {
   name: string
@@ -34,6 +35,7 @@ export const MODULE_REGISTRY: Record<ModuleId, ModuleDefinition> = {
   projects:         { name: "Projects",         requires: ["tasks"] },
   mtm:              { name: "Field Teams (MTM)", requires: ["core"] },
   voip:             { name: "VoIP / Telephony", requires: ["core"] },
+  "sms-otp":        { name: "SMS OTP (2FA)",    requires: ["core"], alwaysOn: true },
 }
 
 /** Legacy plan definitions — kept for backward compatibility with existing orgs */

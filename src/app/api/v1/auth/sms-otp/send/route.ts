@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { sendOtp } from "@/lib/sms"
 import { getOrgId } from "@/lib/api-auth"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 const schema = z.object({
   phone: z.string().min(7).max(20).regex(/^\+?[\d\s-()]+$/, "Invalid phone"),
   purpose: z.enum(["login", "2fa", "verification", "sensitive_action"]),
 })
+
+// Anti-SMS-bombing limits: a phone can receive at most 3 codes per 10 min,
+// and a single IP can trigger at most 10 sends per 10 min across all phones.
+const OTP_WINDOW_MS = 10 * 60 * 1000
+const PER_PHONE_LIMIT = 3
+const PER_IP_LIMIT = 10
 
 /**
  * POST /api/v1/auth/sms-otp/send
@@ -22,8 +29,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
-  const orgId = await getOrgId(req).catch(() => null)
   const normalizedPhone = parsed.data.phone.replace(/[\s\-()]/g, "")
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-real-ip")
+    || "unknown"
+
+  // Per-phone throttle — prevents spamming one number
+  const phoneOk = checkRateLimit(`otp:phone:${normalizedPhone}`, {
+    maxRequests: PER_PHONE_LIMIT,
+    windowMs: OTP_WINDOW_MS,
+  })
+  if (!phoneOk) {
+    return NextResponse.json(
+      { error: "Too many codes requested for this number. Try again later." },
+      { status: 429 }
+    )
+  }
+
+  // Per-IP throttle — prevents one attacker spamming many numbers
+  const ipOk = checkRateLimit(`otp:ip:${ip}`, {
+    maxRequests: PER_IP_LIMIT,
+    windowMs: OTP_WINDOW_MS,
+  })
+  if (!ipOk) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      { status: 429 }
+    )
+  }
+
+  const orgId = await getOrgId(req).catch(() => null)
 
   const result = await sendOtp({
     phone: normalizedPhone,

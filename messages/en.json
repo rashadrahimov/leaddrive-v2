@@ -30,6 +30,7 @@
     "dashboardSettings": "Widget Settings",
     "pipelines": "Pipelines",
     "workflows": "Workflows",
+    "workflowTemplates": "Workflow Templates",
     "users": "Users",
     "smtp": "SMTP",
     "events": "Events",

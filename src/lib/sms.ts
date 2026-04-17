@@ -95,6 +95,8 @@ export interface SendOtpOptions {
   phone: string
   purpose: "login" | "2fa" | "verification" | "sensitive_action"
   organizationId?: string
+  /** Bind the code to a specific user — required for 2fa/sensitive_action flows. */
+  userId?: string
   /** Override the default SMS message. `{{code}}` will be replaced. */
   messageTemplate?: string
 }
@@ -111,13 +113,20 @@ export interface SendOtpResult {
  * Invalidates any prior unused codes for the same phone+purpose.
  */
 export async function sendOtp(opts: SendOtpOptions): Promise<SendOtpResult> {
-  const { phone, purpose, organizationId, messageTemplate } = opts
+  const { phone, purpose, organizationId, userId, messageTemplate } = opts
   const code = generateNumericCode()
   const codeHash = await bcrypt.hash(code, 8)
 
-  // Invalidate existing unused codes for this phone+purpose
+  // Invalidate prior unused codes. Scope by userId when available so one user's
+  // reissue doesn't wipe another user's pending code that happens to share a phone.
   await prisma.otpCode.updateMany({
-    where: { phone, purpose, usedAt: null, expiresAt: { gt: new Date() } },
+    where: {
+      phone,
+      purpose,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+      ...(userId ? { userId } : {}),
+    },
     data: { usedAt: new Date() },
   })
 
@@ -127,6 +136,7 @@ export async function sendOtp(opts: SendOtpOptions): Promise<SendOtpResult> {
       purpose,
       codeHash,
       organizationId: organizationId || null,
+      userId: userId || null,
       expiresAt: new Date(Date.now() + OTP_TTL_MS),
     },
   })
@@ -152,13 +162,27 @@ export interface VerifyOtpResult {
 
 /**
  * Check a submitted code against the latest unused OTP for the phone+purpose.
+ * When `userId` is provided, the lookup is also scoped to that user so a code
+ * issued for user A cannot be verified as user B even if they share a phone.
+ *
  * Single-attempt window with a per-code attempt counter to slow brute force.
  */
-export async function verifyOtp(phone: string, code: string, purpose: string): Promise<VerifyOtpResult> {
+export async function verifyOtp(
+  phone: string,
+  code: string,
+  purpose: string,
+  userId?: string
+): Promise<VerifyOtpResult> {
   if (!/^\d+$/.test(code)) return { success: false, error: "Invalid code format" }
 
   const record = await prisma.otpCode.findFirst({
-    where: { phone, purpose, usedAt: null, expiresAt: { gt: new Date() } },
+    where: {
+      phone,
+      purpose,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+      ...(userId ? { userId } : {}),
+    },
     orderBy: { createdAt: "desc" },
   })
 
