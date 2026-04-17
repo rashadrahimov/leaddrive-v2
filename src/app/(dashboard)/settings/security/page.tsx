@@ -12,6 +12,7 @@ import { signIn } from "next-auth/react"
 import Link from "next/link"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
+import { Sms2FACard } from "@/components/sms-2fa-card"
 
 export default function SecuritySettingsPage() {
   const t = useTranslations("settings")
@@ -573,6 +574,20 @@ export default function SecuritySettingsPage() {
             )
           })()}
         </div>
+      </div>
+
+      {/* ═══ SMS 2FA Section ═══ */}
+      <div className="border-t pt-6 mt-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-10 w-10 rounded-xl bg-sky-100 flex items-center justify-center">
+            <Smartphone className="h-5 w-5 text-sky-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">{t("sms2faSectionTitle")}</h2>
+            <p className="text-sm text-muted-foreground">{t("sms2faSectionDesc")}</p>
+          </div>
+        </div>
+        <Sms2FACard />
       </div>
 
       {/* ═══ API Keys Section ═══ */}

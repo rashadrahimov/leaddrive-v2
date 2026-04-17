@@ -157,6 +157,7 @@ model User {
   mtmAgents           MtmAgent[]
   accounts            Account[]
   quotas              SalesQuota[]
+  otpCodes            OtpCode[]
   assignedTasks       Task[]          @relation("TaskAssignee")
   createdTasks        Task[]          @relation("TaskCreator")
   taskComments        TaskComment[]   @relation("TaskComments")
@@ -3262,6 +3263,7 @@ model OtpCode {
   id             String    @id @default(cuid())
   organizationId String?   // nullable for public/pre-auth flows (e.g. phone verification during signup)
   userId         String?   // nullable — bound to a specific user after login for 2FA/sensitive_action
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   phone          String    // E.164 format recommended
   codeHash       String    // bcrypt hash of the numeric code
   purpose        String    // "login" | "2fa" | "verification" | "sensitive_action"
@@ -3274,6 +3276,20 @@ model OtpCode {
   @@index([userId, purpose])
   @@index([expiresAt])
   @@map("otp_codes")
+}
+
+/// Tracks which workflow templates have been applied to which org.
+/// Enables duplicate prevention and usage analytics for the templates gallery.
+model AppliedTemplate {
+  id             String   @id @default(cuid())
+  organizationId String
+  templateId     String   // slug from WORKFLOW_TEMPLATES (e.g. "welcome-new-lead")
+  ruleId         String   // the WorkflowRule that was created
+  appliedBy      String?  // userId who clicked "Use template"
+  appliedAt      DateTime @default(now())
+
+  @@index([organizationId, templateId])
+  @@map("applied_templates")
 }
 
 // --- Task 5: Custom Report Builder ---

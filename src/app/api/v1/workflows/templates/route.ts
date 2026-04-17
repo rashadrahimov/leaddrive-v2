@@ -1,34 +1,101 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { getOrgId } from "@/lib/api-auth"
+import { getOrgId, getSession } from "@/lib/api-auth"
 import { WORKFLOW_TEMPLATES, getTemplateById } from "@/lib/workflow-templates"
+import { isSmsConfigured } from "@/lib/sms"
 
 const applyTemplateSchema = z.object({
   templateId: z.string().min(1),
   name: z.string().max(200).optional(),
   isActive: z.boolean().optional().default(true),
+  /** Force re-apply even when a rule from this template already exists. */
+  force: z.boolean().optional().default(false),
+  /**
+   * Per-action overrides applied before the rule is created. Keyed by action
+   * index (0-based). Unknown keys are ignored. Kept narrow on purpose —
+   * only surfaces safe customer-facing fields.
+   */
+  customizations: z
+    .record(
+      z.string(),
+      z.object({
+        subject: z.string().optional(),
+        body: z.string().optional(),
+        message: z.string().optional(),
+        title: z.string().optional(),
+      })
+    )
+    .optional(),
 })
 
 /**
+ * Returns action types that require SMS provider to be configured.
+ * Used by the preflight warning so users know before applying.
+ */
+function smsDependentActions(template: ReturnType<typeof getTemplateById>): boolean {
+  return !!template?.actions.some((a) => a.actionType === "send_sms")
+}
+
+/**
  * GET /api/v1/workflows/templates
- * Returns the catalog of pre-built workflow templates.
- * Clients resolve name/description via the workflowTemplates i18n namespace.
+ *
+ * Returns the catalog enriched with per-template metadata:
+ *   - `appliedCount`: how many times this org has applied this template
+ *   - `isApplied`: true if at least one active rule exists (for dedup UI)
+ *   - `requiresSms`: true if any action is send_sms
+ *   - `canRun`: false when requiresSms and org has no SMS provider configured
+ *                 (UI renders a warning badge)
+ *
+ * Clients still resolve names/descriptions via the workflowTemplates i18n namespace.
  */
 export async function GET(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  return NextResponse.json({ success: true, data: WORKFLOW_TEMPLATES })
+
+  const [applied, smsOk] = await Promise.all([
+    prisma.appliedTemplate.groupBy({
+      by: ["templateId"],
+      where: { organizationId: orgId },
+      _count: { templateId: true },
+    }),
+    isSmsConfigured(orgId),
+  ])
+
+  const counts: Record<string, number> = {}
+  for (const row of applied) counts[row.templateId] = row._count.templateId
+
+  const enriched = WORKFLOW_TEMPLATES.map((t) => {
+    const requiresSms = smsDependentActions(t)
+    return {
+      ...t,
+      appliedCount: counts[t.id] || 0,
+      isApplied: (counts[t.id] || 0) > 0,
+      requiresSms,
+      canRun: !requiresSms || smsOk,
+    }
+  })
+
+  return NextResponse.json({
+    success: true,
+    data: enriched,
+    meta: { smsProviderConfigured: smsOk },
+  })
 }
 
 /**
  * POST /api/v1/workflows/templates
- * Body: { templateId, name?, isActive? }
- * Creates a WorkflowRule + WorkflowAction[] from the template for the current org.
+ * Body: { templateId, name?, isActive?, force?, customizations? }
+ *
+ * Creates a WorkflowRule + actions for the template. Records it in
+ * applied_templates for analytics and duplicate detection.
+ *
+ * Returns 409 when the same template was already applied unless `force=true`.
  */
 export async function POST(req: NextRequest) {
   const orgId = await getOrgId(req)
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const session = await getSession(req).catch(() => null)
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 })
@@ -43,6 +110,55 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Template not found" }, { status: 404 })
   }
 
+  // Duplicate check — skipped when force=true
+  if (!parsed.data.force) {
+    const existing = await prisma.appliedTemplate.findFirst({
+      where: { organizationId: orgId, templateId: template.id },
+      orderBy: { appliedAt: "desc" },
+    })
+    if (existing) {
+      return NextResponse.json(
+        {
+          error: "Template already applied",
+          code: "already_applied",
+          appliedAt: existing.appliedAt,
+          existingRuleId: existing.ruleId,
+        },
+        { status: 409 }
+      )
+    }
+  }
+
+  // Preflight: warn if send_sms action will fail
+  if (smsDependentActions(template)) {
+    const smsOk = await isSmsConfigured(orgId)
+    if (!smsOk) {
+      return NextResponse.json(
+        {
+          error: "This template requires SMS provider to be configured. Go to Settings → VoIP to set up Twilio or Vonage first.",
+          code: "sms_not_configured",
+        },
+        { status: 422 }
+      )
+    }
+  }
+
+  // Apply customizations (safe fields only)
+  const customized = template.actions.map((a, idx) => {
+    const custom = parsed.data.customizations?.[String(idx)]
+    if (!custom) return a
+    return {
+      ...a,
+      actionConfig: {
+        ...a.actionConfig,
+        ...(custom.subject !== undefined ? { subject: custom.subject } : {}),
+        ...(custom.body !== undefined ? { body: custom.body } : {}),
+        ...(custom.message !== undefined ? { message: custom.message } : {}),
+        ...(custom.title !== undefined ? { title: custom.title } : {}),
+      },
+    }
+  })
+
   try {
     const rule = await prisma.workflowRule.create({
       data: {
@@ -53,7 +169,7 @@ export async function POST(req: NextRequest) {
         conditions: template.conditions,
         isActive: parsed.data.isActive,
         actions: {
-          create: template.actions.map((a) => ({
+          create: customized.map((a) => ({
             actionType: a.actionType,
             actionConfig: a.actionConfig,
             actionOrder: a.actionOrder,
@@ -61,6 +177,15 @@ export async function POST(req: NextRequest) {
         },
       },
       include: { actions: true },
+    })
+
+    await prisma.appliedTemplate.create({
+      data: {
+        organizationId: orgId,
+        templateId: template.id,
+        ruleId: rule.id,
+        appliedBy: session?.userId || null,
+      },
     })
 
     return NextResponse.json({ success: true, data: rule }, { status: 201 })

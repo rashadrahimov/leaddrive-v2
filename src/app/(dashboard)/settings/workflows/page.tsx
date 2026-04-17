@@ -15,7 +15,7 @@ import {
   Plus, Workflow, CheckCircle, XCircle, Pencil, Trash2,
   Play, Pause, Eye, Briefcase, Target, Ticket, CheckSquare,
   User, Building2, Mail, Bell, Globe, Edit3, Search, Zap,
-  UserPlus, ArrowRight, Sparkles,
+  UserPlus, ArrowRight, Sparkles, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAutoTour } from "@/components/tour/tour-provider"
@@ -88,7 +88,21 @@ export default function WorkflowsPage() {
   const [deleteName, setDeleteName] = useState("")
   const [actionsWorkflow, setActionsWorkflow] = useState<WorkflowRule | null>(null)
   const [search, setSearch] = useState("")
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const orgId = session?.user?.organizationId
+
+  // One-shot onboarding hint — persists "seen" in localStorage per browser/user.
+  useEffect(() => {
+    try {
+      const seen = typeof window !== "undefined" && window.localStorage.getItem("leaddrive.workflows.onboarded")
+      if (!seen) setShowOnboarding(true)
+    } catch { /* private mode / SSR — ignore */ }
+  }, [])
+
+  const dismissOnboarding = () => {
+    setShowOnboarding(false)
+    try { window.localStorage.setItem("leaddrive.workflows.onboarded", "1") } catch {}
+  }
 
   const entityLabels: Record<string, string> = {
     deal: t("entityDeal"),
@@ -223,6 +237,43 @@ export default function WorkflowsPage() {
           </Button>
         </div>
       </div>
+
+      {/* First-visit onboarding — points users at the templates gallery */}
+      {showOnboarding && (
+        <div className="relative rounded-lg border border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 p-4 dark:border-violet-900 dark:from-violet-950/40 dark:to-purple-950/40">
+          <button
+            onClick={dismissOnboarding}
+            className="absolute top-3 right-3 text-violet-600/60 hover:text-violet-700 dark:text-violet-300/60 dark:hover:text-violet-200"
+            aria-label={t("onboardingDismiss")}
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-start gap-3 pr-6">
+            <div className="rounded-md bg-gradient-to-br from-violet-500 to-purple-600 p-2 text-white shadow-sm shrink-0">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-sm text-violet-900 dark:text-violet-100">
+                {t("onboardingTitle")}
+              </h3>
+              <p className="text-xs text-violet-800/80 dark:text-violet-200/70 mt-1 leading-relaxed">
+                {t("onboardingBody")}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <Link href="/settings/workflows/templates">
+                  <Button size="sm" className="bg-violet-600 hover:bg-violet-700 text-white gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t("onboardingCta")}
+                  </Button>
+                </Link>
+                <Button size="sm" variant="ghost" onClick={dismissOnboarding}>
+                  {t("onboardingDismiss")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">

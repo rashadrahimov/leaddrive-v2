@@ -1,18 +1,46 @@
 /**
  * SMS utilities: generic sending + OTP generation/verification.
  *
- * Uses the org's configured VoIP provider (Twilio) for delivery when available,
- * falling back to env-configured credentials for system-wide flows (e.g. signup).
+ * Delivery is pluggable via the provider registry in src/lib/sms/providers/.
+ * Provider selection order:
+ *   1. ChannelConfig(voip).settings.smsProvider (per-org)
+ *   2. SMS_PROVIDER env var (default: "twilio")
  *
  * OTP codes are single-use, time-limited (10 min), and stored hashed via bcrypt.
  */
 
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { twilioProvider } from "@/lib/sms/providers/twilio"
+import { vonageProvider } from "@/lib/sms/providers/vonage"
+import type { SmsProvider, SmsProviderSettings } from "@/lib/sms/providers/types"
 
 const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
 const OTP_LENGTH = 6
 const MAX_VERIFY_ATTEMPTS = 5
+
+const PROVIDERS: Record<string, SmsProvider> = {
+  twilio: twilioProvider,
+  vonage: vonageProvider,
+}
+
+async function resolveProvider(organizationId?: string): Promise<{ provider: SmsProvider; settings: SmsProviderSettings }> {
+  let settings: SmsProviderSettings = {}
+  let providerName = process.env.SMS_PROVIDER || "twilio"
+
+  if (organizationId) {
+    const cfg = await prisma.channelConfig.findFirst({
+      where: { organizationId, channelType: "voip", isActive: true },
+    })
+    if (cfg?.settings) {
+      settings = cfg.settings as SmsProviderSettings
+      if (typeof settings.smsProvider === "string") providerName = settings.smsProvider
+    }
+  }
+
+  const provider = PROVIDERS[providerName] || PROVIDERS.twilio
+  return { provider, settings }
+}
 
 export interface SendSmsOptions {
   to: string
@@ -26,63 +54,19 @@ export interface SmsResult {
   error?: string
 }
 
-/**
- * Send an SMS via the org's configured Twilio credentials.
- * Falls back to env-level TWILIO_* credentials when no org is provided
- * (used by signup/pre-auth flows).
- */
+/** Preflight check: is an SMS provider configured for this org (or env fallback)? */
+export async function isSmsConfigured(organizationId?: string): Promise<boolean> {
+  const { provider, settings } = await resolveProvider(organizationId)
+  return provider.isConfigured(settings)
+}
+
+/** Send an SMS via the resolved provider. */
 export async function sendSms(opts: SendSmsOptions): Promise<SmsResult> {
-  const { to, message, organizationId } = opts
-
-  let accountSid: string | undefined
-  let authToken: string | undefined
-  let fromNumber: string | undefined
-
-  if (organizationId) {
-    const cfg = await prisma.channelConfig.findFirst({
-      where: { organizationId, channelType: "voip", isActive: true },
-    })
-    const settings = (cfg?.settings as any) || {}
-    accountSid = settings.accountSid
-    authToken = settings.authToken
-    fromNumber = settings.twilioNumber
-  }
-
-  // Fallback to env for system-level flows
-  if (!accountSid || !authToken || !fromNumber) {
-    accountSid = process.env.TWILIO_ACCOUNT_SID
-    authToken = process.env.TWILIO_AUTH_TOKEN
-    fromNumber = process.env.TWILIO_FROM_NUMBER
-  }
-
-  if (!accountSid || !authToken || !fromNumber) {
+  const { provider, settings } = await resolveProvider(opts.organizationId)
+  if (!provider.isConfigured(settings)) {
     return { success: false, error: "SMS provider not configured" }
   }
-
-  try {
-    const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-    const auth = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
-    const body = new URLSearchParams({ To: to, From: fromNumber, Body: message })
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    })
-
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "")
-      return { success: false, error: `Twilio ${res.status}: ${errText.slice(0, 200)}` }
-    }
-
-    const data = await res.json().catch(() => ({}))
-    return { success: true, messageId: data.sid }
-  } catch (e) {
-    return { success: false, error: (e as Error).message }
-  }
+  return provider.send(settings, { to: opts.to, message: opts.message })
 }
 
 function generateNumericCode(length = OTP_LENGTH): string {
@@ -146,8 +130,14 @@ export async function sendOtp(opts: SendOtpOptions): Promise<SendOtpResult> {
 
   const smsResult = await sendSms({ to: phone, message, organizationId })
 
-  // In dev we expose the code for local testing; never in production.
-  const debugCode = process.env.NODE_ENV !== "production" ? code : undefined
+  // debugCode is only exposed when BOTH:
+  //   1. NODE_ENV !== "production"
+  //   2. OTP_EXPOSE_DEBUG_CODE="1" is explicitly set in env
+  // Belt-and-braces: if someone boots prod with NODE_ENV=development by mistake,
+  // they'd still need to flip the explicit opt-in to leak codes.
+  const debugCode = (process.env.NODE_ENV !== "production" && process.env.OTP_EXPOSE_DEBUG_CODE === "1")
+    ? code
+    : undefined
 
   if (!smsResult.success) {
     return { success: false, error: smsResult.error, debugCode }

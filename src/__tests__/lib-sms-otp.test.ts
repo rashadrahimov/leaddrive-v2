@@ -84,20 +84,33 @@ describe("sendOtp", () => {
     expect(res.error).toMatch(/not configured/i)
   })
 
-  it("exposes debugCode only in non-production environments", async () => {
+  it("exposes debugCode only when NODE_ENV != production AND OTP_EXPOSE_DEBUG_CODE=1", async () => {
     ;(prisma.otpCode.updateMany as any).mockResolvedValue({ count: 0 })
     ;(prisma.otpCode.create as any).mockResolvedValue({ id: "otp_1" })
 
-    const prev = process.env.NODE_ENV
-    process.env.NODE_ENV = "development"
-    const devRes = await sendOtp({ phone: "+15550000001", purpose: "login" })
-    expect(devRes.debugCode).toMatch(/^\d{6}$/)
+    const prevEnv = process.env.NODE_ENV
+    const prevFlag = process.env.OTP_EXPOSE_DEBUG_CODE
 
+    // dev + explicit opt-in → exposed
+    process.env.NODE_ENV = "development"
+    process.env.OTP_EXPOSE_DEBUG_CODE = "1"
+    const devOpen = await sendOtp({ phone: "+15550000001", purpose: "login" })
+    expect(devOpen.debugCode).toMatch(/^\d{6}$/)
+
+    // dev without opt-in → hidden
+    delete process.env.OTP_EXPOSE_DEBUG_CODE
+    const devClosed = await sendOtp({ phone: "+15550000001", purpose: "login" })
+    expect(devClosed.debugCode).toBeUndefined()
+
+    // production even with opt-in → still hidden (belt-and-braces)
     process.env.NODE_ENV = "production"
+    process.env.OTP_EXPOSE_DEBUG_CODE = "1"
     const prodRes = await sendOtp({ phone: "+15550000002", purpose: "login" })
     expect(prodRes.debugCode).toBeUndefined()
 
-    process.env.NODE_ENV = prev
+    process.env.NODE_ENV = prevEnv
+    if (prevFlag === undefined) delete process.env.OTP_EXPOSE_DEBUG_CODE
+    else process.env.OTP_EXPOSE_DEBUG_CODE = prevFlag
   })
 })
 
