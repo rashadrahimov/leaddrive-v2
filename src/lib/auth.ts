@@ -47,6 +47,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             data: { lastLogin: new Date(), loginCount: { increment: 1 } },
           }).catch(() => {}) // Non-critical
 
+          // Determine 2FA method. TOTP wins when both flags are set —
+          // it's instant and free, while SMS costs money and takes seconds.
+          let twoFactorMethod: "totp" | "sms" | null = null
+          if (user.totpEnabled) twoFactorMethod = "totp"
+          else if (user.smsAuthEnabled && user.verifiedPhone) twoFactorMethod = "sms"
+
+          // If SMS 2FA is active, fire off a code right after password check
+          // so it's already in transit by the time the UI lands on the verify page.
+          // Done dynamically to avoid a startup-time import of sms.ts into auth.ts.
+          if (twoFactorMethod === "sms" && user.verifiedPhone) {
+            try {
+              const { sendOtp } = await import("@/lib/sms")
+              await sendOtp({
+                phone: user.verifiedPhone,
+                purpose: "2fa",
+                organizationId: user.organizationId,
+                userId: user.id,
+              })
+            } catch (e) {
+              console.error("[Auth] SMS 2FA code dispatch failed:", e)
+              // Don't block login — user can request a resend on the verify page.
+            }
+          }
+
           return {
             id: user.id,
             email: user.email,
@@ -56,8 +80,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             organizationName: user.organization.name,
             plan: user.organization.plan,
             // 2FA flags
-            needs2fa: user.totpEnabled ? true : undefined,
-            needsSetup2fa: (user.require2fa && !user.totpEnabled) ? true : undefined,
+            needs2fa: twoFactorMethod ? true : undefined,
+            twoFactorMethod: twoFactorMethod || undefined,
+            needsSetup2fa: (user.require2fa && !user.totpEnabled && !user.smsAuthEnabled) ? true : undefined,
           }
         } catch (err) {
           console.error("[Auth] Login error:", err)
@@ -177,11 +202,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
         // Propagate 2FA flags from authorize return
         if ((user as any).needs2fa) token.needs2fa = true
+        if ((user as any).twoFactorMethod) token.twoFactorMethod = (user as any).twoFactorMethod
         if ((user as any).needsSetup2fa) token.needsSetup2fa = true
       }
       // Handle session.update() calls from 2FA verify/setup pages or profile updates
       if (trigger === "update" && updateData) {
-        if (updateData.needs2fa === false) token.needs2fa = undefined
+        if (updateData.needs2fa === false) {
+          token.needs2fa = undefined
+          token.twoFactorMethod = undefined
+        }
         if (updateData.needsSetup2fa === false) token.needsSetup2fa = undefined
         if (updateData.name) token.name = updateData.name
       }
@@ -216,6 +245,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           addons: (token.addons as string[]) || [],
           modules: (token.modules as Record<string, boolean>) || undefined,
           needs2fa: token.needs2fa as boolean | undefined,
+          twoFactorMethod: token.twoFactorMethod as "totp" | "sms" | undefined,
           needsSetup2fa: token.needsSetup2fa as boolean | undefined,
         },
       }

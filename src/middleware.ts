@@ -51,7 +51,7 @@ function getOrgSubdomain(host: string): string | null {
 }
 
 // Paths that should be rate-limited more aggressively
-const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa", "/api/v1/auth/sms-otp", "/api/v1/mtm/mobile/auth"]
+const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa", "/api/v1/auth/verify-sms-2fa", "/api/v1/auth/resend-sms-2fa", "/api/v1/auth/sms-otp", "/api/v1/auth/sms-2fa", "/api/v1/mtm/mobile/auth"]
 
 // Generate CSP header with nonce
 function buildCsp(nonce: string, allowSameOriginFrame = false) {

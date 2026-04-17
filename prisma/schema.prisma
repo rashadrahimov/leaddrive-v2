@@ -136,6 +136,8 @@ model User {
   department     String?
   totpSecret     String?
   totpEnabled    Boolean   @default(false)
+  smsAuthEnabled Boolean   @default(false)   // SMS 2FA flag — when true, login requires SMS code after password
+  verifiedPhone  String?                      // E.164 phone number verified via sms-otp flow
   require2fa     Boolean   @default(false)
   backupCodes    Json      @default("[]")
   calendarToken  String?   @unique
