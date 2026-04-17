@@ -304,6 +304,10 @@ model Contact {
   department     String?
   avatar         String?
   source         String?  // website, referral, cold_call, etc.
+  // SMS attribution (TT §3.3 "SMS kampaniyaları" as segmentation source).
+  // Populated by POST /campaigns/[id]/send when an SMS delivers successfully.
+  lastSmsCampaignId String?
+  lastSmsAt      DateTime?
   tags           String[] @default([])
   isActive       Boolean  @default(true)
   lastContactAt  DateTime?
@@ -3276,6 +3280,32 @@ model OtpCode {
   @@index([userId, purpose])
   @@index([expiresAt])
   @@map("otp_codes")
+}
+
+/// Deferred workflow actions — enqueued when an action has delayMinutes > 0.
+/// A cron ticks every minute, finds rows where scheduledAt <= now and
+/// executedAt is null, and runs them via the same executeAction() path.
+///
+/// Used primarily by the missed-call → SMS template (TT §9 requires a
+/// 2-minute delay so the operator has a chance to call back first).
+model ScheduledAction {
+  id             String    @id @default(cuid())
+  organizationId String
+  ruleId         String    // workflow rule that scheduled this
+  entityType     String    // "deal" | "lead" | "ticket" | "call" | ...
+  entityId       String    // stable id of the trigger entity
+  entitySnapshot Json      // snapshot of the entity at trigger time (for template substitution)
+  actionType     String    // "send_sms" | "send_email" | ...
+  actionConfig   Json
+  scheduledAt    DateTime
+  executedAt     DateTime?
+  error          String?   @db.Text
+  attempts       Int       @default(0)
+  createdAt      DateTime  @default(now())
+
+  @@index([executedAt, scheduledAt])
+  @@index([organizationId, ruleId])
+  @@map("scheduled_actions")
 }
 
 /// Tracks which workflow templates have been applied to which org.

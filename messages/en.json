@@ -4114,6 +4114,8 @@
     "fieldBody": "Body",
     "fieldMessage": "Message",
     "fieldTitle": "Title",
+    "fieldDelayMinutes": "Delay (minutes)",
+    "fieldDelayHint": "0 = run immediately. The CRM waits this many minutes before executing the action.",
     "cancel": "Cancel",
     "empty": "No templates available",
     "actionsCount": "actions",

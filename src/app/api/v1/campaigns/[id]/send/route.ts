@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail, renderTemplate } from "@/lib/email"
+import { sendSms, isSmsConfigured } from "@/lib/sms"
 import { createNotification } from "@/lib/notifications"
 import { trackContactEvent } from "@/lib/contact-events"
 
@@ -18,6 +19,123 @@ export async function POST(
       where: { id, organizationId: orgId },
     })
     if (!campaign) return NextResponse.json({ error: "Campaign not found" }, { status: 404 })
+
+    // ─────────────────────────────────────────────────────────────────────
+    // SMS BRANCH — routes through our sms.ts abstraction (Twilio/Vonage/ATL).
+    // Triggered when campaign.type === "sms". Filters contacts/leads by
+    // `phone` instead of `email`. Body is campaign.subject or campaign.name.
+    // ─────────────────────────────────────────────────────────────────────
+    if (campaign.type === "sms") {
+      const smsOk = await isSmsConfigured(orgId)
+      if (!smsOk) {
+        return NextResponse.json(
+          { error: "SMS provider not configured. Go to Settings → VoIP to set up Twilio, Vonage or ATL first." },
+          { status: 422 }
+        )
+      }
+
+      const smsBody = campaign.subject || campaign.name
+      const mode = campaign.recipientMode || "all"
+      let smsRecipients: { id: string; phone: string | null; fullName: string }[]
+
+      if (mode === "manual") {
+        const ids = Array.isArray(campaign.recipientIds) ? campaign.recipientIds as string[] : []
+        if (ids.length === 0) return NextResponse.json({ error: "No recipients selected" }, { status: 400 })
+        smsRecipients = await prisma.contact.findMany({
+          where: { organizationId: orgId, id: { in: ids }, phone: { not: null } },
+          select: { id: true, phone: true, fullName: true },
+        })
+      } else if (mode === "segment" && campaign.segmentId) {
+        // Reuse segment resolution but require phone instead of email
+        const segment = await prisma.contactSegment.findFirst({
+          where: { id: campaign.segmentId, organizationId: orgId },
+        })
+        const where: any = { organizationId: orgId, phone: { not: null } }
+        if (segment?.conditions && typeof segment.conditions === "object") {
+          const cond = segment.conditions as any
+          const AND: any[] = []
+          if (cond.source) AND.push({ source: cond.source })
+          if (cond.name) AND.push({ fullName: { contains: cond.name, mode: "insensitive" } })
+          if (cond.createdAfter) AND.push({ createdAt: { gte: new Date(cond.createdAfter) } })
+          if (cond.createdBefore) AND.push({ createdAt: { lte: new Date(cond.createdBefore) } })
+          if (AND.length) where.AND = AND
+        }
+        smsRecipients = await prisma.contact.findMany({
+          where,
+          select: { id: true, phone: true, fullName: true },
+        })
+      } else if (mode === "source" && campaign.recipientSource) {
+        smsRecipients = await prisma.contact.findMany({
+          where: { organizationId: orgId, phone: { not: null }, source: campaign.recipientSource },
+          select: { id: true, phone: true, fullName: true },
+        })
+      } else {
+        // "all" / "contacts" / default — contacts with phones
+        smsRecipients = await prisma.contact.findMany({
+          where: { organizationId: orgId, phone: { not: null } },
+          select: { id: true, phone: true, fullName: true },
+        })
+      }
+
+      const MAX_SMS_BATCH = 1000 // SMS carries real $$ per message — tighter cap than email
+      if (smsRecipients.length > MAX_SMS_BATCH) {
+        smsRecipients = smsRecipients.slice(0, MAX_SMS_BATCH)
+      }
+
+      let sentSms = 0
+      const smsErrors: string[] = []
+      const deliveredContactIds: string[] = []
+      for (const c of smsRecipients) {
+        if (!c.phone) continue
+        const res = await sendSms({ to: c.phone, message: smsBody, organizationId: orgId })
+        if (res.success) {
+          sentSms++
+          deliveredContactIds.push(c.id)
+          trackContactEvent(orgId, c.id, "sms_sent", { campaignId: campaign.id, messageId: res.messageId }).catch(() => {})
+        } else if (smsErrors.length < 3) {
+          smsErrors.push(`${c.phone}: ${res.error}`)
+        }
+      }
+
+      // SMS attribution for segmentation (TT §3.3 "SMS kampaniyaları" source).
+      // Stamps lastSmsCampaignId + lastSmsAt on every contact that successfully
+      // received this blast so segments can filter "received SMS campaign X".
+      if (deliveredContactIds.length > 0) {
+        await prisma.contact.updateMany({
+          where: { organizationId: orgId, id: { in: deliveredContactIds } },
+          data: { lastSmsCampaignId: campaign.id, lastSmsAt: new Date() },
+        }).catch((e) => console.error("[campaigns/send] SMS attribution update failed:", e))
+      }
+
+      await prisma.campaign.update({
+        where: { id },
+        data: {
+          status: sentSms > 0 ? "sent" : "draft",
+          sentAt: sentSms > 0 ? new Date() : undefined,
+          totalSent: sentSms,
+          totalRecipients: smsRecipients.length,
+        },
+      })
+
+      createNotification({
+        organizationId: orgId,
+        userId: "",
+        type: sentSms > 0 ? "success" : "warning",
+        title: `SMS campaign sent: ${campaign.name}`,
+        message: `${sentSms} / ${smsRecipients.length} SMS delivered`,
+        entityType: "campaign",
+        entityId: campaign.id,
+      }).catch(() => {})
+
+      return NextResponse.json({
+        success: sentSms > 0,
+        data: { sent: sentSms, total: smsRecipients.length, errors: smsErrors, channel: "sms" },
+      })
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // EMAIL BRANCH (default, existing behavior)
+    // ─────────────────────────────────────────────────────────────────────
 
     // Load template if specified
     let htmlBody = `<p>${campaign.subject || campaign.name}</p>`

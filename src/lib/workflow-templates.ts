@@ -176,8 +176,11 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     actions: [
       {
         actionType: "send_sms",
+        // 2-minute delay per TT §9 — gives operator a chance to call back first.
+        // Editable in the template preview modal before applying.
         actionConfig: {
           message: "Sorry we missed your call. We'll get back to you shortly. — LeadDrive team",
+          delayMinutes: 2,
         },
         actionOrder: 0,
       },

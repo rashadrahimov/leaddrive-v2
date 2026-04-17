@@ -57,12 +57,50 @@ export async function executeWorkflows(
       if (!evaluateConditions(rule.conditions as any, entity)) continue
 
       for (const action of rule.actions) {
-        await executeAction(orgId, normalized, action as any, entity)
+        const config = (typeof action.actionConfig === "object" && action.actionConfig)
+          ? action.actionConfig as Record<string, any>
+          : {}
+        const delayMinutes = Number(config.delayMinutes || 0)
+
+        if (delayMinutes > 0) {
+          // Deferred: enqueue for cron pickup instead of running now.
+          // TT §9 requires a 2-min delay for missed-call → SMS so the
+          // operator has a chance to call back first.
+          await prisma.scheduledAction.create({
+            data: {
+              organizationId: orgId,
+              ruleId: rule.id,
+              entityType: normalized,
+              entityId: String(entity.id || ""),
+              entitySnapshot: entity as any,
+              actionType: action.actionType,
+              actionConfig: config,
+              scheduledAt: new Date(Date.now() + delayMinutes * 60_000),
+            },
+          }).catch(e => console.error("[workflow] schedule failed:", e))
+        } else {
+          await executeAction(orgId, normalized, action as any, entity)
+        }
       }
     }
   } catch (e) {
     console.error("Workflow execution error:", e)
   }
+}
+
+/**
+ * Execute a single action outside the normal trigger path —
+ * used by the scheduled-actions cron. Exported so cron handlers
+ * don't have to duplicate the switch statement.
+ */
+export async function runScheduledAction(
+  orgId: string,
+  entityType: string,
+  actionType: string,
+  actionConfig: Record<string, any>,
+  entity: Record<string, any>
+) {
+  await executeAction(orgId, entityType, { actionType, actionConfig }, entity)
 }
 
 function evaluateConditions(conditions: any, entity: Record<string, any>): boolean {

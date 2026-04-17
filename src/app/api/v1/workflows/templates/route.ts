@@ -24,6 +24,7 @@ const applyTemplateSchema = z.object({
         body: z.string().optional(),
         message: z.string().optional(),
         title: z.string().optional(),
+        delayMinutes: z.number().int().min(0).max(1440).optional(), // up to 24h delay
       })
     )
     .optional(),
@@ -155,6 +156,7 @@ export async function POST(req: NextRequest) {
         ...(custom.body !== undefined ? { body: custom.body } : {}),
         ...(custom.message !== undefined ? { message: custom.message } : {}),
         ...(custom.title !== undefined ? { title: custom.title } : {}),
+        ...(custom.delayMinutes !== undefined ? { delayMinutes: custom.delayMinutes } : {}),
       },
     }
   })

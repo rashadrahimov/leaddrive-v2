@@ -4048,6 +4048,8 @@
     "fieldBody": "Mətn",
     "fieldMessage": "Mesaj",
     "fieldTitle": "Başlıq",
+    "fieldDelayMinutes": "Gecikmə (dəqiqə)",
+    "fieldDelayHint": "0 = dərhal. CRM əməliyyatı yerinə yetirməmişdən əvvəl göstərilən dəqiqə qədər gözləyəcək.",
     "cancel": "Ləğv et",
     "empty": "Şablon mövcud deyil",
     "actionsCount": "əməliyyat",

@@ -44,6 +44,7 @@ interface CustomField {
   body?: string
   message?: string
   title?: string
+  delayMinutes?: number
 }
 
 const ICONS: Record<string, LucideIcon> = {
@@ -332,6 +333,25 @@ export default function WorkflowTemplatesPage() {
                               onChange={(e) => setCustom({ title: e.target.value })}
                               className="text-xs h-8"
                             />
+                          </div>
+                        )}
+                        {(cfg.delayMinutes !== undefined || action.actionType === "send_sms") && (
+                          <div className="space-y-1">
+                            <Label className="text-[11px]">{t("fieldDelayMinutes")}</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={1440}
+                              defaultValue={(cfg.delayMinutes as unknown as number) ?? 0}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10)
+                                setCustom({ delayMinutes: Number.isFinite(v) && v >= 0 ? v : 0 })
+                              }}
+                              className="text-xs h-8"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                              {t("fieldDelayHint")}
+                            </p>
                           </div>
                         )}
                       </div>
