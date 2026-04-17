@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, name: true, email: true, role: true,
         phone: true, department: true, isActive: true,
-        totpEnabled: true, require2fa: true, lastLogin: true, loginCount: true,
+        totpEnabled: true, require2fa: true,
+        smsAuthEnabled: true, verifiedPhone: true,
+        lastLogin: true, loginCount: true,
         skills: true, maxTickets: true, isAvailable: true, preferredLanguage: true, createdAt: true,
       },
       orderBy: { name: "asc" },

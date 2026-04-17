@@ -12,7 +12,7 @@ import { Phone, ShieldCheck, ShieldOff, Loader2 } from "lucide-react"
 
 type State =
   | { kind: "loading" }
-  | { kind: "disabled" } // flag off — show "Enable SMS 2FA"
+  | { kind: "disabled"; suggestedPhone: string | null } // flag off — show "Enable SMS 2FA"
   | { kind: "entering_phone"; phone: string } // user clicked Enable → collecting phone
   | { kind: "awaiting_code"; phone: string; code: string }
   | { kind: "enabled"; maskedPhone: string | null } // flag on — show "Disable"
@@ -46,13 +46,13 @@ export function Sms2FACard() {
         if (data.data.enabled) {
           setState({ kind: "enabled", maskedPhone: data.data.phone })
         } else {
-          setState({ kind: "disabled" })
+          setState({ kind: "disabled", suggestedPhone: data.data.suggestedPhone || null })
         }
       } else {
-        setState({ kind: "disabled" })
+        setState({ kind: "disabled", suggestedPhone: null })
       }
     } catch {
-      setState({ kind: "disabled" })
+      setState({ kind: "disabled", suggestedPhone: null })
     }
   }
 
@@ -208,7 +208,7 @@ export function Sms2FACard() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              onClick={() => setState({ kind: "entering_phone", phone: "" })}
+              onClick={() => setState({ kind: "entering_phone", phone: state.suggestedPhone || "" })}
             >
               <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
               {t("sms2faEnableCta")}

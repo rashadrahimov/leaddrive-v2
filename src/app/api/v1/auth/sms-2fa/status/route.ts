@@ -13,12 +13,12 @@ export async function GET(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { smsAuthEnabled: true, verifiedPhone: true },
+    select: { smsAuthEnabled: true, verifiedPhone: true, phone: true },
   })
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
 
-  // Mask phone in the response: "+9945*****838" — enough for the UI to confirm
-  // which number is active, but not full disclosure in case the response leaks.
+  // Mask the *verified* phone for display — only enough to confirm which
+  // number receives codes, never full disclosure if the response leaks.
   const maskedPhone = user.verifiedPhone
     ? user.verifiedPhone.slice(0, 5) + "*****" + user.verifiedPhone.slice(-3)
     : null
@@ -28,6 +28,10 @@ export async function GET(req: NextRequest) {
     data: {
       enabled: user.smsAuthEnabled,
       phone: maskedPhone,
+      // Suggestion for the Enable form — the admin-set work phone, unmasked
+      // because it belongs to the signed-in user anyway. Pre-fills the input
+      // so the user doesn't have to type it from scratch.
+      suggestedPhone: !user.smsAuthEnabled ? (user.phone || null) : null,
     },
   })
 }

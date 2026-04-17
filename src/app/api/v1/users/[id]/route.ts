@@ -13,6 +13,7 @@ const updateUserSchema = z.object({
   department: z.string().max(100).nullable().optional(),
   isActive: z.boolean().optional(),
   resetTotp: z.boolean().optional(),
+  resetSms: z.boolean().optional(),
   require2fa: z.boolean().optional(),
   skills: z.array(z.string()).optional(),
   maxTickets: z.number().int().min(1).max(100).optional(),
@@ -87,6 +88,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       updateData.backupCodes = []
       updateData.require2fa = false
     }
+    // Admin can reset user's SMS 2FA (for lost-phone recovery).
+    // Keeps verifiedPhone on the record so user can re-enable without re-verifying.
+    if (parsed.data.resetSms === true) {
+      updateData.smsAuthEnabled = false
+    }
     // Admin can toggle require2fa
     if (parsed.data.require2fa !== undefined) {
       updateData.require2fa = parsed.data.require2fa
@@ -103,6 +109,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       select: {
         id: true, name: true, email: true, role: true,
         phone: true, department: true, isActive: true, totpEnabled: true, require2fa: true,
+        smsAuthEnabled: true, verifiedPhone: true,
         skills: true, maxTickets: true, isAvailable: true, preferredLanguage: true, createdAt: true,
       },
     })

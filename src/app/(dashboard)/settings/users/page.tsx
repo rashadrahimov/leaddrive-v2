@@ -32,6 +32,8 @@ interface User {
   loginCount: number
   totpEnabled: boolean
   require2fa: boolean
+  smsAuthEnabled: boolean
+  verifiedPhone: string | null
   skills: string[]
   maxTickets: number
   isAvailable: boolean
@@ -446,44 +448,84 @@ export default function UsersSettingsPage() {
     },
     {
       key: "totpEnabled", label: "2FA",
-      render: (item: User) => (
-        <div className="flex items-center gap-2">
-          {/* Toggle require2fa */}
-          <button
-            type="button"
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              item.require2fa || item.totpEnabled ? "bg-green-500" : "bg-muted-foreground/40"
-            }`}
-            onClick={async (e) => {
-              e.stopPropagation()
-              if (item.totpEnabled && !item.require2fa) {
-                // Already configured, toggling off = reset
-                if (!confirm("Сбросить 2FA для этого пользователя?")) return
+      render: (item: User) => {
+        const anyMethodActive = item.totpEnabled || item.smsAuthEnabled
+        return (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* TOTP status pill — clickable to reset */}
+            <button
+              type="button"
+              title={item.totpEnabled ? "TOTP настроен. Кликни чтобы сбросить" : "TOTP не настроен"}
+              className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                item.totpEnabled
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                  : "bg-muted/40 text-muted-foreground border-muted"
+              }`}
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!item.totpEnabled) return
+                if (!confirm("Сбросить TOTP 2FA для этого пользователя? Он сможет войти без кода, пока не настроит снова.")) return
                 await fetch(`/api/v1/users/${item.id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
                   body: JSON.stringify({ resetTotp: true }),
                 })
-              } else {
-                // Toggle require2fa
+                fetchUsers()
+              }}
+            >
+              TOTP {item.totpEnabled ? "✓" : "—"}
+            </button>
+            {/* SMS status pill — clickable to reset */}
+            <button
+              type="button"
+              title={
+                item.smsAuthEnabled
+                  ? `SMS на ${item.verifiedPhone || "—"}. Кликни чтобы сбросить`
+                  : "SMS 2FA не настроен"
+              }
+              className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition ${
+                item.smsAuthEnabled
+                  ? "bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100"
+                  : "bg-muted/40 text-muted-foreground border-muted"
+              }`}
+              onClick={async (e) => {
+                e.stopPropagation()
+                if (!item.smsAuthEnabled) return
+                if (!confirm("Сбросить SMS 2FA для этого пользователя? Он сможет войти без SMS-кода, пока не активирует снова.")) return
                 await fetch(`/api/v1/users/${item.id}`, {
                   method: "PUT",
                   headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
-                  body: JSON.stringify({ require2fa: !(item.require2fa || item.totpEnabled) }),
+                  body: JSON.stringify({ resetSms: true }),
                 })
-              }
-              fetchUsers()
-            }}
-          >
-            <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
-              item.require2fa || item.totpEnabled ? "translate-x-4" : "translate-x-0"
-            }`} />
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {item.totpEnabled ? "Настроен" : item.require2fa ? "Обязат." : "Выкл"}
-          </span>
-        </div>
-      ),
+                fetchUsers()
+              }}
+            >
+              SMS {item.smsAuthEnabled ? "✓" : "—"}
+            </button>
+            {/* Require 2FA toggle */}
+            <button
+              type="button"
+              title="Требовать 2FA при входе (любой метод)"
+              className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors ${
+                item.require2fa || anyMethodActive ? "bg-green-500" : "bg-muted-foreground/40"
+              }`}
+              onClick={async (e) => {
+                e.stopPropagation()
+                await fetch(`/api/v1/users/${item.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+                  body: JSON.stringify({ require2fa: !(item.require2fa || anyMethodActive) }),
+                })
+                fetchUsers()
+              }}
+            >
+              <span className={`pointer-events-none inline-block h-3 w-3 rounded-full bg-white shadow transform transition-transform ${
+                item.require2fa || anyMethodActive ? "translate-x-3" : "translate-x-0"
+              }`} />
+            </button>
+          </div>
+        )
+      },
     },
     {
       key: "actions", label: "",

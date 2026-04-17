@@ -102,6 +102,28 @@ describe("GET /api/v1/auth/sms-2fa/status", () => {
     expect(body.data.phone).toBe("+9945*****838")
   })
 
+  it("suggests admin-set phone when disabled (pre-fill for Enable form)", async () => {
+    state.user.smsAuthEnabled = false
+    state.user.verifiedPhone = null
+    state.user.phone = "+994501234567" // admin set this via /settings/users
+
+    const res = await statusGET(emptyReq())
+    const body = await res.json()
+
+    expect(body.data.suggestedPhone).toBe("+994501234567")
+  })
+
+  it("does NOT leak suggestedPhone when already enabled", async () => {
+    state.user.smsAuthEnabled = true
+    state.user.verifiedPhone = "+994512060838"
+    state.user.phone = "+994501234567"
+
+    const res = await statusGET(emptyReq())
+    const body = await res.json()
+
+    expect(body.data.suggestedPhone).toBeNull()
+  })
+
   it("401 when not logged in", async () => {
     state.session = null
     const res = await statusGET(emptyReq())
