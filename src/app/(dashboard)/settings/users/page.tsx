@@ -127,6 +127,15 @@ function UserFormDialog({
     setSaving(true)
     setError("")
 
+    // Phone is optional, but if present it must be valid E.164 (+ and 7-15 digits).
+    // Catching this client-side prevents a round-trip to the backend and gives
+    // a focused error message right next to the field.
+    if (form.phone !== "" && !/^\+\d{7,15}$/.test(form.phone)) {
+      setError("Неверный формат телефона. Используй международный: +994501234567")
+      setSaving(false)
+      return
+    }
+
     try {
       const skills = form.skills.split(",").map(s => s.trim()).filter(Boolean)
       const payload: Record<string, any> = {
@@ -207,7 +216,37 @@ function UserFormDialog({
             </div>
             <div>
               <Label htmlFor="phone">Телефон</Label>
-              <Input id="phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
+              <Input
+                id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={16}
+                placeholder="+994501234567"
+                value={form.phone}
+                onChange={(e) => {
+                  // Accept only leading + and digits, strip everything else
+                  // as the user types so copy-pasted spaces/dashes/parens
+                  // don't get saved verbatim into the DB.
+                  let v = e.target.value.replace(/[^\d+]/g, "")
+                  if (v.indexOf("+") > 0) v = v.replace(/\+/g, "")
+                  setForm((f) => ({ ...f, phone: v.slice(0, 16) }))
+                }}
+                aria-invalid={form.phone !== "" && !/^\+\d{7,15}$/.test(form.phone)}
+                className={
+                  form.phone !== "" && !/^\+\d{7,15}$/.test(form.phone)
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : undefined
+                }
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Международный формат — начни с <code className="font-mono">+</code> и кода страны (пример: +994501234567). Пробелы, скобки и дефисы обрезаются автоматически.
+              </p>
+              {form.phone !== "" && !/^\+\d{7,15}$/.test(form.phone) && (
+                <p className="text-xs text-destructive mt-1">
+                  Неверный формат: нужно <code className="font-mono">+</code>, затем 7-15 цифр.
+                </p>
+              )}
             </div>
             {/* Briefing language preference */}
             {isEdit && (

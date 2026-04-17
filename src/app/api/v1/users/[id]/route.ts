@@ -9,7 +9,16 @@ const updateUserSchema = z.object({
   email: z.string().email().optional(),
   password: z.string().min(8).max(100).optional(),
   role: z.enum(["admin", "manager", "agent", "viewer"]).optional(),
-  phone: z.string().max(50).nullable().optional(),
+  // E.164-ish: '+' followed by 7-15 digits. Allow null (clearing the field)
+  // and empty string (coerced to null below).
+  phone: z
+    .string()
+    .max(50)
+    .refine((v) => v === "" || /^\+\d{7,15}$/.test(v), {
+      message: "Phone must be in international format (+ and 7-15 digits, e.g. +994501234567)",
+    })
+    .nullable()
+    .optional(),
   department: z.string().max(100).nullable().optional(),
   isActive: z.boolean().optional(),
   resetTotp: z.boolean().optional(),

@@ -43,6 +43,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name, email and password are required" }, { status: 400 })
     }
 
+    // Phone is optional, but when provided must be in E.164 format so it's
+    // usable by SMS providers (ATL / Twilio) without further normalization.
+    if (phone && typeof phone === "string" && phone !== "" && !/^\+\d{7,15}$/.test(phone)) {
+      return NextResponse.json(
+        { error: "Phone must be in international format (+ and 7-15 digits)" },
+        { status: 400 }
+      )
+    }
+
     // Check plan user limit
     const limitCheck = await checkUserLimit(orgId)
     if (!limitCheck.allowed) {
