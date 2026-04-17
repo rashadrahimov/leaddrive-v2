@@ -14,6 +14,9 @@ const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
   task: new Set(["status", "priority", "assignedTo", "notes", "tags"]),
   contact: new Set(["status", "notes", "tags"]),
   company: new Set(["leadStatus", "notes", "tags"]),
+  // call-triggered workflows (e.g. missed-call-sms) may annotate the call log.
+  // Exclude phone numbers and recording URL — those are system-generated immutables.
+  call: new Set(["notes", "disposition"]),
 }
 
 // Normalize entity type: v1 uses plural "deals"/"leads", v2 uses singular "deal"/"lead"

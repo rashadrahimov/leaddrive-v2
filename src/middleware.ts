@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth"
 // import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain"]
+const publicPaths = ["/login", "/register", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/register", "/api/v1/auth/sms-otp", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain"]
 
 // Marketing-only paths served on leaddrivecrm.org
 const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
@@ -51,7 +51,7 @@ function getOrgSubdomain(host: string): string | null {
 }
 
 // Paths that should be rate-limited more aggressively
-const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa", "/api/v1/mtm/mobile/auth"]
+const RATE_LIMITED_PATHS = ["/api/auth", "/login", "/register", "/forgot-password", "/api/v1/auth/reset-password", "/api/v1/auth/2fa", "/api/v1/auth/totp", "/api/v1/auth/verify-2fa", "/api/v1/auth/sms-otp", "/api/v1/mtm/mobile/auth"]
 
 // Generate CSP header with nonce
 function buildCsp(nonce: string, allowSameOriginFrame = false) {
