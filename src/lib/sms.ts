@@ -13,6 +13,7 @@ import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { twilioProvider } from "@/lib/sms/providers/twilio"
 import { vonageProvider } from "@/lib/sms/providers/vonage"
+import { atlProvider } from "@/lib/sms/providers/atl"
 import type { SmsProvider, SmsProviderSettings } from "@/lib/sms/providers/types"
 
 const OTP_TTL_MS = 10 * 60 * 1000 // 10 minutes
@@ -22,6 +23,7 @@ const MAX_VERIFY_ATTEMPTS = 5
 const PROVIDERS: Record<string, SmsProvider> = {
   twilio: twilioProvider,
   vonage: vonageProvider,
+  atl: atlProvider,
 }
 
 async function resolveProvider(organizationId?: string): Promise<{ provider: SmsProvider; settings: SmsProviderSettings }> {

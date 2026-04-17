@@ -73,8 +73,16 @@ Body:
 
 ## Provider selection
 
-`sendSms` prefers org-scoped Twilio credentials stored under
-`ChannelConfig(channelType="voip")`. Falls back to env:
+`sendSms` resolves the provider in this order:
+
+1. `ChannelConfig(voip).settings.smsProvider` — per-org override
+   (`"twilio"` | `"vonage"` | `"atl"`)
+2. `SMS_PROVIDER` env var (default: `"twilio"`)
+
+All three providers (Twilio, Vonage, ATL) support env-level fallbacks for
+pre-auth flows (signup, phone verification before an org exists).
+
+### Twilio
 
 ```bash
 TWILIO_ACCOUNT_SID=AC...
@@ -82,7 +90,41 @@ TWILIO_AUTH_TOKEN=...
 TWILIO_FROM_NUMBER=+1...
 ```
 
-The env fallback lets pre-auth flows (signup) send codes before an org exists.
+Org settings: `{ accountSid, authToken, twilioNumber }`
+
+### Vonage (Nexmo)
+
+```bash
+VONAGE_API_KEY=...
+VONAGE_API_SECRET=...
+VONAGE_FROM_NAME=LeadDrive
+```
+
+Org settings: `{ apiKey, apiSecret, fromName }`
+
+### ATL SMS (Azerbaijan)
+
+```bash
+ATL_LOGIN=...
+ATL_PASSWORD=...
+ATL_TITLE=TEST           # sender name; must be pre-registered with ATL
+ATL_ENDPOINT=https://send.atlsms.az:7443/bulksms/api   # optional override
+```
+
+Org settings: `{ smsProvider: "atl", atlLogin, atlPassword, atlTitle }`
+
+ATL uses an XML-over-HTTPS protocol. The adapter:
+
+- Escapes XML-unsafe chars (`& < > ' "`) in the message body.
+- Normalizes phones to `994XXXXXXXXX` format (strips `+` and separators).
+- Generates a unique 32-char `controlid` per send (via `crypto.randomUUID`).
+- Maps response codes to human-readable errors — e.g. `105` → "Invalid
+  credentials", `118` → "Not enough units", `235` → "Invalid sender title".
+
+The `atlTitle` is your sender name and must be pre-approved by your ATL
+account manager. Only `"TEST"` is pre-approved on the sandbox account; real
+deployments need a production-approved brand title to avoid response code
+`235`.
 
 ## Usage from workflow actions
 
