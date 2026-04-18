@@ -12,6 +12,7 @@ import {
   Radio, Plus, ExternalLink, MessageSquare, ThumbsUp, ThumbsDown,
   Minus, Check, Eye, Archive, Ticket, TrendingUp, Filter, RefreshCw, Link as LinkIcon,
 } from "lucide-react"
+import { SocialAnalyticsPanel } from "@/components/social/analytics-panel"
 
 interface Account {
   id: string
@@ -201,6 +202,9 @@ export default function SocialMonitoringPage() {
           <StatCard icon={Ticket} label="Tickets created" value={stats.byStatus.converted_to_ticket ?? 0} color="amber" />
         </div>
       )}
+
+      <SocialAnalyticsPanel orgId={orgId} />
+
 
       <div className="rounded-lg border bg-card p-4 space-y-3">
         <h3 className="text-sm font-semibold flex items-center gap-2"><Radio className="h-4 w-4" /> Monitored handles</h3>
