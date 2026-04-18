@@ -3494,6 +3494,7 @@ model WebChatSession {
   status         String   @default("open")   // open | closed | escalated
   ticketId       String?                      // set on escalation
   assignedUserId String?
+  aiPaused       Boolean  @default(false)
   lastMessageAt  DateTime @default(now())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

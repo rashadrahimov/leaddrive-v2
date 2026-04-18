@@ -2029,7 +2029,13 @@
     "send": "Send",
     "newMessageFrom": "New message from {name}",
     "open": "Open",
-    "unassigned": "Unassigned"
+    "unassigned": "Unassigned",
+    "takeOver": "Take over",
+    "release": "Release",
+    "takeOverHint": "Claim this chat and pause AI auto-reply",
+    "releaseHint": "Release this chat and resume AI auto-reply",
+    "aiActive": "AI active",
+    "aiPaused": "AI paused"
   },
   "reports": {
     "title": "Reports & Analytics",

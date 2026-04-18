@@ -105,9 +105,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Optional AI auto-reply via Da Vinci
+  // Optional AI auto-reply via Da Vinci — skipped when a human has taken over.
   let botReply: { id: string; text: string; createdAt: Date } | null = null
-  if (widget.aiEnabled) {
+  if (widget.aiEnabled && !session.aiPaused) {
     try {
       const reply = await generateAiReply(session.organizationId, session.id, parsed.data.text, parsed.data.lang)
       if (reply) {

@@ -2029,7 +2029,13 @@
     "send": "Göndər",
     "newMessageFrom": "Yeni mesaj: {name}",
     "open": "Aç",
-    "unassigned": "Təyin olunmayıb"
+    "unassigned": "Təyin olunmayıb",
+    "takeOver": "Özünə götür",
+    "release": "Burax",
+    "takeOverHint": "Çatı özünə götür — AI avtomatik cavab dayanır",
+    "releaseHint": "Çatı burax — AI yenidən cavab verəcək",
+    "aiActive": "AI aktiv",
+    "aiPaused": "AI pauzada"
   },
   "reports": {
     "title": "Hesabatlar və Analitika",

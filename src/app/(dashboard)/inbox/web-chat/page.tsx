@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Send, MessageCircle, Globe, User, CheckCircle, Ticket as TicketIcon, ArrowUpRight } from "lucide-react"
+import { Send, MessageCircle, Globe, User, CheckCircle, Ticket as TicketIcon, ArrowUpRight, Bot, Hand } from "lucide-react"
 import { toast } from "sonner"
 
 interface SessionItem {
@@ -41,6 +41,7 @@ interface SessionDetail {
   status: string
   ticketId: string | null
   assignedUserId: string | null
+  aiPaused: boolean
   messages: Message[]
 }
 
@@ -332,6 +333,23 @@ export default function WebChatInboxPage() {
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                {(() => {
+                  const myId = (session?.user as any)?.id as string | undefined
+                  const mine = !!myId && detail.assignedUserId === myId
+                  return (
+                    <Button
+                      variant={mine ? "default" : "outline"}
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => assignAgent(detail.id, mine ? null : myId || null)}
+                      disabled={!myId}
+                      title={mine ? t("releaseHint") : t("takeOverHint")}
+                    >
+                      {mine ? <Hand className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                      {mine ? t("release") : t("takeOver")}
+                    </Button>
+                  )
+                })()}
                 <select
                   value={detail.assignedUserId || ""}
                   onChange={e => assignAgent(detail.id, e.target.value || null)}
@@ -342,6 +360,9 @@ export default function WebChatInboxPage() {
                     <option key={a.id} value={a.id}>{a.name || a.email}</option>
                   ))}
                 </select>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded ${detail.aiPaused ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"}`}>
+                  {detail.aiPaused ? t("aiPaused") : t("aiActive")}
+                </span>
                 {detail.ticketId ? (
                   <a href={`/tickets/${detail.ticketId}`} target="_blank" rel="noreferrer">
                     <Button variant="outline" size="sm" className="gap-1.5">

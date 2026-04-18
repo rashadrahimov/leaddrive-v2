@@ -23,6 +23,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 const updateSchema = z.object({
   status: z.enum(["open", "closed", "escalated"]).optional(),
   assignedUserId: z.string().nullable().optional(),
+  aiPaused: z.boolean().optional(),
 })
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -38,9 +39,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const existing = await prisma.webChatSession.findFirst({ where: { id, organizationId: orgId } })
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
+  // Auto-pause AI when a human claims the session; resume when released.
+  // Explicit aiPaused in the body wins (agent can toggle manually).
+  const data: typeof parsed.data = { ...parsed.data }
+  if (parsed.data.aiPaused === undefined && parsed.data.assignedUserId !== undefined) {
+    data.aiPaused = parsed.data.assignedUserId !== null
+  }
+
   const updated = await prisma.webChatSession.update({
     where: { id },
-    data: parsed.data,
+    data,
   })
   return NextResponse.json({ success: true, data: updated })
 }
