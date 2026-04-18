@@ -17,8 +17,8 @@ export async function GET(req: NextRequest) {
   const mentions = await prisma.socialMention.findMany({
     where: {
       organizationId: orgId,
-      // Exclude internal sentinel rows (e.g. telegram poller offset marker)
-      externalId: { not: { startsWith: "__" } },
+      // See excludeSentinel note below — exclude the telegram cursor row.
+      externalId: { not: "__tg_offset__" },
       ...(status ? { status } : {}),
       ...(platform ? { platform } : {}),
       ...(sentiment ? { sentiment } : {}),
@@ -28,7 +28,10 @@ export async function GET(req: NextRequest) {
     include: { account: { select: { handle: true, displayName: true } } },
   })
 
-  const excludeSentinel = { externalId: { not: { startsWith: "__" } } }
+  // Telegram poller stores its offset cursor as a sentinel row with a
+  // well-known externalId. Exclude it by exact name. (Earlier `startsWith:
+  // "__"` was broken — underscores are SQL LIKE wildcards.)
+  const excludeSentinel = { externalId: { not: "__tg_offset__" } }
   const [totals, byStatus, bySentiment] = await Promise.all([
     prisma.socialMention.count({ where: { organizationId: orgId, ...excludeSentinel } }),
     prisma.socialMention.groupBy({
