@@ -8,6 +8,28 @@ export type Module =
   | "projects" | "budgeting" | "invoices" | "events" | "pricing"
   | "inbox" | "journeys" | "segments" | "voip"
 
+/**
+ * Central list of every module that can be gated by permissions OR an API-key scope.
+ * Add a module here (and to the `Module` type above) and it will automatically
+ * appear in the API-keys scope picker and be enforceable at the auth layer.
+ */
+export const MODULES: readonly Module[] = [
+  "companies", "contacts", "deals", "leads", "tasks",
+  "contracts", "offers", "invoices", "tickets", "kb", "campaigns",
+  "projects", "events", "pricing", "budgeting",
+  "reports", "profitability",
+  "inbox", "journeys", "segments", "voip",
+  "ai", "settings", "users", "audit",
+] as const
+
+/**
+ * Flat list of every `read:<module>` / `write:<module>` scope string that
+ * an API key can hold. Derived from MODULES — no need to touch this manually.
+ */
+export const API_SCOPES: readonly string[] = MODULES.flatMap(
+  (m) => [`read:${m}`, `write:${m}`]
+)
+
 // Permission matrix: role × module × action
 const ROLE_PERMISSIONS: Record<Role, Record<string, Action[]>> = {
   superadmin: {

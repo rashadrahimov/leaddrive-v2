@@ -33,6 +33,8 @@ interface Lead {
   email: string | null
   phone: string | null
   source: string | null
+  brand: string | null
+  category: string | null
   status: string
   priority: string
   score: number
@@ -83,6 +85,7 @@ export default function LeadsPage() {
   useAutoTour("leads")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("")
   const [sortBy, setSortBy] = useState("score_desc")
   const [showForm, setShowForm] = useState(false)
   const [editData, setEditData] = useState<Lead | undefined>()
@@ -117,13 +120,15 @@ export default function LeadsPage() {
   // Filter & sort
   const filtered = leads.filter(l => {
     if (statusFilter !== "all" && l.status !== statusFilter) return false
+    if (categoryFilter && l.category !== categoryFilter) return false
     if (search) {
       const q = search.toLowerCase()
       return (
         l.contactName.toLowerCase().includes(q) ||
         (l.companyName || "").toLowerCase().includes(q) ||
         (l.email || "").toLowerCase().includes(q) ||
-        (l.phone || "").toLowerCase().includes(q)
+        (l.phone || "").toLowerCase().includes(q) ||
+        (l.brand || "").toLowerCase().includes(q)
       )
     }
     return true
@@ -294,6 +299,14 @@ export default function LeadsPage() {
                 className="pl-9"
               />
             </div>
+            <Select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="w-[150px]">
+              <option value="">All categories</option>
+              <option value="vip">VIP</option>
+              <option value="regular">Regular</option>
+              <option value="partner">Partner</option>
+              <option value="prospect">Prospect</option>
+              <option value="inactive">Inactive</option>
+            </Select>
             <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[180px]">
               <option value="score_desc">{t("sortScoreDesc")}</option>
               <option value="score_asc">{t("sortScoreAsc")}</option>
@@ -396,6 +409,7 @@ export default function LeadsPage() {
                 { key: null, label: t("colContacts"), className: "px-4" },
                 { key: "conversion", label: t("colConversion"), className: "px-3", hint: t("hintColTemperature") },
                 { key: "source", label: t("colSource"), className: "px-3", hint: t("hintColSource") },
+                { key: null, label: "Category", className: "px-3" },
                 { key: "status", label: t("colStatus"), className: "px-3", hint: t("hintColStatus") },
               ].map(col => {
                 const isActive = col.key && sortBy.startsWith(col.key)
@@ -484,7 +498,21 @@ export default function LeadsPage() {
                     })()}
                   </td>
                   <td className="px-3 py-3 text-muted-foreground text-xs">
-                    {lead.source ? sourceLabels[lead.source] || lead.source : "—"}
+                    <div className="flex flex-col gap-0.5">
+                      <span>{lead.source ? sourceLabels[lead.source] || lead.source : "—"}</span>
+                      {lead.brand && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full w-fit">{lead.brand}</span>}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3">
+                    {lead.category ? (
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-medium capitalize",
+                        lead.category === "vip" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                        lead.category === "partner" ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" :
+                        lead.category === "prospect" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                        lead.category === "inactive" ? "bg-muted text-muted-foreground" :
+                        "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                      )}>{lead.category}</span>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
                   </td>
                   <td className="px-3 py-3">
                     <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", statusColors[lead.status] || "bg-muted")}>
@@ -569,7 +597,7 @@ export default function LeadsPage() {
         lead={selectedLead}
         orgId={orgId}
         onSaved={fetchLeads}
-        onConvert={lead => { setSelectedLead(null); setConvertLead(lead) }}
+        onConvert={lead => { setSelectedLead(null); setConvertLead(lead as unknown as Lead) }}
       />
     </div>
   )

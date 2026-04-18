@@ -41,6 +41,8 @@ const CONTACT_FIELD_MAP: Record<string, string> = {
   company: "companyName",
   position: "position", title: "position", role: "position",
   source: "source",
+  brand: "brand",
+  category: "category", segment: "category",
 }
 
 const COMPANY_FIELD_MAP: Record<string, string> = {
@@ -141,7 +143,7 @@ export function CsvImportDialog({ open, onOpenChange, entityType, onImported }: 
 
   const mappedFields = Object.values(fieldMapping).filter(Boolean)
   const targetFields = entityType === "contacts"
-    ? ["fullName", "email", "phone", "position", "source", "companyName"]
+    ? ["fullName", "email", "phone", "position", "source", "brand", "category", "companyName"]
     : ["name", "email", "phone", "website", "industry", "address", "city", "country"]
 
   return (

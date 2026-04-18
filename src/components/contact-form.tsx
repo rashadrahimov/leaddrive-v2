@@ -27,6 +27,8 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
     position: initialData?.position || "",
     companyId: initialData?.companyId || "",
     source: initialData?.source || "",
+    brand: initialData?.brand || "",
+    category: initialData?.category || "",
     portalAccessEnabled: initialData?.portalAccessEnabled || false,
   })
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
@@ -42,6 +44,8 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
         position: initialData?.position || "",
         companyId: initialData?.companyId || "",
         source: initialData?.source || "",
+        brand: initialData?.brand || "",
+        category: initialData?.category || "",
         portalAccessEnabled: initialData?.portalAccessEnabled || false,
       })
       setError("")
@@ -105,6 +109,8 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                   <option value="cold_call">{tc("coldCall")}</option>
                   <option value="linkedin">{tc("linkedin")}</option>
                   <option value="event">{tc("event")}</option>
+                  <option value="sms">SMS</option>
+                  <option value="social">Social</option>
                   <option value="other">{tc("other")}</option>
                 </Select>
               </div>
@@ -115,6 +121,23 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                 <option value="">{tc("noCompany")}</option>
                 {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="brand">Brand</Label>
+                <Input id="brand" value={form.brand} onChange={e => update("brand", e.target.value)} placeholder="Product brand" />
+              </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select value={form.category} onChange={e => update("category", e.target.value)}>
+                  <option value="">{tc("select")}</option>
+                  <option value="vip">VIP</option>
+                  <option value="regular">Regular</option>
+                  <option value="partner">Partner</option>
+                  <option value="prospect">Prospect</option>
+                  <option value="inactive">Inactive</option>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center gap-2 pt-2 border-t">
               <input

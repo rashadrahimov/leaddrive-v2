@@ -14,11 +14,29 @@ export function buildContactWhere(orgId: string, conditions: Record<string, any>
   if (conditions.source && conditions.source !== "") {
     AND.push({ source: conditions.source })
   }
+  if (conditions.brand?.trim()) {
+    AND.push({ brand: conditions.brand.trim() })
+  }
+  if (conditions.category && conditions.category !== "") {
+    AND.push({ category: conditions.category })
+  }
   if (conditions.role?.trim()) {
     AND.push({ position: { contains: conditions.role, mode: "insensitive" } })
   }
   if (conditions.tag?.trim()) {
     AND.push({ tags: { has: conditions.tag } })
+  }
+  // SMS attribution — contacts who received any SMS (or a specific campaign)
+  if (conditions.hasSmsAttribution || conditions.receivedSms) {
+    AND.push({ lastSmsAt: { not: null } })
+  }
+  if (conditions.smsCampaignId) {
+    AND.push({ lastSmsCampaignId: conditions.smsCampaignId })
+  }
+  if (conditions.smsSinceDays) {
+    const days = parseInt(conditions.smsSinceDays)
+    const cutoff = new Date(Date.now() - days * 86400000)
+    AND.push({ lastSmsAt: { gte: cutoff } })
   }
   if (conditions.createdAfter || conditions.created_after) {
     AND.push({ createdAt: { gte: new Date(conditions.createdAfter || conditions.created_after) } })

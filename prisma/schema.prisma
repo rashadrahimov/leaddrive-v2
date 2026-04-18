@@ -104,6 +104,20 @@ model Organization {
   taskChecklists         TaskChecklist[]
   taskComments           TaskComment[]
 
+  // Web chat widget (§4)
+  webChatWidget          WebChatWidget?
+  webChatSessions        WebChatSession[]
+  webChatMessages        WebChatMessage[]
+
+  // Social media monitoring (§5)
+  socialAccounts         SocialAccount[]
+  socialMentions         SocialMention[]
+
+  // Surveys/NPS (§8)
+  surveys                Survey[]
+  surveyResponses        SurveyResponse[]
+  surveyUnsubscribes     SurveyUnsubscribe[]
+
   @@map("organizations")
 }
 
@@ -305,7 +319,9 @@ model Contact {
   position       String?
   department     String?
   avatar         String?
-  source         String?  // website, referral, cold_call, etc.
+  source         String?  // website, referral, cold_call, sms, email, social, event, other
+  brand          String?  // product brand the contact is associated with (TT §3.3)
+  category       String?  // contact category: vip, regular, partner, prospect, inactive (TT §3.3)
   // SMS attribution (TT §3.3 "SMS kampaniyaları" as segmentation source).
   // Populated by POST /campaigns/[id]/send when an SMS delivers successfully.
   lastSmsCampaignId String?
@@ -457,6 +473,8 @@ model Lead {
   email          String?
   phone          String?
   source         String?
+  brand          String?  // product brand the lead is associated with (TT §3.3)
+  category       String?  // lead category: vip, regular, partner, prospect (TT §3.3)
   status         String   @default("new") // new, contacted, qualified, converted, lost
   priority       String   @default("medium")
   score          Int      @default(0)
@@ -3432,4 +3450,204 @@ model CustomDomain {
   @@index([organizationId])
   @@index([domain])
   @@map("custom_domains")
+}
+
+// ═══════════════════════════════════════════════════
+// WEB CHAT WIDGET (§4) — embeddable live chat for tenant websites
+// ═══════════════════════════════════════════════════
+
+model WebChatWidget {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  enabled        Boolean  @default(true)
+  publicKey      String   @unique                     // short key used in embed snippet
+  title          String   @default("Support")
+  greeting       String   @default("Hi! How can we help?")
+  primaryColor   String   @default("#0176D3")
+  position       String   @default("bottom-right")    // bottom-right | bottom-left
+  showLauncher   Boolean  @default(true)
+  aiEnabled      Boolean  @default(true)              // use Da Vinci auto-reply
+  escalateToTicket Boolean @default(true)             // create Ticket on escalation
+  allowedOrigins String[] @default([])                // CORS whitelist, empty = any
+  workingHours   Json?                                 // { mon: ["09:00","18:00"], ... }
+  offlineMessage String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([publicKey])
+  @@map("web_chat_widgets")
+}
+
+model WebChatSession {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  visitorName    String?
+  visitorEmail   String?
+  visitorPhone   String?
+  contactId      String?                      // linked CRM contact (matched by email)
+  pageUrl        String?
+  userAgent      String?
+  ipAddress      String?
+  status         String   @default("open")   // open | closed | escalated
+  ticketId       String?                      // set on escalation
+  assignedUserId String?
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  messages       WebChatMessage[]
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, lastMessageAt])
+  @@map("web_chat_sessions")
+}
+
+model WebChatMessage {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessionId      String
+  session        WebChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  fromRole       String   // visitor | bot | agent
+  authorUserId   String?
+  text           String
+  attachmentUrl  String?
+  attachmentName String?
+  attachmentType String?   // MIME type
+  attachmentSize Int?      // bytes
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+  @@index([organizationId])
+  @@map("web_chat_messages")
+}
+
+// ═══════════════════════════════════════════════════
+// SOCIAL MEDIA MONITORING (§5)
+// ═══════════════════════════════════════════════════
+
+model SocialAccount {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  platform       String   // twitter | instagram | facebook | telegram | vkontakte | youtube | tiktok
+  handle         String   // @brand or page name being monitored
+  displayName    String?
+  accessToken    String?  // encrypted OAuth token when connected; null = keyword-only monitoring
+  tokenExpiresAt DateTime?
+  isActive       Boolean  @default(true)
+  keywords       String[] @default([])  // additional keywords to track alongside handle
+  lastPolledAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  mentions       SocialMention[]
+
+  @@unique([organizationId, platform, handle])
+  @@index([organizationId, platform])
+  @@map("social_accounts")
+}
+
+model SocialMention {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountId      String?
+  account        SocialAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  platform       String
+  externalId     String   // unique per platform (post/comment id)
+  authorName     String?
+  authorHandle   String?
+  authorAvatar   String?
+  text           String
+  url            String?
+  sentiment      String?  // positive | neutral | negative
+  matchedTerm    String?
+  reach          Int      @default(0)
+  engagement     Int      @default(0)
+  status         String   @default("new")  // new | reviewed | replied | ignored | converted_to_ticket
+  ticketId       String?
+  handledBy      String?  // userId
+  handledAt      DateTime?
+  publishedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  @@unique([organizationId, platform, externalId])
+  @@index([organizationId, status])
+  @@index([organizationId, platform, publishedAt])
+  @@index([organizationId, sentiment])
+  @@map("social_mentions")
+}
+
+// ═══════════════════════════════════════════════════
+// SURVEYS / NPS (§8)
+// ═══════════════════════════════════════════════════
+
+model Survey {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  type           String   @default("nps")   // nps | csat | ces | custom
+  status         String   @default("draft") // draft | active | paused | archived
+  publicSlug     String   @unique           // stable slug used in public URL
+  thankYouText   String   @default("Thank you for your feedback!")
+  // Question set (JSON) — for NPS it auto-includes the 0–10 scale
+  questions      Json     @default("[]")    // [{ id, type: "nps"|"rating"|"text"|"choice", label, options? }]
+  triggers       Json     @default("{}")    // e.g. { afterTicketResolve: true, afterInvoicePaid: false }
+  channels       String[] @default([])      // email | sms | link
+  totalSent      Int      @default(0)
+  totalResponses Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  responses      SurveyResponse[]
+
+  @@index([organizationId, status])
+  @@map("surveys")
+}
+
+model SurveyResponse {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  surveyId       String
+  survey         Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  contactId      String?
+  ticketId       String?
+  email          String?
+  phone          String?
+  // Primary numeric score — for NPS 0-10, for CSAT 1-5, for CES 1-7
+  score          Int?
+  category       String?   // promoter | passive | detractor (NPS)
+  answers        Json     @default("{}")    // keyed by question id
+  comment        String?
+  channel        String?   // email | sms | link | portal
+  completedAt    DateTime @default(now())
+  ipAddress      String?
+
+  @@index([organizationId, surveyId])
+  @@index([organizationId, completedAt])
+  @@index([surveyId, category])
+  @@map("survey_responses")
+}
+
+model SurveyUnsubscribe {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  surveyId       String?                           // null = unsubscribe from all surveys in this org
+  email          String?
+  phone          String?
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, email])
+  @@index([organizationId, phone])
+  @@map("survey_unsubscribes")
 }

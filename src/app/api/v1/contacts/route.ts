@@ -18,6 +18,8 @@ const createContactSchema = z.object({
   position: z.string().max(200).optional(),
   companyId: z.string().optional(),
   source: z.string().max(50).optional(),
+  brand: z.string().max(100).optional(),
+  category: z.string().max(50).optional(),
   tags: z.array(z.string()).optional(),
 })
 

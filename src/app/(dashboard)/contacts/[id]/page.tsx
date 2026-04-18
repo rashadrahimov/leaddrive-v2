@@ -35,6 +35,8 @@ interface Contact {
   position?: string
   department?: string
   source?: string
+  brand?: string
+  category?: string
   tags: string[]
   isActive: boolean
   lastContactAt?: string
@@ -155,6 +157,7 @@ export default function ContactDetailPage() {
   const [showEdit, setShowEdit] = useState(false)
   const [editData, setEditData] = useState({
     fullName: "", email: "", phone: "", position: "", department: "", source: "",
+    brand: "", category: "",
     companyId: "", isActive: true, phones: [] as string[],
   })
   const [saving, setSaving] = useState(false)
@@ -187,6 +190,8 @@ export default function ContactDetailPage() {
       position: contact.position || "",
       department: contact.department || "",
       source: contact.source || "",
+      brand: contact.brand || "",
+      category: contact.category || "",
       companyId: contact.companyId || "",
       isActive: contact.isActive,
       phones: contact.phones || [],
@@ -220,6 +225,8 @@ export default function ContactDetailPage() {
           position: editData.position || undefined,
           department: editData.department || undefined,
           source: editData.source || undefined,
+          brand: editData.brand || undefined,
+          category: editData.category || undefined,
           companyId: editData.companyId || undefined,
           isActive: editData.isActive,
           phones: editData.phones.filter(p => p.trim()),
@@ -448,6 +455,14 @@ export default function ContactDetailPage() {
                   <span className="ml-2 font-medium">{contact.department || "—"}</span>
                 </div>
                 <div>
+                  <span className="text-muted-foreground">Brand:</span>
+                  <span className="ml-2 font-medium">{contact.brand || "—"}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Category:</span>
+                  <span className="ml-2 font-medium capitalize">{contact.category || "—"}</span>
+                </div>
+                <div>
                   <span className="text-muted-foreground">Status:</span>
                   <Badge className="ml-2">{contact.isActive ? "Active" : "Inactive"}</Badge>
                 </div>
@@ -625,6 +640,21 @@ export default function ContactDetailPage() {
             <div>
               <Label className="text-sm font-medium">{tc("source")}</Label>
               <Input value={editData.source} onChange={e => setEditData(d => ({ ...d, source: e.target.value }))} disabled={!isEditable("source")} className="mt-1" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Brand</Label>
+              <Input value={editData.brand} onChange={e => setEditData(d => ({ ...d, brand: e.target.value }))} className="mt-1" placeholder="Product brand" />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Category</Label>
+              <Select value={editData.category} onChange={e => setEditData(d => ({ ...d, category: e.target.value }))} className="mt-1">
+                <option value="">—</option>
+                <option value="vip">VIP</option>
+                <option value="regular">Regular</option>
+                <option value="partner">Partner</option>
+                <option value="prospect">Prospect</option>
+                <option value="inactive">Inactive</option>
+              </Select>
             </div>
           </div>
         </DialogContent>

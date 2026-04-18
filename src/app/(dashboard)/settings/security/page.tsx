@@ -46,10 +46,17 @@ export default function SecuritySettingsPage() {
   const [generatedKey, setGeneratedKey] = useState("")
   const [keyCopied, setKeyCopied] = useState(false)
   const [keyLoading, setKeyLoading] = useState(false)
+  const [availableModules, setAvailableModules] = useState<string[]>([])
 
   const fetchApiKeys = () => {
     fetch("/api/v1/api-keys").then(r => r.json()).then(j => {
       if (j.success) setApiKeys(j.data)
+    })
+  }
+
+  const fetchApiKeyScopes = () => {
+    fetch("/api/v1/api-keys/scopes").then(r => r.json()).then(j => {
+      if (j.success) setAvailableModules(j.data.modules)
     })
   }
 
@@ -88,6 +95,7 @@ export default function SecuritySettingsPage() {
       })
       .finally(() => setLoading(false))
     fetchApiKeys()
+    fetchApiKeyScopes()
     fetchLinkedAccounts()
     fetch("/api/v1/settings/auth-methods").then(r => r.json()).then(j => {
       if (j.success) setAuthMethods(j.data)
@@ -639,17 +647,58 @@ export default function SecuritySettingsPage() {
                     <Input value={newKeyName} onChange={(e: any) => setNewKeyName(e.target.value)} placeholder="e.g. My Integration" className="mt-1" />
                   </div>
                   <div>
-                    <Label className="text-xs">Scopes</Label>
-                    <div className="flex flex-wrap gap-1.5 mt-1">
-                      {["read:companies", "write:companies", "read:contacts", "write:contacts", "read:deals", "write:deals", "read:leads", "write:leads", "read:invoices", "write:invoices", "read:tasks", "write:tasks"].map(scope => (
+                    <div className="flex items-center justify-between mb-1">
+                      <Label className="text-xs">Scopes</Label>
+                      <div className="flex gap-2 text-[10px]">
                         <button
-                          key={scope}
-                          onClick={() => setNewKeyScopes(prev => prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope])}
-                          className={`text-xs px-2 py-1 rounded-full border transition-colors ${newKeyScopes.includes(scope) ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 hover:bg-muted"}`}
+                          type="button"
+                          onClick={() => setNewKeyScopes(availableModules.map(m => `read:${m}`))}
+                          className="text-primary hover:underline"
                         >
-                          {scope}
+                          Select all read
                         </button>
-                      ))}
+                        <span className="text-muted-foreground">·</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewKeyScopes([])}
+                          className="text-muted-foreground hover:underline"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                      {availableModules.map(mod => {
+                        const readScope = `read:${mod}`
+                        const writeScope = `write:${mod}`
+                        const readOn = newKeyScopes.includes(readScope)
+                        const writeOn = newKeyScopes.includes(writeScope)
+                        const toggle = (scope: string) =>
+                          setNewKeyScopes(prev =>
+                            prev.includes(scope) ? prev.filter(s => s !== scope) : [...prev, scope]
+                          )
+                        return (
+                          <div key={mod} className="flex items-center justify-between gap-2 py-1">
+                            <span className="text-xs font-medium capitalize">{mod}</span>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => toggle(readScope)}
+                                className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${readOn ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 hover:bg-muted"}`}
+                              >
+                                read
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggle(writeScope)}
+                                className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors ${writeOn ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 hover:bg-muted"}`}
+                              >
+                                write
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                   <div>

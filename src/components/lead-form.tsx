@@ -27,6 +27,8 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
     email: initialData?.email || "",
     phone: initialData?.phone || "",
     source: initialData?.source || "",
+    brand: initialData?.brand || "",
+    category: initialData?.category || "",
     status: initialData?.status || "new",
     priority: initialData?.priority || "medium",
     estimatedValue: String(initialData?.estimatedValue || ""),
@@ -43,6 +45,8 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
         email: initialData?.email || "",
         phone: initialData?.phone || "",
         source: initialData?.source || "",
+        brand: initialData?.brand || "",
+        category: initialData?.category || "",
         status: initialData?.status || "new",
         priority: initialData?.priority || "medium",
         estimatedValue: String(initialData?.estimatedValue || ""),
@@ -87,9 +91,23 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
               <div><Label>{tc("phone")}</Label><Input value={form.phone} onChange={e => u("phone", e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div><Label>{tc("source")}</Label><Select value={form.source} onChange={e => u("source", e.target.value)}><option value="">{tc("select")}...</option><option value="website">Website</option><option value="referral">Referral</option><option value="cold_call">Cold Call</option><option value="linkedin">LinkedIn</option></Select></div>
+              <div><Label>{tc("source")}</Label><Select value={form.source} onChange={e => u("source", e.target.value)}><option value="">{tc("select")}...</option><option value="website">Website</option><option value="referral">Referral</option><option value="cold_call">Cold Call</option><option value="linkedin">LinkedIn</option><option value="sms">SMS</option><option value="social">Social</option></Select></div>
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></div>
               <div><Label>{t("estValue")}</Label><Input type="number" value={form.estimatedValue} onChange={e => u("estimatedValue", e.target.value)} placeholder="0" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Brand</Label><Input value={form.brand} onChange={e => u("brand", e.target.value)} placeholder="Product brand" /></div>
+              <div>
+                <Label>Category</Label>
+                <Select value={form.category} onChange={e => u("category", e.target.value)}>
+                  <option value="">{tc("select")}...</option>
+                  <option value="vip">VIP</option>
+                  <option value="regular">Regular</option>
+                  <option value="partner">Partner</option>
+                  <option value="prospect">Prospect</option>
+                  <option value="inactive">Inactive</option>
+                </Select>
+              </div>
             </div>
             {isEdit && (
               <div><Label>{tc("status")}</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="converted">Converted</option><option value="lost">Lost</option></Select></div>

@@ -14,6 +14,8 @@ const updateLeadSchema = z.object({
   email: z.string().email().optional().or(z.literal("")).nullable(),
   phone: z.string().nullable().optional(),
   source: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
   status: z.string().optional(),
   priority: z.string().optional(),
   score: z.number().optional(),

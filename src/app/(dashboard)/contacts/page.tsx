@@ -26,6 +26,8 @@ interface Contact {
   phone: string | null
   position: string | null
   source: string | null
+  brand: string | null
+  category: string | null
   companyId: string | null
   isActive: boolean
   portalAccessEnabled: boolean
@@ -55,6 +57,7 @@ export default function ContactsPage() {
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [sortBy, setSortBy] = useState("name_asc")
   const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState<string>("")
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [importOpen, setImportOpen] = useState(false)
@@ -80,7 +83,7 @@ export default function ContactsPage() {
   useEffect(() => { setSelected(new Set()) }, [search, sortBy])
 
   function handleEdit(item: Contact) {
-    setEditData({ id: item.id, fullName: item.fullName, email: item.email, phone: item.phone, position: item.position, companyId: item.companyId, source: item.source })
+    setEditData({ id: item.id, fullName: item.fullName, email: item.email, phone: item.phone, position: item.position, companyId: item.companyId, source: item.source, brand: item.brand, category: item.category })
     setFormOpen(true)
   }
 
@@ -136,8 +139,12 @@ export default function ContactsPage() {
         c.fullName.toLowerCase().includes(q) ||
         (c.email || "").toLowerCase().includes(q) ||
         (c.phone || "").toLowerCase().includes(q) ||
-        (c.company?.name || "").toLowerCase().includes(q)
+        (c.company?.name || "").toLowerCase().includes(q) ||
+        (c.brand || "").toLowerCase().includes(q)
       )
+    }
+    if (categoryFilter) {
+      result = result.filter(c => c.category === categoryFilter)
     }
     return [...result].sort((a, b) => {
       switch (sortBy) {
@@ -149,7 +156,7 @@ export default function ContactsPage() {
         default: return 0
       }
     })
-  }, [contacts, search, sortBy])
+  }, [contacts, search, sortBy, categoryFilter])
 
   const totalPages = Math.ceil(filtered.length / pageSize)
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
@@ -282,6 +289,14 @@ export default function ContactsPage() {
         </div>
         <span className="text-sm text-muted-foreground">{tc("results", { count: filtered.length })}</span>
         <div className="flex-1" />
+        <Select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }} className="w-[160px]">
+          <option value="">All categories</option>
+          <option value="vip">VIP</option>
+          <option value="regular">Regular</option>
+          <option value="partner">Partner</option>
+          <option value="prospect">Prospect</option>
+          <option value="inactive">Inactive</option>
+        </Select>
         <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
           <option value="name_asc">{t("sortNameAsc")}</option>
           <option value="name_desc">{t("sortNameDesc")}</option>
@@ -312,6 +327,7 @@ export default function ContactsPage() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colEmail")} <InfoHint text={t("hintColEmail")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPhone")} <InfoHint text={t("hintColPhone")} size={12} /></span></th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colSource") || "Source"}</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Category</th>
               <th className="px-4 py-3 text-center font-medium text-muted-foreground">Score</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPortal")} <InfoHint text={t("hintColPortal")} size={12} /></span></th>
@@ -343,7 +359,14 @@ export default function ContactsPage() {
                       {item.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                     </div>
                     <div>
-                      <div className="font-medium">{item.fullName}</div>
+                      <div className="font-medium flex items-center gap-1.5">
+                        {item.fullName}
+                        {item.brand && (
+                          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-normal">
+                            {item.brand}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">{item.position || "—"}</div>
                     </div>
                   </div>
@@ -380,6 +403,17 @@ export default function ContactsPage() {
                        item.source === "email" ? <AtSign className="h-3 w-3" /> : null}
                       {item.source}
                     </span>
+                  ) : <span className="text-muted-foreground text-xs">—</span>}
+                </td>
+                <td className="px-4 py-3">
+                  {item.category ? (
+                    <span className={cn("inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium capitalize",
+                      item.category === "vip" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                      item.category === "partner" ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" :
+                      item.category === "prospect" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                      item.category === "inactive" ? "bg-muted text-muted-foreground" :
+                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    )}>{item.category}</span>
                   ) : <span className="text-muted-foreground text-xs">—</span>}
                 </td>
                 <td className="px-4 py-3 text-center">

@@ -33,6 +33,8 @@ interface Lead {
   email: string | null
   phone: string | null
   source: string | null
+  brand: string | null
+  category: string | null
   status: string
   priority: string
   score: number
@@ -491,6 +493,18 @@ export default function LeadDetailPage() {
               </span>
               <InfoHint text={t("hintColSource")} size={12} />
             </div>
+            {lead.brand && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Brand:</span>
+                <span className="font-medium">{lead.brand}</span>
+              </div>
+            )}
+            {lead.category && (
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="font-medium capitalize">{lead.category}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span className="text-muted-foreground">{t("modalCreated")}:</span>

@@ -7,14 +7,14 @@ import { type ModuleId, hasModule } from "@/lib/modules"
 import {
   LayoutDashboard, Building2, Users, Handshake, UserPlus,
   CheckSquare, FileText, FileSpreadsheet, Calculator, Brain,
-  Ticket, BookOpen, BarChart3, Mail, MessageSquare, Zap,
+  Ticket, BookOpen, BarChart3, Mail, MessageSquare, MessageCircle, Zap,
   Settings, ChevronLeft, DollarSign, Target, Send,
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
   Trophy, Activity, FileBarChart, Bot, Sparkles,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "next-intl"
 import { useTicketBadge } from "@/contexts/ticket-badge-context"
@@ -46,7 +46,10 @@ const navItems: NavItem[] = [
   { module: "leads", href: "/journeys", icon: Workflow, tKey: "journeys", group: "Marketing" },
   { module: "events", href: "/events", icon: CalendarDays, tKey: "events", group: "Marketing" },
   { module: "campaigns", href: "/pages", icon: FileText, tKey: "landingPages", group: "Marketing" },
+  { module: "campaigns", href: "/surveys", icon: Sparkles, tKey: "surveys", group: "Marketing" },
+  { module: "campaigns", href: "/social-monitoring", icon: Activity, tKey: "socialMonitoring", group: "Marketing" },
   { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
+  { module: "omnichannel", href: "/inbox/web-chat", icon: MessageCircle, tKey: "webChatInbox", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
   { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
@@ -138,6 +141,22 @@ export function Sidebar({ org }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const t = useTranslations("nav")
   const { newTicketCount } = useTicketBadge()
+  const [webChatUnread, setWebChatUnread] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    const tick = async () => {
+      try {
+        const res = await fetch("/api/v1/web-chat/sessions/unread-count")
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data.success) setWebChatUnread(data.data.count)
+      } catch {}
+    }
+    tick()
+    const id = setInterval(tick, 30000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [])
 
   // Filter sidebar items based on org modules/features/plan
   // Superadmin and enterprise plans see everything
@@ -211,6 +230,11 @@ export function Sidebar({ org }: SidebarProps) {
                       {item.href === "/tickets" && newTicketCount > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
                           {newTicketCount > 99 ? "99+" : newTicketCount}
+                        </span>
+                      )}
+                      {item.href === "/inbox/web-chat" && webChatUnread > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
+                          {webChatUnread > 99 ? "99+" : webChatUnread}
                         </span>
                       )}
                     </div>

@@ -16,6 +16,8 @@ import { SegmentConditionBuilder } from "@/components/segment-condition-builder"
 interface SegmentConditions {
   company: string
   source: string
+  brand: string
+  category: string
   role: string
   tag: string
   createdAfter: string
@@ -23,6 +25,9 @@ interface SegmentConditions {
   name: string
   hasEmail: boolean
   hasPhone: boolean
+  // SMS attribution (TT §3.3)
+  hasSmsAttribution: boolean
+  smsSinceDays: string
   // Behavioral conditions
   engagementScoreMin: string
   engagementScoreMax: string
@@ -36,6 +41,8 @@ interface SegmentConditions {
 const emptyConditions: SegmentConditions = {
   company: "",
   source: "",
+  brand: "",
+  category: "",
   role: "",
   tag: "",
   createdAfter: "",
@@ -43,6 +50,8 @@ const emptyConditions: SegmentConditions = {
   name: "",
   hasEmail: false,
   hasPhone: false,
+  hasSmsAttribution: false,
+  smsSinceDays: "",
   engagementScoreMin: "",
   engagementScoreMax: "",
   engagementTier: "",
@@ -72,9 +81,19 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     { value: "referral", label: t("sourceReferral") },
     { value: "cold_call", label: t("sourceColdCall") },
     { value: "email", label: t("sourceEmail") },
+    { value: "sms", label: "SMS" },
     { value: "social", label: t("sourceSocial") },
     { value: "event", label: t("sourceEvent") },
     { value: "other", label: t("sourceOther") },
+  ]
+
+  const categoryOptions = [
+    { value: "", label: t("sourceAny") },
+    { value: "vip", label: "VIP" },
+    { value: "regular", label: "Regular" },
+    { value: "partner", label: "Partner" },
+    { value: "prospect", label: "Prospect" },
+    { value: "inactive", label: "Inactive" },
   ]
 
   const [name, setName] = useState("")
@@ -100,6 +119,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
         setConditions({
           company: c.company || "",
           source: c.source || "",
+          brand: c.brand || "",
+          category: c.category || "",
           role: c.role || "",
           tag: c.tag || "",
           createdAfter: c.createdAfter || c.created_after || "",
@@ -107,6 +128,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
           name: c.name || "",
           hasEmail: !!c.hasEmail || !!c.has_email,
           hasPhone: !!c.hasPhone || !!c.has_phone,
+          hasSmsAttribution: !!c.hasSmsAttribution || !!c.receivedSms,
+          smsSinceDays: c.smsSinceDays || "",
           engagementScoreMin: c.engagementScoreMin || "",
           engagementScoreMax: c.engagementScoreMax || "",
           engagementTier: c.engagementTier || "",
@@ -130,6 +153,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     let count = 0
     if (conditions.company.trim()) count++
     if (conditions.source) count++
+    if (conditions.brand.trim()) count++
+    if (conditions.category) count++
     if (conditions.role.trim()) count++
     if (conditions.tag.trim()) count++
     if (conditions.createdAfter) count++
@@ -137,6 +162,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     if (conditions.name.trim()) count++
     if (conditions.hasEmail) count++
     if (conditions.hasPhone) count++
+    if (conditions.hasSmsAttribution) count++
+    if (conditions.smsSinceDays) count++
     if (conditions.engagementScoreMin) count++
     if (conditions.engagementScoreMax) count++
     if (conditions.engagementTier) count++
@@ -151,6 +178,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     const clean: any = {}
     if (conditions.company.trim()) clean.company = conditions.company.trim()
     if (conditions.source) clean.source = conditions.source
+    if (conditions.brand.trim()) clean.brand = conditions.brand.trim()
+    if (conditions.category) clean.category = conditions.category
     if (conditions.role.trim()) clean.role = conditions.role.trim()
     if (conditions.tag.trim()) clean.tag = conditions.tag.trim()
     if (conditions.createdAfter) clean.createdAfter = conditions.createdAfter
@@ -158,6 +187,8 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
     if (conditions.name.trim()) clean.name = conditions.name.trim()
     if (conditions.hasEmail) clean.hasEmail = true
     if (conditions.hasPhone) clean.hasPhone = true
+    if (conditions.hasSmsAttribution) clean.hasSmsAttribution = true
+    if (conditions.smsSinceDays) clean.smsSinceDays = conditions.smsSinceDays
     // Behavioral conditions
     if (conditions.engagementScoreMin) clean.engagementScoreMin = conditions.engagementScoreMin
     if (conditions.engagementScoreMax) clean.engagementScoreMax = conditions.engagementScoreMax
@@ -416,6 +447,47 @@ export function SegmentForm({ open, onOpenChange, onSaved, initialData, orgId }:
                     >
                       {sourceOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </Select>
+                  </FilterField>
+                </div>
+
+                {/* Row 1b: Brand + Category (TT §3.3) */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FilterField icon={Tag} label={t("condBrand")}>
+                    <Input
+                      value={conditions.brand}
+                      onChange={e => updateCond("brand", e.target.value)}
+                      placeholder={t("contains")}
+                      className="h-9"
+                    />
+                  </FilterField>
+                  <FilterField icon={Archive} label={t("condCategory")}>
+                    <Select
+                      value={conditions.category}
+                      onChange={e => updateCond("category", e.target.value)}
+                      className="h-9"
+                    >
+                      {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </Select>
+                  </FilterField>
+                </div>
+
+                {/* Row 1c: SMS attribution (TT §3.3) */}
+                <div className="grid grid-cols-2 gap-3 items-end">
+                  <ToggleCheck
+                    checked={conditions.hasSmsAttribution}
+                    onChange={v => updateCond("hasSmsAttribution", v)}
+                    icon={Phone}
+                    label={t("condReceivedSms")}
+                  />
+                  <FilterField icon={Calendar} label={t("condSmsWithinDays")}>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={conditions.smsSinceDays}
+                      onChange={e => updateCond("smsSinceDays", e.target.value)}
+                      placeholder="30"
+                      className="h-9"
+                    />
                   </FilterField>
                 </div>
 

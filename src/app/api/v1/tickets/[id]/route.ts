@@ -7,6 +7,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { executeWorkflows } from "@/lib/workflow-engine"
 import { autoAssignTicket } from "@/lib/auto-assign"
 import { fireWebhooks } from "@/lib/webhooks"
+import { triggerSurveysOnTicketResolved } from "@/lib/survey-triggers"
 
 const updateTicketSchema = z.object({
   subject: z.string().min(1).max(300).optional(),
@@ -146,6 +147,15 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       executeWorkflows(orgId, "ticket", triggerEvent, updated).catch(() => {})
       const webhookEvent = updated.status === "resolved" ? "ticket.resolved" : "ticket.updated"
       fireWebhooks(orgId, webhookEvent, { id: updated.id, ticketNumber: updated.ticketNumber, subject: updated.subject, status: updated.status }).catch(() => {})
+
+      // Fire survey triggers when ticket transitions to resolved (§8 trigger)
+      if (oldStatus !== "resolved" && updated.status === "resolved") {
+        triggerSurveysOnTicketResolved(orgId, {
+          id: updated.id,
+          contactId: updated.contactId,
+          ticketNumber: updated.ticketNumber,
+        }).catch(err => console.error("[survey-trigger] ticket.resolved:", err))
+      }
     }
 
     return NextResponse.json({ success: true, data: updated })

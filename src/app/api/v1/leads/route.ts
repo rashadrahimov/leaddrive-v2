@@ -15,6 +15,8 @@ const createLeadSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().max(50).optional(),
   source: z.string().max(50).optional(),
+  brand: z.string().max(100).optional(),
+  category: z.string().max(50).optional(),
   status: z.enum(["new", "contacted", "qualified", "converted", "lost"]).optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   estimatedValue: z.number().min(0).optional(),
