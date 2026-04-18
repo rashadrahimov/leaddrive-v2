@@ -1,10 +1,16 @@
 import { MarketingNavbar } from "@/components/marketing/navbar"
 import { MarketingFooter } from "@/components/marketing/footer"
 import { FloatingButtons } from "@/components/marketing/floating-buttons"
-import { LiveChat } from "@/components/marketing/live-chat"
+import Script from "next/script"
 
 import { GoogleAnalytics } from "@/components/marketing/google-analytics"
 import type { Metadata } from "next"
+
+// LeadDrive Inc. Web Chat widget (§4). Loader runs from the CRM app origin and
+// renders an iframe over the marketing site. CRM-side CORS whitelist has
+// both https://leaddrivecrm.org and https://www.leaddrivecrm.org approved.
+const WEB_CHAT_PUBLIC_KEY = "wc_f37a218a9541147136"
+const WIDGET_LOADER_URL = "https://app.leaddrivecrm.org/widget.js"
 
 export const metadata: Metadata = {
   title: {
@@ -47,7 +53,16 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <main>{children}</main>
       <MarketingFooter />
       <FloatingButtons />
-      <LiveChat />
+
+      {/* Web chat widget — loader fetches config from app.leaddrivecrm.org and
+          injects a floating bubble + iframe with /embed/chat/[key]. */}
+      <Script
+        id="leaddrive-web-chat"
+        src={WIDGET_LOADER_URL}
+        data-key={WEB_CHAT_PUBLIC_KEY}
+        data-lang="az"
+        strategy="afterInteractive"
+      />
 
       <GoogleAnalytics />
     </div>
