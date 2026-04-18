@@ -50,8 +50,10 @@ export function isOriginAllowed(
 ): boolean {
   if (!origin) return true
   try {
-    const reqOrigin = new URL(req.url).origin
-    if (origin === reqOrigin) return true
+    const originHost = new URL(origin).host
+    const forwardedHost = req.headers.get("x-forwarded-host")
+    const host = forwardedHost || req.headers.get("host")
+    if (host && host === originHost) return true
   } catch {}
   if (allowedOrigins.length === 0) return true
   return allowedOrigins.includes(origin)
