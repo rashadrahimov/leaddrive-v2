@@ -1,15 +1,10 @@
 import { MarketingNavbar } from "@/components/marketing/navbar"
 import { MarketingFooter } from "@/components/marketing/footer"
 import { FloatingButtons } from "@/components/marketing/floating-buttons"
+import { WebChatEmbed } from "@/components/marketing/web-chat-embed"
 
 import { GoogleAnalytics } from "@/components/marketing/google-analytics"
 import type { Metadata } from "next"
-
-// LeadDrive Inc. Web Chat widget (§4). Loader runs from the CRM app origin and
-// renders an iframe over the marketing site. CRM-side CORS whitelist has
-// both https://leaddrivecrm.org and https://www.leaddrivecrm.org approved.
-const WEB_CHAT_PUBLIC_KEY = "wc_f37a218a9541147136"
-const WIDGET_LOADER_URL = "https://app.leaddrivecrm.org/widget.js"
 
 export const metadata: Metadata = {
   title: {
@@ -53,16 +48,9 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <MarketingFooter />
       <FloatingButtons />
 
-      {/* Web chat widget — inline bootstrap creates a <script> with data-key so
-          the loader (which reads its own script tag) sees the attribute reliably.
-          next/script's afterInteractive only emits a preload in the initial HTML,
-          which was invisible to widget.js's currentScript lookup on first paint. */}
-      <script
-        id="leaddrive-web-chat-bootstrap"
-        dangerouslySetInnerHTML={{
-          __html: `(function(){var s=document.createElement('script');s.src='${WIDGET_LOADER_URL}';s.async=true;s.setAttribute('data-key','${WEB_CHAT_PUBLIC_KEY}');s.setAttribute('data-lang','az');document.body.appendChild(s);})();`,
-        }}
-      />
+      {/* Web chat widget — client component loads widget.js after hydration
+          so React doesn't clobber the DOM nodes the loader appends to body. */}
+      <WebChatEmbed />
 
       <GoogleAnalytics />
     </div>
