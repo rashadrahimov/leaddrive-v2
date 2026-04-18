@@ -147,14 +147,25 @@ export function Sidebar({ org }: SidebarProps) {
   useEffect(() => {
     let cancelled = false
 
-    // Lazy-ask Notification permission on first user click — browsers reject
-    // programmatic calls without a user gesture.
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-      const ask = () => {
-        Notification.requestPermission().catch(() => {})
-        document.removeEventListener("click", ask)
+    // Lazy-ask Notification permission + register Web Push subscription on
+    // first user click. Browsers reject both without a user gesture; once
+    // granted, push works even when the browser is fully closed (sw.js).
+    if (typeof window !== "undefined" && "Notification" in window) {
+      const askAndSubscribe = () => {
+        document.removeEventListener("click", askAndSubscribe)
+        import("@/lib/push-client")
+          .then(m => m.registerPush())
+          .catch(() => {
+            // Fallback: at least ask for Notification permission
+            if (Notification.permission === "default") Notification.requestPermission().catch(() => {})
+          })
       }
-      document.addEventListener("click", ask, { once: true })
+      if (Notification.permission === "default") {
+        document.addEventListener("click", askAndSubscribe, { once: true })
+      } else if (Notification.permission === "granted") {
+        // Refresh subscription silently on mount (idempotent upsert)
+        import("@/lib/push-client").then(m => m.registerPush()).catch(() => {})
+      }
     }
 
     const notify = (delta: number) => {

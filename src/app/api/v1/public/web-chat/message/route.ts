@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { buildWidgetCorsHeaders } from "@/lib/widget-cors"
 import { escalateWebChatToTicket } from "@/lib/web-chat-escalate"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { sendPushToUser } from "@/lib/push-send"
 
 export async function OPTIONS(req: NextRequest) {
   return new NextResponse(null, { status: 204, headers: await buildWidgetCorsHeaders(req, req.headers.get("origin")) })
@@ -60,6 +61,35 @@ export async function POST(req: NextRequest) {
     where: { id: session.id },
     data: { lastMessageAt: new Date() },
   })
+
+  // Fire web-push to the assigned agent (or all agents if unassigned).
+  // Fire-and-forget — never block the visitor's request on push delivery.
+  ;(async () => {
+    try {
+      const visitorName = session.visitorName || session.visitorEmail || "a visitor"
+      const preview = parsed.data.text.length > 80 ? parsed.data.text.slice(0, 77) + "…" : parsed.data.text
+      const payload = {
+        title: `💬 ${visitorName}`,
+        body: preview,
+        url: `/inbox/web-chat`,
+        tag: `ld-webchat-${session.id}`,
+      }
+      if (session.assignedUserId) {
+        await sendPushToUser(session.organizationId, session.assignedUserId, payload)
+      } else {
+        // Unassigned — notify every admin/manager/support user in the org
+        const recipients = await prisma.user.findMany({
+          where: { organizationId: session.organizationId, role: { in: ["admin", "manager", "support"] } },
+          select: { id: true },
+        })
+        for (const u of recipients) {
+          await sendPushToUser(session.organizationId, u.id, payload)
+        }
+      }
+    } catch (e) {
+      console.error("[web-chat] push notify failed:", e)
+    }
+  })()
 
   // Auto-escalate: fires once when widget.escalateToTicket=true AND visitor has email on session
   // AND there's no ticket yet. Happens AFTER first real visitor message (not on session start).

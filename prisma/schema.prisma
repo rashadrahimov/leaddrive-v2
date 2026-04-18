@@ -108,6 +108,7 @@ model Organization {
   webChatWidget          WebChatWidget?
   webChatSessions        WebChatSession[]
   webChatMessages        WebChatMessage[]
+  pushSubscriptions      PushSubscription[]
 
   // Social media monitoring (§5)
   socialAccounts         SocialAccount[]
@@ -3650,4 +3651,20 @@ model SurveyUnsubscribe {
   @@index([organizationId, email])
   @@index([organizationId, phone])
   @@map("survey_unsubscribes")
+}
+
+model PushSubscription {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String   // agent who owns this subscription
+  endpoint       String   @unique
+  p256dh         String   // browser encryption public key
+  auth           String   // browser auth secret
+  userAgent      String?
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, userId])
+  @@map("push_subscriptions")
 }
