@@ -64,6 +64,22 @@ export default function InsightsPage() {
   const [entity, setEntity] = useState<Entity>(searchParams?.get("entity") === "leads" ? "leads" : "contacts")
   const entityLabel = entity === "contacts" ? t("contacts") : t("leads")
   const entitySingular = entity === "contacts" ? t("contacts").replace(/s$|ы$|лар$/i, "") : t("leads").replace(/s$|ы$|лар$/i, "")
+
+  // Translate raw DB values ("vip", "cold_call", "EMAIL" ...) to localized labels.
+  const categoryLabel = (v: string): string => {
+    const k = String(v || "").toLowerCase()
+    const map: Record<string, string> = { vip: "catVip", regular: "catRegular", partner: "catPartner", prospect: "catProspect", inactive: "catInactive", "(none)": "catNone" }
+    return map[k] ? t(map[k]) : v
+  }
+  const sourceLabel = (v: string): string => {
+    const k = String(v || "").toLowerCase()
+    const map: Record<string, string> = {
+      website: "srcWebsite", referral: "srcReferral", cold_call: "srcColdCall", linkedin: "srcLinkedin",
+      email: "srcEmail", sms: "srcSms", social: "srcSocial", event: "srcEvent", other: "srcOther",
+      outlook_eml: "srcOutlook", "(none)": "srcNone",
+    }
+    return map[k] ? t(map[k]) : v
+  }
   const [data, setData] = useState<ContactsAgg | LeadsAgg | null>(null)
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState<string[]>([])
@@ -236,13 +252,13 @@ export default function InsightsPage() {
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
                         <Pie
-                          data={categorized}
+                          data={categorized.map(r => ({ ...r, label: categoryLabel(r.category) }))}
                           dataKey="count"
-                          nameKey="category"
+                          nameKey="label"
                           cx="50%"
                           cy="50%"
                           outerRadius={90}
-                          label={(e: any) => `${e.category} (${e.count})`}
+                          label={(e: any) => `${e.label} (${e.count})`}
                           onClick={(e: any) => e?.category && drillTo(`category=${e.category}`)}
                         >
                           {categorized.map((r, i) => (
@@ -276,8 +292,8 @@ export default function InsightsPage() {
                 return (
                   <>
                     <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={sourced}>
-                        <XAxis dataKey="source" tick={{ fontSize: 11 }} />
+                      <BarChart data={sourced.map(r => ({ ...r, label: sourceLabel(r.source) }))}>
+                        <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                         <Tooltip />
                         <Bar dataKey="count" onClick={(e: any) => e?.source && drillTo(`source=${e.source}`)}>
@@ -372,7 +388,7 @@ export default function InsightsPage() {
                 <div className="space-y-2">
                   {(data as ContactsAgg).engagementByCategory.map((r, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Badge variant="outline" className="capitalize text-[10px] w-20 justify-center">{r.category}</Badge>
+                      <Badge variant="outline" className="text-[10px] w-24 justify-center">{categoryLabel(r.category)}</Badge>
                       <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
                         <div
                           className="h-full"

@@ -46,6 +46,12 @@ export function SegmentsWidget({ orgId }: Props) {
 
   const hasCategories = rows.some(r => r.category !== "(none)")
 
+  const categoryLabel = (v: string): string => {
+    const k = String(v || "").toLowerCase()
+    const map: Record<string, string> = { vip: "catVip", regular: "catRegular", partner: "catPartner", prospect: "catProspect", inactive: "catInactive", "(none)": "catNone" }
+    return map[k] ? t(map[k]) : v
+  }
+
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between mb-3">
@@ -97,7 +103,7 @@ export function SegmentsWidget({ orgId }: Props) {
                 className="flex items-center gap-2 text-xs hover:bg-muted rounded px-1 py-0.5 transition-colors"
               >
                 <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[r.category] || "#e5e7eb" }} />
-                <span className="capitalize flex-1 truncate">{r.category}</span>
+                <span className="flex-1 truncate">{categoryLabel(r.category)}</span>
                 <span className="tabular-nums font-medium">{r.count}</span>
                 {total && <span className="text-muted-foreground tabular-nums">{Math.round((r.count / total) * 100)}%</span>}
               </Link>
