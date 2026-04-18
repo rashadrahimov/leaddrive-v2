@@ -66,8 +66,15 @@ export function SegmentsWidget({ orgId }: Props) {
           <div className="w-28 h-28 shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={rows} dataKey="count" nameKey="category" innerRadius={30} outerRadius={50}>
-                  {rows.map((r, i) => (
+                {/* Render only categorized rows — blending "(none)" swamps the pie */}
+                <Pie
+                  data={rows.filter(r => r.category !== "(none)")}
+                  dataKey="count"
+                  nameKey="category"
+                  innerRadius={30}
+                  outerRadius={50}
+                >
+                  {rows.filter(r => r.category !== "(none)").map((r, i) => (
                     <Cell key={i} fill={CATEGORY_COLORS[r.category] || "#e5e7eb"} />
                   ))}
                 </Pie>

@@ -202,45 +202,83 @@ export default function InsightsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-lg border bg-card p-4">
               <h2 className="text-sm font-semibold mb-3">By category</h2>
-              {data.byCategory.length === 0 || data.byCategory.every(r => r.category === "(none)") ? (
-                <p className="text-xs text-muted-foreground py-8 text-center">No {entity} have a category yet. Assign one from the detail page or import.</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie
-                      data={data.byCategory}
-                      dataKey="count"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={90}
-                      label={(e: any) => `${e.category} (${e.count})`}
-                      onClick={(e: any) => e?.category && e.category !== "(none)" && drillTo(`category=${e.category}`)}
-                    >
-                      {data.byCategory.map((r, i) => (
-                        <Cell key={i} fill={CATEGORY_COLORS[r.category] || "#cbd5e1"} style={{ cursor: r.category === "(none)" ? "default" : "pointer" }} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
+              {(() => {
+                // Pie shows only CATEGORIZED rows — mixing 585 "(none)" with 1 "vip" makes the
+                // small slice invisible. We surface the "(none)" bucket as a muted footer instead.
+                const categorized = data.byCategory.filter(r => r.category && r.category !== "(none)")
+                const noneRow = data.byCategory.find(r => r.category === "(none)")
+                const categorizedTotal = categorized.reduce((s, r) => s + r.count, 0)
+                if (categorized.length === 0) {
+                  return (
+                    <div className="py-10 text-center space-y-2">
+                      <p className="text-sm text-muted-foreground">No {entity} have a category yet.</p>
+                      <p className="text-xs text-muted-foreground">Open a {entity.slice(0, -1)} → Edit → set Category (VIP / Regular / Partner / Prospect / Inactive).</p>
+                    </div>
+                  )
+                }
+                return (
+                  <>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie
+                          data={categorized}
+                          dataKey="count"
+                          nameKey="category"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={90}
+                          label={(e: any) => `${e.category} (${e.count})`}
+                          onClick={(e: any) => e?.category && drillTo(`category=${e.category}`)}
+                        >
+                          {categorized.map((r, i) => (
+                            <Cell key={i} fill={CATEGORY_COLORS[r.category] || "#cbd5e1"} style={{ cursor: "pointer" }} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <p className="text-[11px] text-muted-foreground text-center mt-1">
+                      Showing {categorizedTotal} categorized {entity}
+                      {noneRow ? ` · ${noneRow.count} without category` : ""}
+                    </p>
+                  </>
+                )
+              })()}
             </div>
 
             <div className="rounded-lg border bg-card p-4">
               <h2 className="text-sm font-semibold mb-3">By source</h2>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={data.bySource}>
-                  <XAxis dataKey="source" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="count" onClick={(e: any) => e?.source && e.source !== "(none)" && drillTo(`source=${e.source}`)}>
-                    {data.bySource.map((r, i) => (
-                      <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} style={{ cursor: r.source === "(none)" ? "default" : "pointer" }} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {(() => {
+                const sourced = data.bySource.filter(r => r.source && r.source !== "(none)")
+                const noneRow = data.bySource.find(r => r.source === "(none)")
+                if (sourced.length === 0) {
+                  return (
+                    <p className="text-xs text-muted-foreground py-10 text-center">
+                      No source tracked yet on any {entity}.
+                    </p>
+                  )
+                }
+                return (
+                  <>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={sourced}>
+                        <XAxis dataKey="source" tick={{ fontSize: 11 }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="count" onClick={(e: any) => e?.source && drillTo(`source=${e.source}`)}>
+                          {sourced.map((r, i) => (
+                            <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} style={{ cursor: "pointer" }} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                    <p className="text-[11px] text-muted-foreground text-center mt-1">
+                      Showing {sourced.reduce((s, r) => s + r.count, 0)} {entity} with source
+                      {noneRow ? ` · ${noneRow.count} without` : ""}
+                    </p>
+                  </>
+                )
+              })()}
             </div>
           </div>
 
