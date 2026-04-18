@@ -11,6 +11,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import {
   Radio, Plus, ExternalLink, MessageSquare, ThumbsUp, ThumbsDown,
   Minus, Check, Eye, Archive, Ticket, TrendingUp, Filter, RefreshCw, Link as LinkIcon,
+  UserPlus, CheckSquare,
 } from "lucide-react"
 import { SocialAnalyticsPanel } from "@/components/social/analytics-panel"
 
@@ -38,6 +39,9 @@ interface Mention {
   reach: number
   engagement: number
   status: string
+  ticketId: string | null
+  leadId: string | null
+  taskId: string | null
   publishedAt: string | null
   createdAt: string
   account?: { handle: string; displayName: string | null } | null
@@ -163,6 +167,28 @@ export default function SocialMonitoringPage() {
       loadMentions()
     } else {
       alert(data.error || "Failed to create ticket")
+    }
+  }
+
+  const convertToLead = async (id: string) => {
+    const res = await fetch(`/api/v1/social/mentions/${id}/convert-to-lead`, { method: "POST", headers })
+    const data = await res.json()
+    if (data.success) {
+      alert("Lead created.")
+      loadMentions()
+    } else {
+      alert(data.error || "Failed to create lead")
+    }
+  }
+
+  const convertToTask = async (id: string) => {
+    const res = await fetch(`/api/v1/social/mentions/${id}/convert-to-task`, { method: "POST", headers })
+    const data = await res.json()
+    if (data.success) {
+      alert("Task created.")
+      loadMentions()
+    } else {
+      alert(data.error || "Failed to create task")
     }
   }
 
@@ -304,9 +330,37 @@ export default function SocialMonitoringPage() {
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "ignored" })}>
                   <Archive className="h-3 w-3" /> Ignore
                 </Button>
-                {m.status !== "converted_to_ticket" && (
+                {m.ticketId ? (
+                  <a href={`/tickets/${m.ticketId}`} target="_blank" rel="noreferrer">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
+                      <Ticket className="h-3 w-3" /> Ticket ↗
+                    </Button>
+                  </a>
+                ) : (
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToTicket(m.id)}>
                     <Ticket className="h-3 w-3" /> → Ticket
+                  </Button>
+                )}
+                {m.leadId ? (
+                  <a href={`/leads/${m.leadId}`} target="_blank" rel="noreferrer">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
+                      <UserPlus className="h-3 w-3" /> Lead ↗
+                    </Button>
+                  </a>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToLead(m.id)}>
+                    <UserPlus className="h-3 w-3" /> → Lead
+                  </Button>
+                )}
+                {m.taskId ? (
+                  <a href={`/tasks/${m.taskId}`} target="_blank" rel="noreferrer">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
+                      <CheckSquare className="h-3 w-3" /> Task ↗
+                    </Button>
+                  </a>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToTask(m.id)}>
+                    <CheckSquare className="h-3 w-3" /> → Task
                   </Button>
                 )}
                 <div className="flex items-center gap-1 ml-auto">

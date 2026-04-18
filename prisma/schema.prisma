@@ -3571,8 +3571,10 @@ model SocialMention {
   matchedTerm    String?
   reach          Int      @default(0)
   engagement     Int      @default(0)
-  status         String   @default("new")  // new | reviewed | replied | ignored | converted_to_ticket
+  status         String   @default("new")  // new | reviewed | replied | ignored | converted_to_ticket | converted_to_lead | converted_to_task
   ticketId       String?
+  leadId         String?
+  taskId         String?
   handledBy      String?  // userId
   handledAt      DateTime?
   publishedAt    DateTime?
