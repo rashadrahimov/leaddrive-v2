@@ -177,59 +177,7 @@ export default function InsightsPage() {
         </div>
       ) : (
         <>
-          {/* Stats row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatTile icon={Users} label={t("statTotal", { entity: entityLabel })} value={data.total} />
-            <StatTile
-              icon={data.growth.pct == null || data.growth.pct >= 0 ? TrendingUp : TrendingDown}
-              label={t("statNew30d")}
-              value={data.growth.last30}
-              sub={data.growth.pct == null ? "—" : t("statNew30dSub", { pct: (data.growth.pct >= 0 ? "+" : "") + data.growth.pct })}
-              subColor={data.growth.pct == null ? "text-muted-foreground" : data.growth.pct >= 0 ? "text-green-600" : "text-red-500"}
-            />
-            <StatTile
-              icon={Tag}
-              label={t("statWithBrand")}
-              value={(data as any).withBrand ?? (data as any).topBrands.length}
-              sub={t("statWithBrandSub", { count: (data as any).topBrands.length })}
-            />
-            {entity === "contacts" ? (
-              <StatTile
-                icon={MessageSquare}
-                label={t("statSmsCoverage")}
-                value={`${(data as ContactsAgg).sms.coverage}%`}
-                sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`}
-              />
-            ) : (
-              <StatTile icon={Sparkles} label={t("statAvgScore")} value={(data as LeadsAgg).avgScore} />
-            )}
-          </div>
-
-          {/* AI insights */}
-          <div className="rounded-lg border bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-semibold flex items-center gap-2 text-violet-700 dark:text-violet-300">
-                <Sparkles className="h-4 w-4" /> {t("aiTitle")}
-              </h2>
-              <Button variant="outline" size="sm" onClick={fetchInsights} disabled={insightsLoading}>
-                {insightsLoading ? t("aiAnalyzing") : insights.length ? t("aiRegenerate") : t("aiGenerate")}
-              </Button>
-            </div>
-            {insights.length > 0 ? (
-              <ul className="space-y-1.5 text-sm">
-                {insights.map((ln, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-violet-500">•</span>
-                    <span>{ln}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground">{t("aiPlaceholder")}</p>
-            )}
-          </div>
-
-          {/* Contacts-specific: SMS + Engagement (placed high so they're above the fold) */}
+          {/* Contacts-specific: SMS + Engagement — pinned to the very top */}
           {entity === "contacts" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-lg border bg-card p-4">
@@ -286,6 +234,58 @@ export default function InsightsPage() {
               </div>
             </div>
           )}
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatTile icon={Users} label={t("statTotal", { entity: entityLabel })} value={data.total} />
+            <StatTile
+              icon={data.growth.pct == null || data.growth.pct >= 0 ? TrendingUp : TrendingDown}
+              label={t("statNew30d")}
+              value={data.growth.last30}
+              sub={data.growth.pct == null ? "—" : t("statNew30dSub", { pct: (data.growth.pct >= 0 ? "+" : "") + data.growth.pct })}
+              subColor={data.growth.pct == null ? "text-muted-foreground" : data.growth.pct >= 0 ? "text-green-600" : "text-red-500"}
+            />
+            <StatTile
+              icon={Tag}
+              label={t("statWithBrand")}
+              value={(data as any).withBrand ?? (data as any).topBrands.length}
+              sub={t("statWithBrandSub", { count: (data as any).topBrands.length })}
+            />
+            {entity === "contacts" ? (
+              <StatTile
+                icon={MessageSquare}
+                label={t("statSmsCoverage")}
+                value={`${(data as ContactsAgg).sms.coverage}%`}
+                sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`}
+              />
+            ) : (
+              <StatTile icon={Sparkles} label={t("statAvgScore")} value={(data as LeadsAgg).avgScore} />
+            )}
+          </div>
+
+          {/* AI insights */}
+          <div className="rounded-lg border bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-4 w-4" /> {t("aiTitle")}
+              </h2>
+              <Button variant="outline" size="sm" onClick={fetchInsights} disabled={insightsLoading}>
+                {insightsLoading ? t("aiAnalyzing") : insights.length ? t("aiRegenerate") : t("aiGenerate")}
+              </Button>
+            </div>
+            {insights.length > 0 ? (
+              <ul className="space-y-1.5 text-sm">
+                {insights.map((ln, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-violet-500">•</span>
+                    <span>{ln}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">{t("aiPlaceholder")}</p>
+            )}
+          </div>
 
           {/* Category + Source */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
