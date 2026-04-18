@@ -11,7 +11,9 @@
       "Skill(update-config:*)",
       "WebFetch(domain:www.pexels.com)",
       "WebFetch(domain:pixabay.com)",
-      "WebFetch(domain:mixkit.co)"
+      "WebFetch(domain:mixkit.co)",
+      "Bash(ssh -o ConnectTimeout=5 -i ~/.ssh/id_ed25519 root@46.224.171.53 \"grep -q 'bc11731b' <\\(cd /opt/leaddrive-v2 && git log --oneline -1\\)\")",
+      "Bash(ssh -i ~/.ssh/id_ed25519 root@46.224.171.53 \"cd /opt/leaddrive-v2 && echo 'DEPLOY_DONE: '\\\\$\\(git log --oneline -1\\) && pm2 jlist | python3 -c 'import json,sys; d=json.load\\(sys.stdin\\); p=[x for x in d if x[\\\\\"name\\\\\"]==\\\\\"leaddrive-v2\\\\\"][0]; print\\(\\\\\"PM2: status=\\\\\"+p[\\\\\"pm2_env\\\\\"][\\\\\"status\\\\\"]+\\\\\" restarts=\\\\\"+str\\(p[\\\\\"pm2_env\\\\\"][\\\\\"restart_time\\\\\"]\\)+\\\\\" uptime_ms=\\\\\"+str\\(p[\\\\\"pm2_env\\\\\"].get\\(\\\\\"pm_uptime\\\\\",0\\)\\)\\)' && curl -sS -o /dev/null -w 'HEALTH: http_code=%{http_code}\\\\n' http://localhost:3001/\")"
     ]
   }
 }

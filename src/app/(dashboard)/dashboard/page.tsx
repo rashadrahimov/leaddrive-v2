@@ -20,6 +20,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
 import { WeeklyMetrics } from "@/components/dashboard/weekly-metrics"
+import { SegmentsWidget } from "@/components/dashboard/segments-widget"
 import { DidYouKnow } from "@/components/did-you-know"
 
 function fmt(n: number): string {
@@ -210,6 +211,11 @@ export default function DashboardPage() {
         {widgets.campaignStats && <MotionItem><CampaignStats campaigns={campaigns} /></MotionItem>}
         {widgets.upcomingEvents && <MotionItem><UpcomingEvents events={events} /></MotionItem>}
         {widgets.weeklyMetrics && <MotionItem><WeeklyMetrics metrics={weeklyMetrics} /></MotionItem>}
+      </MotionList>
+
+      {/* ═══ Row 5: Contact segments (new) ═══ */}
+      <MotionList className="grid lg:grid-cols-3 gap-4" staggerDelay={0.08}>
+        <MotionItem><SegmentsWidget orgId={session?.user?.organizationId} /></MotionItem>
       </MotionList>
     </div>
   )

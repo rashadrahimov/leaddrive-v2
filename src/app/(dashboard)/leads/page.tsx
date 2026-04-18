@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,9 +83,10 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   useAutoTour("leads")
-  const [search, setSearch] = useState("")
+  const searchParams = useSearchParams()
+  const [search, setSearch] = useState(searchParams?.get("search") || "")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [categoryFilter, setCategoryFilter] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState(searchParams?.get("category") || "")
   const [sortBy, setSortBy] = useState("score_desc")
   const [showForm, setShowForm] = useState(false)
   const [editData, setEditData] = useState<Lead | undefined>()
@@ -216,6 +217,9 @@ export default function LeadsPage() {
               {tc("list")}
             </button>
           </div>
+          <Button variant="outline" onClick={() => router.push("/contacts/insights?entity=leads")} className="gap-2">
+            <BarChart3 className="h-4 w-4" /> Insights
+          </Button>
           <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">
             <Plus className="h-4 w-4" /> {t("newLead")}
           </Button>

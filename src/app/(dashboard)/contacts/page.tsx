@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ColorStatCard } from "@/components/color-stat-card"
 import { Select } from "@/components/ui/select"
-import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare, Globe, UserCheck, PhoneCall, Linkedin, AtSign, Upload } from "lucide-react"
+import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare, Globe, UserCheck, PhoneCall, Linkedin, AtSign, Upload, BarChart3 } from "lucide-react"
 import { CsvImportDialog } from "@/components/csv-import-dialog"
 import { ContactForm } from "@/components/contact-form"
 import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
@@ -55,9 +55,10 @@ export default function ContactsPage() {
   const [deleteItem, setDeleteItem] = useState<Contact | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const searchParams = useSearchParams()
   const [sortBy, setSortBy] = useState("name_asc")
-  const [search, setSearch] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState<string>("")
+  const [search, setSearch] = useState(searchParams?.get("search") || "")
+  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams?.get("category") || "")
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [importOpen, setImportOpen] = useState(false)
@@ -213,6 +214,9 @@ export default function ContactsPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push("/contacts/insights")} className="gap-1.5">
+            <BarChart3 className="h-4 w-4" /> Insights
+          </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" /> CSV Import</Button>
           <Button onClick={handleAdd} data-tour-id="contacts-new"><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
         </div>
