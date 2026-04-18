@@ -219,7 +219,7 @@ export default function SocialMonitoringPage() {
                 {a.keywords.length > 0 && (
                   <span className="text-muted-foreground">+ {a.keywords.length} kw</span>
                 )}
-                {a.platform === "twitter" && a.accessToken && (
+                {["twitter", "facebook", "instagram"].includes(a.platform) && a.accessToken && (
                   <button onClick={() => pollAccount(a.id)} className="text-muted-foreground hover:text-foreground" title="Poll now">
                     <RefreshCw className="h-3 w-3" />
                   </button>
@@ -344,13 +344,13 @@ export default function SocialMonitoringPage() {
               const OAUTH_PLATFORMS: Record<string, { label: string; start: string | null; note: string }> = {
                 facebook: {
                   label: "Connect Facebook Page",
-                  start: null,
-                  note: "Meta doesn't allow searching other pages. You can only monitor Facebook pages you own. Support for Facebook OAuth is coming soon.",
+                  start: "/api/v1/social/oauth/facebook/start",
+                  note: "You'll sign in with Facebook and pick which Pages to monitor. We track posts on each Page you admin (plus linked Instagram Business accounts).",
                 },
                 instagram: {
                   label: "Connect Instagram Business",
-                  start: null,
-                  note: "Instagram only exposes accounts you own (Business/Creator). Connect with Facebook Business (coming soon) to monitor your own feed.",
+                  start: "/api/v1/social/oauth/facebook/start",
+                  note: "Instagram is connected through your Facebook Page. Sign in with Facebook and any linked Business/Creator Instagram account will be tracked automatically.",
                 },
                 tiktok: {
                   label: "Connect TikTok",

@@ -6,6 +6,7 @@ import { pollTikTokAccount } from "@/lib/social/tiktok-poller"
 import { pollYouTubeAccount } from "@/lib/social/youtube-poller"
 import { pollVkAccount } from "@/lib/social/vk-poller"
 import { scanTelegramForOrg } from "@/lib/social/telegram-scanner"
+import { pollFacebookAccount, pollInstagramAccount } from "@/lib/social/facebook-poller"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAuth(req, "campaigns", "write")
@@ -32,6 +33,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       break
     case "telegram":
       result = await scanTelegramForOrg(orgId)
+      break
+    case "facebook":
+      result = await pollFacebookAccount(account.id)
+      break
+    case "instagram":
+      result = await pollInstagramAccount(account.id)
       break
     default:
       return NextResponse.json(
