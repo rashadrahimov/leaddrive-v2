@@ -77,8 +77,10 @@ jobs:
           cp -r node_modules/.prisma .next/standalone/node_modules/.prisma
           cp -r node_modules/@prisma .next/standalone/node_modules/@prisma
 
-          # Copy public assets
-          cp -r public .next/standalone/public
+          # Copy public assets — use trailing /. so contents (not the dir itself)
+          # land inside standalone/public/ and don't create a nested public/public/
+          mkdir -p .next/standalone/public
+          cp -r public/. .next/standalone/public/
 
           # Copy Prisma schema + migrations for migrate deploy
           cp -r prisma .next/standalone/prisma

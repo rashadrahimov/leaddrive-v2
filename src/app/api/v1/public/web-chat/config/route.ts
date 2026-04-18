@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { buildWidgetCorsHeaders } from "@/lib/widget-cors"
+import { buildWidgetCorsHeaders, isOriginAllowed } from "@/lib/widget-cors"
 import { isWidgetOnline } from "@/lib/widget-hours"
 
 export async function OPTIONS(req: NextRequest) {
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Not found" }, { status: 404, headers })
   }
 
-  if (widget.allowedOrigins.length > 0 && origin && !widget.allowedOrigins.includes(origin)) {
+  if (!isOriginAllowed(req, origin, widget.allowedOrigins)) {
     return NextResponse.json({ error: "Origin not allowed" }, { status: 403, headers })
   }
 

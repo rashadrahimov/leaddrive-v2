@@ -3,7 +3,7 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
-import { buildWidgetCorsHeaders } from "@/lib/widget-cors"
+import { buildWidgetCorsHeaders, isOriginAllowed } from "@/lib/widget-cors"
 import { checkRateLimit } from "@/lib/rate-limit"
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     select: { enabled: true, allowedOrigins: true },
   })
   if (!widget?.enabled) return NextResponse.json({ error: "Widget disabled" }, { status: 403, headers })
-  if (widget.allowedOrigins.length > 0 && origin && !widget.allowedOrigins.includes(origin)) {
+  if (!isOriginAllowed(req, origin, widget.allowedOrigins)) {
     return NextResponse.json({ error: "Origin not allowed" }, { status: 403, headers })
   }
 

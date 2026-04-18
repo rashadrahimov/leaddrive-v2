@@ -38,6 +38,25 @@ export async function buildWidgetCorsHeaders(
   }
 }
 
+/**
+ * Check whether an origin is allowed for a widget. Same-origin requests (from the embed
+ * iframe itself on app.leaddrivecrm.org) are ALWAYS allowed — the allowedOrigins whitelist
+ * only gates third-party embeds.
+ */
+export function isOriginAllowed(
+  req: NextRequest,
+  origin: string | null,
+  allowedOrigins: string[],
+): boolean {
+  if (!origin) return true
+  try {
+    const reqOrigin = new URL(req.url).origin
+    if (origin === reqOrigin) return true
+  } catch {}
+  if (allowedOrigins.length === 0) return true
+  return allowedOrigins.includes(origin)
+}
+
 async function resolveAllowedOrigins(req: NextRequest): Promise<string[] | null> {
   try {
     const url = new URL(req.url)

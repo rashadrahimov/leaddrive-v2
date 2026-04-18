@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prisma } from "@/lib/prisma"
-import { buildWidgetCorsHeaders } from "@/lib/widget-cors"
+import { buildWidgetCorsHeaders, isOriginAllowed } from "@/lib/widget-cors"
 import { escalateWebChatToTicket } from "@/lib/web-chat-escalate"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { sendPushToUser } from "@/lib/push-send"
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   if (!widget || !widget.enabled) {
     return NextResponse.json({ error: "Widget disabled" }, { status: 403, headers })
   }
-  if (widget.allowedOrigins.length > 0 && origin && !widget.allowedOrigins.includes(origin)) {
+  if (!isOriginAllowed(req, origin, widget.allowedOrigins)) {
     return NextResponse.json({ error: "Origin not allowed" }, { status: 403, headers })
   }
 
