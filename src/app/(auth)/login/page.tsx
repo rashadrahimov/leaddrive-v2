@@ -200,12 +200,9 @@ export default function LoginPage() {
             </>
           )}
 
-          <div className="flex justify-between text-sm w-full">
+          <div className="flex justify-center text-sm w-full">
             <Link href="/forgot-password" className="text-muted-foreground hover:text-primary">
               {t("forgotPassword")}
-            </Link>
-            <Link href="/register" className="text-muted-foreground hover:text-primary">
-              {t("createAccount")}
             </Link>
           </div>
         </CardFooter>

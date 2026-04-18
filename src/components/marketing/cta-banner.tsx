@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { ArrowRight, Sparkles } from "lucide-react"
 import { AnimateIn } from "./animate-in"
-import { APP_URL } from "@/lib/domains"
 import { useTranslations } from "next-intl"
 
 export function CtaBanner() {
@@ -33,7 +32,7 @@ export function CtaBanner() {
         </AnimateIn>
 
         <AnimateIn delay={180}>
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 flex items-center justify-center">
             <Link
               href="/demo"
               className="group inline-flex items-center gap-2 rounded-full bg-[#0176D3] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-[#0176D3]/20 hover:bg-[#0176D3]/90 hover:shadow-xl transition-all"
@@ -41,12 +40,6 @@ export function CtaBanner() {
               {t("requestDemo")}
               <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
-            <a
-              href={`${APP_URL}/register`}
-              className="inline-flex items-center gap-2 rounded-full border border-[#001E3C]/10 px-8 py-4 text-base font-semibold text-[#001E3C] hover:border-[#001E3C]/20 hover:bg-[#001E3C]/5 transition-all"
-            >
-              {t("startTrial")}
-            </a>
           </div>
         </AnimateIn>
       </div>

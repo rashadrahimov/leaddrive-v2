@@ -2,10 +2,8 @@
 
 import { Fragment, useState } from "react"
 import Link from "next/link"
-import { APP_URL } from "@/lib/domains"
 import { plans, faqs } from "@/lib/marketing-data"
 import { Check, Minus, ArrowRight, ChevronDown } from "lucide-react"
-import { ShimmerButton } from "@/components/ui/shimmer-button"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 
@@ -326,25 +324,15 @@ export default function PricingPage() {
       {/* CTA */}
       <section className="bg-gradient-to-br from-[#0176D3] to-[#014486] py-16">
         <div className="mx-auto max-w-4xl px-4 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white">14 günlük pulsuz sınaq</h2>
-          <p className="mt-3 text-white/80">Kredit kartı tələb olunmur. Dəqiqələr ərzində başlayın.</p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href={`${APP_URL}/register`}>
-              <ShimmerButton
-                background="rgba(255,255,255,0.15)"
-                shimmerColor="rgba(255,255,255,0.4)"
-                borderRadius="9999px"
-                className="text-base font-semibold px-8 py-3.5 border-white/30"
-              >
-                Pulsuz sınaq başlat
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </ShimmerButton>
-            </a>
+          <h2 className="text-3xl font-bold text-white">Hazırsınız başlamağa?</h2>
+          <p className="mt-3 text-white/80">Komandamızla əlaqə saxlayın və sizə uyğun planı birlikdə seçək.</p>
+          <div className="mt-8 flex items-center justify-center">
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all"
             >
               Satışla danışın
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>

@@ -343,14 +343,7 @@ export default function DemoPage() {
             <span className="text-white/90">{t("ctaTitle2")}</span>
           </h2>
           <p className="mt-3 text-white/70">{t("ctaDescription")}</p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href={`${APP_URL}/register`}
-              className="group inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-base font-semibold text-[#0176D3] shadow-lg hover:shadow-xl transition-all"
-            >
-              {t("startTrial")}
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+          <div className="mt-8 flex items-center justify-center">
             <Link
               href="/plans"
               className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 bg-white/10 px-6 py-3.5 text-base font-semibold text-white hover:bg-white/20 transition-all"
