@@ -213,19 +213,18 @@ export function EmbedChatClient({ publicKey, title, greeting, primaryColor, orga
       }
       const data = await res.json()
       if (data.success) {
+        const realMsg = { ...data.data.message, createdAt: new Date(data.data.message.createdAt).getTime() }
         setMessages(prev => {
-          const filtered = prev.filter(m => m.id !== optimistic.id)
-          return [...filtered, { ...data.data.message, createdAt: new Date(data.data.message.createdAt).getTime() }]
+          const filtered = prev.filter(m => m.id !== optimistic.id && m.id !== realMsg.id)
+          return [...filtered, realMsg]
         })
         if (data.data.botReply) {
-          setMessages(prev => [
-            ...prev,
-            {
-              ...data.data.botReply,
-              fromRole: "bot",
-              createdAt: new Date(data.data.botReply.createdAt).getTime(),
-            },
-          ])
+          const bot = {
+            ...data.data.botReply,
+            fromRole: "bot" as const,
+            createdAt: new Date(data.data.botReply.createdAt).getTime(),
+          }
+          setMessages(prev => (prev.some(m => m.id === bot.id) ? prev : [...prev, bot]))
         }
       }
     } catch {}
