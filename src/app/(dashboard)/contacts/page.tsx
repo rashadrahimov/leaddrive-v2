@@ -229,6 +229,64 @@ export default function InsightsPage() {
             )}
           </div>
 
+          {/* Contacts-specific: SMS + Engagement (placed high so they're above the fold) */}
+          {entity === "contacts" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-lg border bg-card p-4">
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-blue-600" /> {t("smsAttribution")}
+                </h2>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.everReceived}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsEver")}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last30}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsLast30")}</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last90}</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsLast90")}</p>
+                  </div>
+                </div>
+                <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all" style={{ width: `${(data as ContactsAgg).sms.coverage}%` }} />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {t("smsCoveragePct", { pct: (data as ContactsAgg).sms.coverage })}
+                </p>
+                {(data as ContactsAgg).sms.everReceived === 0 && (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
+                    {t.rich("smsNone", { link: () => <code className="bg-muted px-1 rounded">/campaigns</code> })}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg border bg-card p-4">
+                <h2 className="text-sm font-semibold mb-3">{t("engagementByCategory")}</h2>
+                <div className="space-y-2">
+                  {(data as ContactsAgg).engagementByCategory.map((r, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Badge variant="outline" className="text-[10px] w-24 justify-center">{categoryLabel(r.category)}</Badge>
+                      <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
+                        <div
+                          className="h-full"
+                          style={{
+                            width: `${Math.min(100, r.avg_score)}%`,
+                            backgroundColor: CATEGORY_COLORS[r.category] || "#cbd5e1",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums w-10 text-right font-medium">{r.avg_score}</span>
+                      <span className="text-[10px] text-muted-foreground w-16 text-right">({r.count})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Category + Source */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-lg border bg-card p-4">
@@ -349,63 +407,6 @@ export default function InsightsPage() {
             </div>
           </div>
 
-          {/* Contacts-specific: SMS + Engagement */}
-          {entity === "contacts" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-blue-600" /> {t("smsAttribution")}
-                </h2>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.everReceived}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsEver")}</p>
-                  </div>
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last30}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsLast30")}</p>
-                  </div>
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last90}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsLast90")}</p>
-                  </div>
-                </div>
-                <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
-                  <div className="h-full bg-blue-500 transition-all" style={{ width: `${(data as ContactsAgg).sms.coverage}%` }} />
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {t("smsCoveragePct", { pct: (data as ContactsAgg).sms.coverage })}
-                </p>
-                {(data as ContactsAgg).sms.everReceived === 0 && (
-                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
-                    {t.rich("smsNone", { link: () => <code className="bg-muted px-1 rounded">/campaigns</code> })}
-                  </p>
-                )}
-              </div>
-
-              <div className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-semibold mb-3">{t("engagementByCategory")}</h2>
-                <div className="space-y-2">
-                  {(data as ContactsAgg).engagementByCategory.map((r, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Badge variant="outline" className="text-[10px] w-24 justify-center">{categoryLabel(r.category)}</Badge>
-                      <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
-                        <div
-                          className="h-full"
-                          style={{
-                            width: `${Math.min(100, r.avg_score)}%`,
-                            backgroundColor: CATEGORY_COLORS[r.category] || "#cbd5e1",
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs tabular-nums w-10 text-right font-medium">{r.avg_score}</span>
-                      <span className="text-[10px] text-muted-foreground w-16 text-right">({r.count})</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
