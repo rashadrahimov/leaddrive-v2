@@ -14,6 +14,16 @@ interface Page {
 }
 
 /**
+ * Build an absolute URL that points to the *public* host (app.leaddrivecrm.org),
+ * not the internal upstream (0.0.0.0:3001) that req.url exposes behind nginx.
+ */
+function publicUrl(req: NextRequest, path: string): URL {
+  const proto = req.headers.get("x-forwarded-proto") || "https"
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || "app.leaddrivecrm.org"
+  return new URL(path, `${proto}://${host}`)
+}
+
+/**
  * Facebook (Meta Graph) OAuth callback.
  *
  * Flow:
@@ -87,7 +97,7 @@ export async function GET(req: NextRequest) {
   const pagesJson = await pagesRes.json() as { data: Array<Page & { instagram_business_account?: { id: string; username?: string } }> }
   const pages = pagesJson.data || []
   if (pages.length === 0) {
-    return NextResponse.redirect(new URL("/social-monitoring?error=no_admined_pages", req.url))
+    return NextResponse.redirect(publicUrl(req, "/social-monitoring?error=no_admined_pages"))
   }
 
   let fbCount = 0
@@ -152,12 +162,12 @@ export async function GET(req: NextRequest) {
   }
 
   const res = NextResponse.redirect(
-    new URL(`/social-monitoring?connected=facebook&pages=${fbCount}&ig=${igCount}`, req.url),
+    publicUrl(req, `/social-monitoring?connected=facebook&pages=${fbCount}&ig=${igCount}`),
   )
   res.cookies.delete("ld_fb_oauth")
   return res
 }
 
 function redirectError(req: NextRequest, code: string): NextResponse {
-  return NextResponse.redirect(new URL(`/social-monitoring?error=${code}`, req.url))
+  return NextResponse.redirect(publicUrl(req, `/social-monitoring?error=${code}`))
 }
