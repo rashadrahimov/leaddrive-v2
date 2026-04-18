@@ -338,19 +338,73 @@ export default function SocialMonitoringPage() {
                 {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Handle / page *</Label>
-              <Input value={newAccHandle} onChange={e => setNewAccHandle(e.target.value)} placeholder="@brand or page name" />
-            </div>
-            <div className="space-y-1">
-              <Label>Extra keywords (comma-separated)</Label>
-              <Input value={newAccKeywords} onChange={e => setNewAccKeywords(e.target.value)} placeholder="product name, campaign hashtag" />
-            </div>
+            {(() => {
+              // Public-search platforms: any handle/keyword works.
+              // OAuth-gated platforms (Meta/TikTok): can only track owned accounts — require sign-in.
+              const OAUTH_PLATFORMS: Record<string, { label: string; start: string | null; note: string }> = {
+                facebook: {
+                  label: "Connect Facebook Page",
+                  start: null,
+                  note: "Meta doesn't allow searching other pages. You can only monitor Facebook pages you own. Support for Facebook OAuth is coming soon.",
+                },
+                instagram: {
+                  label: "Connect Instagram Business",
+                  start: null,
+                  note: "Instagram only exposes accounts you own (Business/Creator). Connect with Facebook Business (coming soon) to monitor your own feed.",
+                },
+                tiktok: {
+                  label: "Connect TikTok",
+                  start: "/api/v1/social/oauth/tiktok/start",
+                  note: "TikTok only exposes your own videos. Sign in to start monitoring comments on your content.",
+                },
+                youtube: {
+                  label: "Connect YouTube",
+                  start: "/api/v1/social/oauth/youtube/start",
+                  note: "Sign in with YouTube for richer access (your channel's comments). Public comment search works with an API key in env.",
+                },
+              }
+              const oauth = OAUTH_PLATFORMS[newAccPlatform]
+              if (oauth) {
+                return (
+                  <>
+                    <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-xs text-amber-800 dark:text-amber-300">
+                      {oauth.note}
+                    </div>
+                    {oauth.start ? (
+                      <Button asChild className="w-full gap-2">
+                        <a href={oauth.start}>
+                          <LinkIcon className="h-4 w-4" /> {oauth.label}
+                        </a>
+                      </Button>
+                    ) : (
+                      <Button disabled className="w-full gap-2">
+                        <LinkIcon className="h-4 w-4" /> {oauth.label} (soon)
+                      </Button>
+                    )}
+                  </>
+                )
+              }
+              // Public-search platforms: classic handle input.
+              return (
+                <>
+                  <div className="space-y-1">
+                    <Label>Handle / page *</Label>
+                    <Input value={newAccHandle} onChange={e => setNewAccHandle(e.target.value)} placeholder="@brand or page name" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Extra keywords (comma-separated)</Label>
+                    <Input value={newAccKeywords} onChange={e => setNewAccKeywords(e.target.value)} placeholder="product name, campaign hashtag" />
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </DialogContent>
         <DialogFooter>
           <Button variant="outline" onClick={() => setShowAddAccount(false)}>Cancel</Button>
-          <Button onClick={addAccount} disabled={!newAccHandle.trim()}>Add</Button>
+          {!["facebook", "instagram", "tiktok", "youtube"].includes(newAccPlatform) && (
+            <Button onClick={addAccount} disabled={!newAccHandle.trim()}>Add</Button>
+          )}
         </DialogFooter>
       </Dialog>
     </div>
