@@ -258,7 +258,7 @@ export default function ContactDetailPage() {
   if (!contact) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/contacts")}>
+        <Button variant="ghost" size="icon" onClick={() => router.push("/contacts/list")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <Card>
@@ -275,7 +275,7 @@ export default function ContactDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/contacts")}>
+        <Button variant="ghost" size="icon" onClick={() => router.push("/contacts/list")}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">

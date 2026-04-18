@@ -217,7 +217,7 @@ export default function LeadsPage() {
               {tc("list")}
             </button>
           </div>
-          <Button variant="outline" onClick={() => router.push("/contacts/insights?entity=leads")} className="gap-2">
+          <Button variant="outline" onClick={() => router.push("/contacts?entity=leads")} className="gap-2">
             <BarChart3 className="h-4 w-4" /> Insights
           </Button>
           <Button onClick={() => { setEditData(undefined); setShowForm(true) }} className="gap-2">

@@ -1,505 +1,357 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
-import { useSession } from "next-auth/react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { ColorStatCard } from "@/components/color-stat-card"
-import { Select } from "@/components/ui/select"
-import { Users, Plus, Mail, Phone, Pencil, Trash2, Search, ChevronLeft, ChevronRight, CheckSquare, Square, MinusSquare, Globe, UserCheck, PhoneCall, Linkedin, AtSign, Upload, BarChart3 } from "lucide-react"
-import { CsvImportDialog } from "@/components/csv-import-dialog"
-import { ContactForm } from "@/components/contact-form"
-import { DeleteConfirmDialog } from "@/components/delete-confirm-dialog"
-import { cn } from "@/lib/utils"
-import { toast } from "sonner"
-import { InfoHint } from "@/components/info-hint"
-import { PageDescription } from "@/components/page-description"
-import { DidYouKnow } from "@/components/did-you-know"
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
+} from "recharts"
+import {
+  Sparkles, Users, TrendingUp, TrendingDown, Minus, MessageSquare, Tag, RefreshCw, Download, List,
+} from "lucide-react"
 
-interface Contact {
-  id: string
-  fullName: string
-  email: string | null
-  phone: string | null
-  position: string | null
-  source: string | null
-  brand: string | null
-  category: string | null
-  companyId: string | null
-  isActive: boolean
-  portalAccessEnabled: boolean
-  portalPasswordHash: string | null
-  company: { id: string; name: string } | null
-  engagementScore?: number
+type Entity = "contacts" | "leads"
+
+interface ContactsAgg {
+  total: number
+  active: number
+  withBrand: number
+  withCategory: number
+  avgEngagement: number
+  growth: { last30: number; prev30: number; pct: number | null }
+  byCategory: Array<{ category: string; count: number }>
+  bySource: Array<{ source: string; count: number }>
+  topBrands: Array<{ brand: string; count: number }>
+  sms: { everReceived: number; last30: number; last90: number; coverage: number }
+  weekly: Array<{ week: string; count: number }>
+  engagementByCategory: Array<{ category: string; avg_score: number; count: number }>
 }
 
-import { useAutoTour } from "@/components/tour/tour-provider"
-import { TourReplayButton } from "@/components/tour/tour-replay-button"
+interface LeadsAgg {
+  total: number
+  avgScore: number
+  growth: { last30: number; prev30: number; pct: number | null }
+  byCategory: Array<{ category: string; count: number }>
+  bySource: Array<{ source: string; count: number }>
+  byStatus: Array<{ status: string; count: number }>
+  topBrands: Array<{ brand: string; count: number }>
+  weekly: Array<{ week: string; count: number }>
+}
 
-export default function ContactsPage() {
+const CATEGORY_COLORS: Record<string, string> = {
+  vip: "#a855f7",
+  partner: "#14b8a6",
+  prospect: "#f59e0b",
+  regular: "#3b82f6",
+  inactive: "#94a3b8",
+  "(none)": "#cbd5e1",
+}
+
+const SOURCE_COLORS = ["#3b82f6", "#22c55e", "#f97316", "#6366f1", "#a855f7", "#14b8a6", "#ec4899", "#94a3b8"]
+
+export default function InsightsPage() {
   const router = useRouter()
-  const { data: session } = useSession()
-  const t = useTranslations("contacts")
-  const tc = useTranslations("common")
-  const te = useTranslations("engagement")
-  const [contacts, setContacts] = useState<Contact[]>([])
-  useAutoTour("contacts")
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [formOpen, setFormOpen] = useState(false)
-  const [editData, setEditData] = useState<Record<string, any> | undefined>()
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [deleteItem, setDeleteItem] = useState<Contact | null>(null)
-  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
-  const [bulkDeleting, setBulkDeleting] = useState(false)
   const searchParams = useSearchParams()
-  const [sortBy, setSortBy] = useState("name_asc")
-  const [search, setSearch] = useState(searchParams?.get("search") || "")
-  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams?.get("category") || "")
-  const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [importOpen, setImportOpen] = useState(false)
+  const { data: session } = useSession()
   const orgId = session?.user?.organizationId
-  const pageSize = 20
+  const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+  const [entity, setEntity] = useState<Entity>(searchParams?.get("entity") === "leads" ? "leads" : "contacts")
+  const [data, setData] = useState<ContactsAgg | LeadsAgg | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [insights, setInsights] = useState<string[]>([])
+  const [insightsLoading, setInsightsLoading] = useState(false)
 
-  const fetchContacts = async () => {
+  const load = (refresh = false) => {
+    setLoading(true)
+    fetch(`/api/v1/analytics/segments?entity=${entity}${refresh ? "&refresh=1" : ""}`, { headers })
+      .then(r => r.json())
+      .then(json => {
+        if (json.success) setData(json.data)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entity, orgId])
+
+  const fetchInsights = async () => {
+    if (!data) return
+    setInsightsLoading(true)
+    setInsights([])
     try {
-      const res = await fetch("/api/v1/contacts?limit=500", {
-        headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+      const res = await fetch("/api/v1/analytics/segments/ai-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ entity, aggregate: data, locale: "ru" }),
       })
       const json = await res.json()
-      if (json.success) {
-        setContacts(json.data.contacts)
-        setTotal(json.data.total)
-      }
-    } catch (err) { console.error(err) } finally { setLoading(false) }
-  }
-
-  useEffect(() => { fetchContacts() }, [session])
-
-  // Clear selection when search/sort changes
-  useEffect(() => { setSelected(new Set()) }, [search, sortBy])
-
-  function handleEdit(item: Contact) {
-    setEditData({ id: item.id, fullName: item.fullName, email: item.email, phone: item.phone, position: item.position, companyId: item.companyId, source: item.source, brand: item.brand, category: item.category })
-    setFormOpen(true)
-  }
-
-  function handleAdd() {
-    setEditData(undefined)
-    setFormOpen(true)
-  }
-
-  function handleDelete(item: Contact) {
-    setDeleteItem(item)
-    setDeleteOpen(true)
-  }
-
-  async function confirmDelete() {
-    if (!deleteItem) return
-    const res = await fetch(`/api/v1/contacts/${deleteItem.id}`, {
-      method: "DELETE",
-      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
-    })
-    if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
-    setSelected(prev => { const next = new Set(prev); next.delete(deleteItem.id); return next })
-    fetchContacts()
-  }
-
-  async function confirmBulkDelete() {
-    if (selected.size === 0) return
-    setBulkDeleting(true)
-    try {
-      const ids = Array.from(selected)
-      const res = await fetch("/api/v1/contacts/bulk-delete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
-        },
-        body: JSON.stringify({ ids }),
-      })
-      if (!res.ok) throw new Error((await res.json()).error || "Failed to delete")
-      setSelected(new Set())
-      fetchContacts()
-    } catch (err: any) {
-      toast.error(`Ошибка: ${err.message}`)
+      if (json.success) setInsights(json.data.insights || [])
     } finally {
-      setBulkDeleting(false)
+      setInsightsLoading(false)
     }
   }
 
-  const filtered = useMemo(() => {
-    let result = contacts
-    if (search) {
-      const q = search.toLowerCase()
-      result = result.filter(c =>
-        c.fullName.toLowerCase().includes(q) ||
-        (c.email || "").toLowerCase().includes(q) ||
-        (c.phone || "").toLowerCase().includes(q) ||
-        (c.company?.name || "").toLowerCase().includes(q) ||
-        (c.brand || "").toLowerCase().includes(q)
-      )
-    }
-    if (categoryFilter) {
-      result = result.filter(c => c.category === categoryFilter)
-    }
-    return [...result].sort((a, b) => {
-      switch (sortBy) {
-        case "name_asc": return a.fullName.localeCompare(b.fullName)
-        case "name_desc": return b.fullName.localeCompare(a.fullName)
-        case "company": return (a.company?.name || "zzz").localeCompare(b.company?.name || "zzz")
-        case "email": return (a.email ? 0 : 1) - (b.email ? 0 : 1)
-        case "active": return (a.isActive ? 0 : 1) - (b.isActive ? 0 : 1)
-        default: return 0
-      }
-    })
-  }, [contacts, search, sortBy, categoryFilter])
-
-  const totalPages = Math.ceil(filtered.length / pageSize)
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
-
-  // Selection helpers
-  const allPageSelected = paginated.length > 0 && paginated.every(c => selected.has(c.id))
-  const somePageSelected = paginated.some(c => selected.has(c.id))
-  const allFilteredSelected = filtered.length > 0 && filtered.every(c => selected.has(c.id))
-
-  function toggleSelectAll() {
-    if (allPageSelected) {
-      // Deselect current page
-      setSelected(prev => {
-        const next = new Set(prev)
-        paginated.forEach(c => next.delete(c.id))
-        return next
-      })
-    } else {
-      // Select current page
-      setSelected(prev => {
-        const next = new Set(prev)
-        paginated.forEach(c => next.add(c.id))
-        return next
-      })
-    }
+  const drillTo = (filter: string) => {
+    // /contacts defaults to Insights; drill-through goes to the actual list view
+    router.push(`/${entity}/list?${filter}`)
   }
 
-  function selectAllFiltered() {
-    setSelected(new Set(filtered.map(c => c.id)))
+  const exportCsv = () => {
+    if (!data) return
+    const rows: string[] = []
+    rows.push("type,key,count")
+    for (const r of data.byCategory) rows.push(`category,${r.category},${r.count}`)
+    for (const r of data.bySource) rows.push(`source,${r.source},${r.count}`)
+    for (const r of data.topBrands) rows.push(`brand,${r.brand},${r.count}`)
+    const blob = new Blob([rows.join("\n")], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${entity}-segments-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
-  function toggleSelect(id: string) {
-    setSelected(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id); else next.add(id)
-      return next
-    })
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <div className="animate-pulse"><div className="h-96 bg-muted rounded-lg" /></div>
-      </div>
-    )
-  }
+  const weeklyFormatted = useMemo(() => {
+    return (data?.weekly || []).map(w => ({
+      week: new Date(w.week).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      count: w.count,
+    }))
+  }, [data])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">{t("title")} <TourReplayButton tourId="contacts" /></h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/contacts/insights")} className="gap-1.5">
-            <BarChart3 className="h-4 w-4" /> Insights
-          </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}><Upload className="h-4 w-4 mr-1" /> CSV Import</Button>
-          <Button onClick={handleAdd} data-tour-id="contacts-new"><Plus className="h-4 w-4 mr-1" /> {t("addContact")}</Button>
-        </div>
-      </div>
-
-      <PageDescription text={t("pageDescription")} />
-      <DidYouKnow page="contacts" className="mb-4" />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children" data-tour-id="contacts-stats">
-        <ColorStatCard label={t("statTotal")} value={total} icon={<Users className="h-4 w-4" />} color="blue" hint={t("hintTotalContacts")} />
-        <ColorStatCard label={t("statActive")} value={contacts.filter(c => c.isActive).length} icon={<Users className="h-4 w-4" />} color="green" hint={t("hintActiveContacts")} />
-        <ColorStatCard label={t("statWithEmail")} value={contacts.filter(c => c.email).length} icon={<Mail className="h-4 w-4" />} color="violet" />
-        <ColorStatCard label={t("statWithPhone")} value={contacts.filter(c => c.phone).length} icon={<Phone className="h-4 w-4" />} color="orange" />
-      </div>
-
-      {/* Engagement Overview */}
-      {contacts.length > 0 && (() => {
-        const hot = contacts.filter(c => (c.engagementScore ?? 0) >= 50).length
-        const warm = contacts.filter(c => { const s = c.engagementScore ?? 0; return s >= 20 && s < 50 }).length
-        const cold = contacts.filter(c => (c.engagementScore ?? 0) < 20).length
-        return (
-          <div className="flex items-center gap-4 px-4 py-2.5 bg-muted/30 rounded-lg border text-sm">
-            <span className="text-muted-foreground font-medium">{te("title")}:</span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> {te("hot")} ({hot})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> {te("warm")} ({warm})
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-400" /> {te("cold")} ({cold})
-            </span>
-          </div>
-        )
-      })()}
-
-      {/* Selection action bar */}
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2.5">
-          <CheckSquare className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-primary dark:text-primary">
-            {t("selected", { count: selected.size, total: filtered.length })}
-          </span>
-          {!allFilteredSelected && (
-            <button onClick={selectAllFiltered} className="text-sm text-primary hover:text-primary/80 underline">
-              {t("selectAll", { count: filtered.length })}
-            </button>
-          )}
-          <div className="flex-1" />
-          <button onClick={() => setSelected(new Set())} className="text-sm text-muted-foreground hover:text-foreground">
-            {t("deselectAll")}
-          </button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="gap-1"
-            onClick={() => setBulkDeleteOpen(true)}
-          >
-            <Trash2 className="h-3.5 w-3.5" /> {t("deleteSelected", { count: selected.size })}
-          </Button>
-        </div>
-      )}
-
-      {/* Search + Sort */}
+    <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("searchPlaceholder")}
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="pl-9"
-          />
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">Segment insights</h1>
+          <p className="text-sm text-muted-foreground">Breakdown by category, source, brand. SMS attribution. Growth trend.</p>
         </div>
-        <span className="text-sm text-muted-foreground">{tc("results", { count: filtered.length })}</span>
-        <div className="flex-1" />
-        <Select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1) }} className="w-[160px]">
-          <option value="">All categories</option>
-          <option value="vip">VIP</option>
-          <option value="regular">Regular</option>
-          <option value="partner">Partner</option>
-          <option value="prospect">Prospect</option>
-          <option value="inactive">Inactive</option>
-        </Select>
-        <Select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-[200px]">
-          <option value="name_asc">{t("sortNameAsc")}</option>
-          <option value="name_desc">{t("sortNameDesc")}</option>
-          <option value="company">{t("sortCompany")}</option>
-          <option value="email">{t("sortWithEmail")}</option>
-          <option value="active">{t("sortActiveFirst")}</option>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="px-3 py-3 w-10">
-                <button onClick={toggleSelectAll} className="p-0.5 rounded hover:bg-muted">
-                  {allPageSelected ? (
-                    <CheckSquare className="h-4 w-4 text-primary" />
-                  ) : somePageSelected ? (
-                    <MinusSquare className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Square className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </button>
-              </th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colName")} <InfoHint text={t("hintColName")} size={12} /></span></th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colCompany")} <InfoHint text={t("hintColCompany")} size={12} /></span></th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colEmail")} <InfoHint text={t("hintColEmail")} size={12} /></span></th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPhone")} <InfoHint text={t("hintColPhone")} size={12} /></span></th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colSource") || "Source"}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Category</th>
-              <th className="px-4 py-3 text-center font-medium text-muted-foreground">Score</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("colStatus")}</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground"><span className="inline-flex items-center gap-1">{t("colPortal")} <InfoHint text={t("hintColPortal")} size={12} /></span></th>
-              <th className="px-4 py-3 w-20"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map(item => (
-              <tr
-                key={item.id}
-                className={cn(
-                  "border-b transition-colors hover:bg-muted/50 cursor-pointer",
-                  selected.has(item.id) && "bg-blue-50/50 dark:bg-blue-900/10"
-                )}
-                onClick={() => router.push(`/contacts/${item.id}`)}
-              >
-                <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => toggleSelect(item.id)} className="p-0.5 rounded hover:bg-muted">
-                    {selected.has(item.id) ? (
-                      <CheckSquare className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Square className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                      {item.fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
-                    </div>
-                    <div>
-                      <div className="font-medium flex items-center gap-1.5">
-                        {item.fullName}
-                        {item.brand && (
-                          <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-normal">
-                            {item.brand}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">{item.position || "—"}</div>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3">{item.company?.name || <span className="text-muted-foreground">—</span>}</td>
-                <td className="px-4 py-3">
-                  {item.email ? (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Mail className="h-3 w-3" /> {item.email}
-                    </div>
-                  ) : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {item.phone ? (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Phone className="h-3 w-3" /> {item.phone}
-                    </div>
-                  ) : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {item.source ? (
-                    <span className={cn("inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium",
-                      item.source === "website" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                      item.source === "referral" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                      item.source === "cold_call" ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" :
-                      item.source === "linkedin" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" :
-                      item.source === "email" ? "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400" :
-                      "bg-muted text-foreground/70"
-                    )}>
-                      {item.source === "website" ? <Globe className="h-3 w-3" /> :
-                       item.source === "referral" ? <UserCheck className="h-3 w-3" /> :
-                       item.source === "cold_call" ? <PhoneCall className="h-3 w-3" /> :
-                       item.source === "linkedin" ? <Linkedin className="h-3 w-3" /> :
-                       item.source === "email" ? <AtSign className="h-3 w-3" /> : null}
-                      {item.source}
-                    </span>
-                  ) : <span className="text-muted-foreground text-xs">—</span>}
-                </td>
-                <td className="px-4 py-3">
-                  {item.category ? (
-                    <span className={cn("inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium capitalize",
-                      item.category === "vip" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                      item.category === "partner" ? "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400" :
-                      item.category === "prospect" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                      item.category === "inactive" ? "bg-muted text-muted-foreground" :
-                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    )}>{item.category}</span>
-                  ) : <span className="text-muted-foreground text-xs">—</span>}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {(() => {
-                    const score = item.engagementScore ?? 0
-                    const color = score >= 50 ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                      : score >= 20 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    return <span className={cn("text-xs font-medium px-1.5 py-0.5 rounded-full", color)}>{score}</span>
-                  })()}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge variant={item.isActive ? "default" : "secondary"}>
-                    {item.isActive ? tc("active") : tc("inactive")}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3">
-                  {item.portalAccessEnabled ? (
-                    item.portalPasswordHash ? (
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 text-xs">Portal</Badge>
-                    ) : (
-                      <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs">Pending</Badge>
-                    )
-                  ) : null}
-                </td>
-                <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleEdit(item)} className="p-1.5 rounded hover:bg-muted" title={tc("edit")}>
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                    </button>
-                    <button onClick={() => handleDelete(item)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20" title={tc("delete")}>
-                      <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-500" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {paginated.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  {search ? t("noResults") : t("noContacts")}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {tc("pageOf", { page, totalPages })}
-          </span>
-          <div className="flex gap-1">
-            <Button variant="outline" size="icon" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <Button variant="outline" size="sm" onClick={() => router.push(`/${entity}/list`)} className="gap-1.5">
+          <List className="h-4 w-4" /> {entity === "contacts" ? "Contact list" : "Lead list"}
+        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex p-1 bg-muted rounded-lg">
+            <button onClick={() => setEntity("contacts")} className={`px-3 py-1 text-sm rounded-md ${entity === "contacts" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>Contacts</button>
+            <button onClick={() => setEntity("leads")} className={`px-3 py-1 text-sm rounded-md ${entity === "leads" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>Leads</button>
           </div>
+          <Button variant="outline" size="sm" onClick={() => load(true)} className="gap-1.5">
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5">
+            <Download className="h-3.5 w-3.5" /> CSV
+          </Button>
         </div>
+      </div>
+
+      {loading || !data ? (
+        <div className="animate-pulse space-y-3">
+          <div className="grid grid-cols-4 gap-3">{[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted rounded-lg" />)}</div>
+          <div className="grid grid-cols-2 gap-3"><div className="h-72 bg-muted rounded-lg" /><div className="h-72 bg-muted rounded-lg" /></div>
+        </div>
+      ) : (
+        <>
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatTile icon={Users} label={`Total ${entity}`} value={data.total} />
+            <StatTile
+              icon={data.growth.pct == null || data.growth.pct >= 0 ? TrendingUp : TrendingDown}
+              label="New 30d"
+              value={data.growth.last30}
+              sub={data.growth.pct == null ? "—" : (data.growth.pct >= 0 ? "+" : "") + data.growth.pct + "% vs prev 30d"}
+              subColor={data.growth.pct == null ? "text-muted-foreground" : data.growth.pct >= 0 ? "text-green-600" : "text-red-500"}
+            />
+            <StatTile icon={Tag} label="With brand" value={(data as any).withBrand ?? (data as any).topBrands.length} sub={`${(data as any).topBrands.length} unique`} />
+            {entity === "contacts" ? (
+              <StatTile icon={MessageSquare} label="SMS coverage" value={`${(data as ContactsAgg).sms.coverage}%`} sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`} />
+            ) : (
+              <StatTile icon={Sparkles} label="Avg score" value={(data as LeadsAgg).avgScore} />
+            )}
+          </div>
+
+          {/* AI insights */}
+          <div className="rounded-lg border bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold flex items-center gap-2 text-violet-700 dark:text-violet-300">
+                <Sparkles className="h-4 w-4" /> AI insights
+              </h2>
+              <Button variant="outline" size="sm" onClick={fetchInsights} disabled={insightsLoading}>
+                {insightsLoading ? "Analyzing…" : insights.length ? "Regenerate" : "Generate"}
+              </Button>
+            </div>
+            {insights.length > 0 ? (
+              <ul className="space-y-1.5 text-sm">
+                {insights.map((t, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-violet-500">•</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">Click Generate to ask Claude Haiku to summarize the current aggregate.</p>
+            )}
+          </div>
+
+          {/* Category + Source */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3">By category</h2>
+              {data.byCategory.length === 0 || data.byCategory.every(r => r.category === "(none)") ? (
+                <p className="text-xs text-muted-foreground py-8 text-center">No {entity} have a category yet. Assign one from the detail page or import.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={240}>
+                  <PieChart>
+                    <Pie
+                      data={data.byCategory}
+                      dataKey="count"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={90}
+                      label={(e: any) => `${e.category} (${e.count})`}
+                      onClick={(e: any) => e?.category && e.category !== "(none)" && drillTo(`category=${e.category}`)}
+                    >
+                      {data.byCategory.map((r, i) => (
+                        <Cell key={i} fill={CATEGORY_COLORS[r.category] || "#cbd5e1"} style={{ cursor: r.category === "(none)" ? "default" : "pointer" }} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3">By source</h2>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={data.bySource}>
+                  <XAxis dataKey="source" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" onClick={(e: any) => e?.source && e.source !== "(none)" && drillTo(`source=${e.source}`)}>
+                    {data.bySource.map((r, i) => (
+                      <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} style={{ cursor: r.source === "(none)" ? "default" : "pointer" }} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Top brands + Weekly timeseries */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3">Top 10 brands</h2>
+              {data.topBrands.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-8 text-center">No brand values set yet.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={Math.max(240, data.topBrands.length * 30)}>
+                  <BarChart data={data.topBrands} layout="vertical" margin={{ left: 40 }}>
+                    <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                    <YAxis dataKey="brand" type="category" tick={{ fontSize: 11 }} width={100} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="count"
+                      fill="#6366f1"
+                      style={{ cursor: "pointer" }}
+                      onClick={(e: any) => e?.brand && drillTo(`search=${encodeURIComponent(e.brand)}`)}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3">New {entity} per week (12 weeks)</h2>
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={weeklyFormatted}>
+                  <XAxis dataKey="week" tick={{ fontSize: 11 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Contacts-specific: SMS + Engagement */}
+          {entity === "contacts" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="rounded-lg border bg-card p-4">
+                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-blue-600" /> SMS attribution
+                </h2>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.everReceived}</p>
+                    <p className="text-[11px] text-muted-foreground">Ever received</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last30}</p>
+                    <p className="text-[11px] text-muted-foreground">Last 30 days</p>
+                  </div>
+                  <div className="rounded-md bg-muted p-3">
+                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last90}</p>
+                    <p className="text-[11px] text-muted-foreground">Last 90 days</p>
+                  </div>
+                </div>
+                <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
+                  <div className="h-full bg-blue-500 transition-all" style={{ width: `${(data as ContactsAgg).sms.coverage}%` }} />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  {(data as ContactsAgg).sms.coverage}% of contacts have SMS attribution
+                </p>
+                {(data as ContactsAgg).sms.everReceived === 0 && (
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
+                    No SMS campaigns recorded. Run one from <code className="bg-muted px-1 rounded">/campaigns</code>.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-lg border bg-card p-4">
+                <h2 className="text-sm font-semibold mb-3">Engagement by category</h2>
+                <div className="space-y-2">
+                  {(data as ContactsAgg).engagementByCategory.map((r, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Badge variant="outline" className="capitalize text-[10px] w-20 justify-center">{r.category}</Badge>
+                      <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
+                        <div
+                          className="h-full"
+                          style={{
+                            width: `${Math.min(100, r.avg_score)}%`,
+                            backgroundColor: CATEGORY_COLORS[r.category] || "#cbd5e1",
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums w-10 text-right font-medium">{r.avg_score}</span>
+                      <span className="text-[10px] text-muted-foreground w-16 text-right">({r.count})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
+    </div>
+  )
+}
 
-      <ContactForm open={formOpen} onOpenChange={setFormOpen} onSaved={fetchContacts} initialData={editData} orgId={orgId} />
-      <DeleteConfirmDialog open={deleteOpen} onOpenChange={setDeleteOpen} onConfirm={confirmDelete} title={t("deleteContact")} itemName={deleteItem?.fullName} />
-      <DeleteConfirmDialog
-        open={bulkDeleteOpen}
-        onOpenChange={setBulkDeleteOpen}
-        onConfirm={confirmBulkDelete}
-        title={t("deleteContact")}
-        itemName={t("contactsSelected", { count: selected.size })}
-      />
-
-      {/* CSV Import */}
-      <CsvImportDialog
-        open={importOpen}
-        onOpenChange={setImportOpen}
-        entityType="contacts"
-        onImported={fetchContacts}
-      />
+function StatTile({ icon: Icon, label, value, sub, subColor }: { icon: any; label: string; value: number | string; sub?: string; subColor?: string }) {
+  return (
+    <div className="rounded-lg border bg-card p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</p>
+      </div>
+      <p className="text-2xl font-bold tabular-nums">{value}</p>
+      {sub && <p className={`text-xs mt-0.5 ${subColor || "text-muted-foreground"}`}>{sub}</p>}
     </div>
   )
 }

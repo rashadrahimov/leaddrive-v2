@@ -49,7 +49,7 @@ export function SegmentsWidget({ orgId }: Props) {
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Tag className="h-4 w-4 text-violet-500" /> Contact segments
         </h3>
-        <Link href="/contacts/insights" className="text-xs text-primary hover:underline flex items-center gap-1">
+        <Link href="/contacts" className="text-xs text-primary hover:underline flex items-center gap-1">
           Insights <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -59,7 +59,7 @@ export function SegmentsWidget({ orgId }: Props) {
         <div className="h-40 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
           <Tag className="h-6 w-6 opacity-40 mb-2" />
           <p>No category assigned yet</p>
-          <p className="mt-1">Set category from <Link href="/contacts" className="text-primary hover:underline">/contacts</Link></p>
+          <p className="mt-1">Set category from <Link href="/contacts/list" className="text-primary hover:underline">contact list</Link></p>
         </div>
       ) : (
         <div className="flex items-center gap-3">
@@ -79,7 +79,7 @@ export function SegmentsWidget({ orgId }: Props) {
             {rows.filter(r => r.category !== "(none)").slice(0, 5).map(r => (
               <Link
                 key={r.category}
-                href={`/contacts?category=${r.category}`}
+                href={`/contacts/list?category=${r.category}`}
                 className="flex items-center gap-2 text-xs hover:bg-muted rounded px-1 py-0.5 transition-colors"
               >
                 <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: CATEGORY_COLORS[r.category] || "#e5e7eb" }} />
