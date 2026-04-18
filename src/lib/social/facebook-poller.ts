@@ -1,8 +1,22 @@
 import { prisma } from "@/lib/prisma"
 import { decryptToken } from "@/lib/secure-token"
 import { classifySentiment } from "@/lib/sentiment"
+import crypto from "crypto"
 
 const GRAPH = "https://graph.facebook.com/v21.0"
+
+/**
+ * Meta requires `appsecret_proof` (HMAC-SHA256 of the access token, keyed by
+ * the app secret) on every server-side call when the app is configured with
+ * "Require App Secret" — the new default for Business Login apps. Missing or
+ * wrong proof surfaces as OAuth error #10 on /posts even when the token is
+ * fine.
+ */
+function appsecretProof(token: string): string | null {
+  const secret = process.env.FACEBOOK_APP_SECRET
+  if (!secret) return null
+  return crypto.createHmac("sha256", secret).update(token).digest("hex")
+}
 
 /**
  * Poll a Facebook Page's feed and capture every post as a mention.
@@ -28,9 +42,13 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   const sinceParam = account.lastPolledAt
     ? `&since=${Math.floor(account.lastPolledAt.getTime() / 1000)}`
     : ""
-  // /posts returns only the page's own posts (pages_read_engagement is enough).
-  // /feed would also include visitor posts but requires pages_read_user_content.
-  const url = `${GRAPH}/${account.handle}/posts?fields=id,message,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}`
+  const proof = appsecretProof(token)
+  const proofParam = proof ? `&appsecret_proof=${proof}` : ""
+  // /me/posts — /me resolves to the page when using a page access token.
+  // /posts returns only the page's own posts (pages_read_engagement is enough),
+  // unlike /feed which also needs pages_read_user_content. Using /me bypasses
+  // a Meta quirk where /{page_id}/posts errors with #10 even for page admins.
+  const url = `${GRAPH}/me/posts?fields=id,message,story,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}${proofParam}`
 
   const res = await fetch(url)
   if (!res.ok) {
@@ -42,6 +60,7 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
     data: Array<{
       id: string
       message?: string
+      story?: string
       created_time: string
       permalink_url?: string
       reactions?: { summary?: { total_count: number } }
@@ -54,7 +73,9 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   const keywords = account.keywords || []
 
   for (const post of data.data || []) {
-    const text = (post.message || "").trim()
+    // Some posts carry only a `story` (status updates, shares), others carry
+    // a user-authored `message`. Skip posts with neither.
+    const text = (post.message || post.story || "").trim()
     if (!text) continue
 
     // If keywords configured, require at least one to match.
@@ -139,7 +160,9 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
   }
 
   // First — recent media on the IG business account.
-  const mediaUrl = `${GRAPH}/${account.handle}/media?fields=id,caption,permalink,timestamp,username,like_count,comments_count&limit=25&access_token=${encodeURIComponent(token)}`
+  const proof = appsecretProof(token)
+  const proofParam = proof ? `&appsecret_proof=${proof}` : ""
+  const mediaUrl = `${GRAPH}/${account.handle}/media?fields=id,caption,permalink,timestamp,username,like_count,comments_count&limit=25&access_token=${encodeURIComponent(token)}${proofParam}`
   const mediaRes = await fetch(mediaUrl)
   if (!mediaRes.ok) {
     console.error("[instagram-poller] media fetch failed:", await mediaRes.text())
