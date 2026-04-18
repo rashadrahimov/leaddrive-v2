@@ -34,7 +34,7 @@ export default function SettingsPage() {
     { icon: Keyboard, title: t("macrosTitle"), description: t("macrosDesc"), href: "/settings/macros", hint: t("macrosHint") },
     { icon: Globe2, title: t("customDomainsTitle"), description: t("customDomainsDesc"), href: "/settings/custom-domains", hint: t("hintCustomDomains") },
     { icon: Bot, title: "AI Automation", description: "Manage AI features, shadow actions, budget", href: "/settings/ai-automation", hint: "Configure AI-powered automations" },
-    { icon: MessageCircle, title: "Web Chat Widget", description: "Embed code, AI auto-reply, allowed origins, business hours", href: "/settings/web-chat", hint: "Configure the chat bubble for your website" },
+    { icon: MessageCircle, title: t("webChatTitle"), description: t("webChatDesc"), href: "/settings/web-chat", hint: t("webChatHint") },
   ]
 
   return (
