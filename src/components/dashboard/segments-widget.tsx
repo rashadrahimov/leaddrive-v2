@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useTranslations } from "next-intl"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { Tag, ArrowRight } from "lucide-react"
 
@@ -24,6 +25,8 @@ interface Props {
 }
 
 export function SegmentsWidget({ orgId }: Props) {
+  const t = useTranslations("insights")
+  const tNav = useTranslations("nav")
   const [rows, setRows] = useState<CategoryRow[]>([])
   const [total, setTotal] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,10 +50,10 @@ export function SegmentsWidget({ orgId }: Props) {
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold flex items-center gap-2">
-          <Tag className="h-4 w-4 text-violet-500" /> Contact segments
+          <Tag className="h-4 w-4 text-violet-500" /> {t("widgetTitle")}
         </h3>
         <Link href="/contacts" className="text-xs text-primary hover:underline flex items-center gap-1">
-          Insights <ArrowRight className="h-3 w-3" />
+          {t("widgetCta")} <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
       {loading ? (
@@ -58,8 +61,12 @@ export function SegmentsWidget({ orgId }: Props) {
       ) : !hasCategories ? (
         <div className="h-40 flex flex-col items-center justify-center text-center text-xs text-muted-foreground">
           <Tag className="h-6 w-6 opacity-40 mb-2" />
-          <p>No category assigned yet</p>
-          <p className="mt-1">Set category from <Link href="/contacts/list" className="text-primary hover:underline">contact list</Link></p>
+          <p>{t("widgetEmpty")}</p>
+          <p className="mt-1">
+            {t.rich("widgetEmptyHint", {
+              link: () => <Link href="/contacts/list" className="text-primary hover:underline">{tNav("contacts")}</Link>,
+            })}
+          </p>
         </div>
       ) : (
         <div className="flex items-center gap-3">

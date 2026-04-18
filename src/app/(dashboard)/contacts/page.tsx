@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -58,7 +59,11 @@ export default function InsightsPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+  const t = useTranslations("insights")
+  const locale = useLocale()
   const [entity, setEntity] = useState<Entity>(searchParams?.get("entity") === "leads" ? "leads" : "contacts")
+  const entityLabel = entity === "contacts" ? t("contacts") : t("leads")
+  const entitySingular = entity === "contacts" ? t("contacts").replace(/s$|ы$|лар$/i, "") : t("leads").replace(/s$|ы$|лар$/i, "")
   const [data, setData] = useState<ContactsAgg | LeadsAgg | null>(null)
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState<string[]>([])
@@ -88,7 +93,7 @@ export default function InsightsPage() {
       const res = await fetch("/api/v1/analytics/segments/ai-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ entity, aggregate: data, locale: "ru" }),
+        body: JSON.stringify({ entity, aggregate: data, locale }),
       })
       const json = await res.json()
       if (json.success) setInsights(json.data.insights || [])
@@ -129,22 +134,22 @@ export default function InsightsPage() {
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Segment insights</h1>
-          <p className="text-sm text-muted-foreground">Breakdown by category, source, brand. SMS attribution. Growth trend.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => router.push(`/${entity}/list`)} className="gap-1.5">
-          <List className="h-4 w-4" /> {entity === "contacts" ? "Contact list" : "Lead list"}
+          <List className="h-4 w-4" /> {entity === "contacts" ? t("contactList") : t("leadList")}
         </Button>
         <div className="flex items-center gap-2">
           <div className="flex p-1 bg-muted rounded-lg">
-            <button onClick={() => setEntity("contacts")} className={`px-3 py-1 text-sm rounded-md ${entity === "contacts" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>Contacts</button>
-            <button onClick={() => setEntity("leads")} className={`px-3 py-1 text-sm rounded-md ${entity === "leads" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>Leads</button>
+            <button onClick={() => setEntity("contacts")} className={`px-3 py-1 text-sm rounded-md ${entity === "contacts" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>{t("contacts")}</button>
+            <button onClick={() => setEntity("leads")} className={`px-3 py-1 text-sm rounded-md ${entity === "leads" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>{t("leads")}</button>
           </div>
           <Button variant="outline" size="sm" onClick={() => load(true)} className="gap-1.5">
-            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+            <RefreshCw className="h-3.5 w-3.5" /> {t("refresh")}
           </Button>
           <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5">
-            <Download className="h-3.5 w-3.5" /> CSV
+            <Download className="h-3.5 w-3.5" /> {t("csv")}
           </Button>
         </div>
       </div>
@@ -158,19 +163,29 @@ export default function InsightsPage() {
         <>
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatTile icon={Users} label={`Total ${entity}`} value={data.total} />
+            <StatTile icon={Users} label={t("statTotal", { entity: entityLabel })} value={data.total} />
             <StatTile
               icon={data.growth.pct == null || data.growth.pct >= 0 ? TrendingUp : TrendingDown}
-              label="New 30d"
+              label={t("statNew30d")}
               value={data.growth.last30}
-              sub={data.growth.pct == null ? "—" : (data.growth.pct >= 0 ? "+" : "") + data.growth.pct + "% vs prev 30d"}
+              sub={data.growth.pct == null ? "—" : t("statNew30dSub", { pct: (data.growth.pct >= 0 ? "+" : "") + data.growth.pct })}
               subColor={data.growth.pct == null ? "text-muted-foreground" : data.growth.pct >= 0 ? "text-green-600" : "text-red-500"}
             />
-            <StatTile icon={Tag} label="With brand" value={(data as any).withBrand ?? (data as any).topBrands.length} sub={`${(data as any).topBrands.length} unique`} />
+            <StatTile
+              icon={Tag}
+              label={t("statWithBrand")}
+              value={(data as any).withBrand ?? (data as any).topBrands.length}
+              sub={t("statWithBrandSub", { count: (data as any).topBrands.length })}
+            />
             {entity === "contacts" ? (
-              <StatTile icon={MessageSquare} label="SMS coverage" value={`${(data as ContactsAgg).sms.coverage}%`} sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`} />
+              <StatTile
+                icon={MessageSquare}
+                label={t("statSmsCoverage")}
+                value={`${(data as ContactsAgg).sms.coverage}%`}
+                sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`}
+              />
             ) : (
-              <StatTile icon={Sparkles} label="Avg score" value={(data as LeadsAgg).avgScore} />
+              <StatTile icon={Sparkles} label={t("statAvgScore")} value={(data as LeadsAgg).avgScore} />
             )}
           </div>
 
@@ -178,30 +193,30 @@ export default function InsightsPage() {
           <div className="rounded-lg border bg-gradient-to-br from-violet-50 to-blue-50 dark:from-violet-950/30 dark:to-blue-950/30 p-4">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-sm font-semibold flex items-center gap-2 text-violet-700 dark:text-violet-300">
-                <Sparkles className="h-4 w-4" /> AI insights
+                <Sparkles className="h-4 w-4" /> {t("aiTitle")}
               </h2>
               <Button variant="outline" size="sm" onClick={fetchInsights} disabled={insightsLoading}>
-                {insightsLoading ? "Analyzing…" : insights.length ? "Regenerate" : "Generate"}
+                {insightsLoading ? t("aiAnalyzing") : insights.length ? t("aiRegenerate") : t("aiGenerate")}
               </Button>
             </div>
             {insights.length > 0 ? (
               <ul className="space-y-1.5 text-sm">
-                {insights.map((t, i) => (
+                {insights.map((ln, i) => (
                   <li key={i} className="flex gap-2">
                     <span className="text-violet-500">•</span>
-                    <span>{t}</span>
+                    <span>{ln}</span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-muted-foreground">Click Generate to ask Claude Haiku to summarize the current aggregate.</p>
+              <p className="text-xs text-muted-foreground">{t("aiPlaceholder")}</p>
             )}
           </div>
 
           {/* Category + Source */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-semibold mb-3">By category</h2>
+              <h2 className="text-sm font-semibold mb-3">{t("byCategory")}</h2>
               {(() => {
                 // Pie shows only CATEGORIZED rows — mixing 585 "(none)" with 1 "vip" makes the
                 // small slice invisible. We surface the "(none)" bucket as a muted footer instead.
@@ -211,8 +226,8 @@ export default function InsightsPage() {
                 if (categorized.length === 0) {
                   return (
                     <div className="py-10 text-center space-y-2">
-                      <p className="text-sm text-muted-foreground">No {entity} have a category yet.</p>
-                      <p className="text-xs text-muted-foreground">Open a {entity.slice(0, -1)} → Edit → set Category (VIP / Regular / Partner / Prospect / Inactive).</p>
+                      <p className="text-sm text-muted-foreground">{t("noCategoriesTitle", { entity: entityLabel.toLowerCase() })}</p>
+                      <p className="text-xs text-muted-foreground">{t("noCategoriesHint", { singular: entitySingular.toLowerCase() })}</p>
                     </div>
                   )
                 }
@@ -238,8 +253,8 @@ export default function InsightsPage() {
                       </PieChart>
                     </ResponsiveContainer>
                     <p className="text-[11px] text-muted-foreground text-center mt-1">
-                      Showing {categorizedTotal} categorized {entity}
-                      {noneRow ? ` · ${noneRow.count} without category` : ""}
+                      {t("showingCategorized", { shown: categorizedTotal, entity: entityLabel.toLowerCase() })}
+                      {noneRow ? ` · ${t("withoutCategory", { count: noneRow.count })}` : ""}
                     </p>
                   </>
                 )
@@ -247,14 +262,14 @@ export default function InsightsPage() {
             </div>
 
             <div className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-semibold mb-3">By source</h2>
+              <h2 className="text-sm font-semibold mb-3">{t("bySource")}</h2>
               {(() => {
                 const sourced = data.bySource.filter(r => r.source && r.source !== "(none)")
                 const noneRow = data.bySource.find(r => r.source === "(none)")
                 if (sourced.length === 0) {
                   return (
                     <p className="text-xs text-muted-foreground py-10 text-center">
-                      No source tracked yet on any {entity}.
+                      {t("noSources", { entity: entityLabel.toLowerCase() })}
                     </p>
                   )
                 }
@@ -273,8 +288,8 @@ export default function InsightsPage() {
                       </BarChart>
                     </ResponsiveContainer>
                     <p className="text-[11px] text-muted-foreground text-center mt-1">
-                      Showing {sourced.reduce((s, r) => s + r.count, 0)} {entity} with source
-                      {noneRow ? ` · ${noneRow.count} without` : ""}
+                      {t("showingSourced", { shown: sourced.reduce((s, r) => s + r.count, 0), entity: entityLabel.toLowerCase() })}
+                      {noneRow ? ` · ${t("withoutSource", { count: noneRow.count })}` : ""}
                     </p>
                   </>
                 )
@@ -285,9 +300,9 @@ export default function InsightsPage() {
           {/* Top brands + Weekly timeseries */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-semibold mb-3">Top 10 brands</h2>
+              <h2 className="text-sm font-semibold mb-3">{t("topBrands")}</h2>
               {data.topBrands.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-8 text-center">No brand values set yet.</p>
+                <p className="text-xs text-muted-foreground py-8 text-center">{t("noBrands")}</p>
               ) : (
                 <ResponsiveContainer width="100%" height={Math.max(240, data.topBrands.length * 30)}>
                   <BarChart data={data.topBrands} layout="vertical" margin={{ left: 40 }}>
@@ -306,7 +321,7 @@ export default function InsightsPage() {
             </div>
 
             <div className="rounded-lg border bg-card p-4">
-              <h2 className="text-sm font-semibold mb-3">New {entity} per week (12 weeks)</h2>
+              <h2 className="text-sm font-semibold mb-3">{t("weeklyTitle", { entity: entityLabel.toLowerCase() })}</h2>
               <ResponsiveContainer width="100%" height={240}>
                 <LineChart data={weeklyFormatted}>
                   <XAxis dataKey="week" tick={{ fontSize: 11 }} />
@@ -323,37 +338,37 @@ export default function InsightsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="rounded-lg border bg-card p-4">
                 <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-blue-600" /> SMS attribution
+                  <MessageSquare className="h-4 w-4 text-blue-600" /> {t("smsAttribution")}
                 </h2>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-md bg-muted p-3">
                     <p className="text-2xl font-bold">{(data as ContactsAgg).sms.everReceived}</p>
-                    <p className="text-[11px] text-muted-foreground">Ever received</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsEver")}</p>
                   </div>
                   <div className="rounded-md bg-muted p-3">
                     <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last30}</p>
-                    <p className="text-[11px] text-muted-foreground">Last 30 days</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsLast30")}</p>
                   </div>
                   <div className="rounded-md bg-muted p-3">
                     <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last90}</p>
-                    <p className="text-[11px] text-muted-foreground">Last 90 days</p>
+                    <p className="text-[11px] text-muted-foreground">{t("smsLast90")}</p>
                   </div>
                 </div>
                 <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
                   <div className="h-full bg-blue-500 transition-all" style={{ width: `${(data as ContactsAgg).sms.coverage}%` }} />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-1">
-                  {(data as ContactsAgg).sms.coverage}% of contacts have SMS attribution
+                  {t("smsCoveragePct", { pct: (data as ContactsAgg).sms.coverage })}
                 </p>
                 {(data as ContactsAgg).sms.everReceived === 0 && (
                   <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
-                    No SMS campaigns recorded. Run one from <code className="bg-muted px-1 rounded">/campaigns</code>.
+                    {t.rich("smsNone", { link: () => <code className="bg-muted px-1 rounded">/campaigns</code> })}
                   </p>
                 )}
               </div>
 
               <div className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-semibold mb-3">Engagement by category</h2>
+                <h2 className="text-sm font-semibold mb-3">{t("engagementByCategory")}</h2>
                 <div className="space-y-2">
                   {(data as ContactsAgg).engagementByCategory.map((r, i) => (
                     <div key={i} className="flex items-center gap-3">
