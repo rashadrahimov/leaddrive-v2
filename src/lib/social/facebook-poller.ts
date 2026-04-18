@@ -28,7 +28,9 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   const sinceParam = account.lastPolledAt
     ? `&since=${Math.floor(account.lastPolledAt.getTime() / 1000)}`
     : ""
-  const url = `${GRAPH}/${account.handle}/feed?fields=id,message,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares,from&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}`
+  // /posts returns only the page's own posts (pages_read_engagement is enough).
+  // /feed would also include visitor posts but requires pages_read_user_content.
+  const url = `${GRAPH}/${account.handle}/posts?fields=id,message,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}`
 
   const res = await fetch(url)
   if (!res.ok) {
@@ -45,7 +47,6 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
       reactions?: { summary?: { total_count: number } }
       comments?: { summary?: { total_count: number } }
       shares?: { count: number }
-      from?: { id: string; name: string }
     }>
   }
 
@@ -86,8 +87,8 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
           sentiment,
           engagement,
           url: post.permalink_url || null,
-          authorName: post.from?.name || null,
-          authorHandle: post.from?.id || null,
+          authorName: account.displayName,
+          authorHandle: account.handle,
           publishedAt: new Date(post.created_time),
         },
         create: {
@@ -101,8 +102,8 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
           engagement,
           reach: 0,
           url: post.permalink_url || null,
-          authorName: post.from?.name || null,
-          authorHandle: post.from?.id || null,
+          authorName: account.displayName,
+          authorHandle: account.handle,
           publishedAt: new Date(post.created_time),
         },
       })
