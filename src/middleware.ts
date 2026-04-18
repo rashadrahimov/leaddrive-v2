@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth"
 // import { canAccessModule } from "@/lib/plan-config"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
-const publicPaths = ["/login", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/sms-otp", "/api/v1/settings/auth-methods", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain"]
+const publicPaths = ["/login", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/sms-otp", "/api/v1/settings/auth-methods", "/api/v1/public", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain", "/embed", "/s", "/widget.js"]
 
 // Marketing-only paths served on leaddrivecrm.org
 const marketingPaths = ["/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing"]
@@ -138,7 +138,7 @@ const authMiddleware = auth((req) => {
       return withCspHeaders(NextResponse.redirect(new URL(`${process.env.NEXT_PUBLIC_MARKETING_URL || "https://leaddrivecrm.org"}/home`)), nonce)
     }
     // On marketing domain: allow marketing paths + static assets + sw.js
-    if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js") {
+    if (isMarketingPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/_next/") || pathname === "/sw.js" || pathname === "/widget.js" || pathname.startsWith("/embed/") || pathname.startsWith("/s/")) {
       // Let it through — will be handled by publicPaths check below
     } else {
       // Non-marketing paths (dashboard, auth, etc.) → redirect to app subdomain
