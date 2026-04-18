@@ -76,10 +76,22 @@ function isIframeAllowedPath(pathname: string): boolean {
   return IFRAME_ALLOWED_PATHS.some((p) => pathname.startsWith(p) && (pathname.includes("/pdf") || pathname.includes("/act")))
 }
 
+// Paths embeddable from ANY origin (web chat widget on customer sites).
+// allowedOrigins whitelist is still enforced at the API layer (session/message endpoints).
+const CROSS_ORIGIN_EMBEDDABLE = ["/embed/chat/"]
+
+function isCrossOriginEmbeddable(pathname: string): boolean {
+  return CROSS_ORIGIN_EMBEDDABLE.some(p => pathname.startsWith(p))
+}
+
 // Apply CSP + nonce headers to any response
-function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFrame = false): NextResponse {
+function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFrame = false, pathname?: string): NextResponse {
   response.headers.set("x-nonce", nonce)
-  if (allowSameOriginFrame) {
+  if (pathname && isCrossOriginEmbeddable(pathname)) {
+    // Widget iframes — no X-Frame-Options restriction, allow embedding anywhere.
+    // (Leaving X-Frame-Options unset lets browsers use the more permissive CSP
+    // frame-ancestors rule, which we also don't set here — effectively "any origin".)
+  } else if (allowSameOriginFrame) {
     // Embeddable HTML (e.g. invoice preview): allow same-origin iframe, skip strict CSP
     // so inline <style> tags work without nonce (CSP3 ignores 'unsafe-inline' when nonce present)
     response.headers.set("X-Frame-Options", "SAMEORIGIN")
@@ -182,7 +194,7 @@ const authMiddleware = auth((req) => {
     if (localeCookie) {
       requestHeaders.set("x-locale", localeCookie)
     }
-    return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce)
+    return withCspHeaders(NextResponse.next({ headers: requestHeaders }), nonce, false, pathname)
   }
 
   // Allow health check

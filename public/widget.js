@@ -3,8 +3,12 @@
      <script src="https://app.leaddrivecrm.org/widget.js" data-key="YOUR_PUBLIC_KEY" async></script>
 */
 (function () {
-  if (window.__ldChatLoaded) return
+  if (window.__ldChatLoaded) {
+    console.warn("[leaddrive-widget] already loaded, skipping")
+    return
+  }
   window.__ldChatLoaded = true
+  console.log("[leaddrive-widget] IIFE started")
 
   var script = document.currentScript || (function () {
     var scripts = document.getElementsByTagName("script")
@@ -14,13 +18,17 @@
     }
     return null
   })()
-  if (!script) return
+  if (!script) {
+    console.warn("[leaddrive-widget] couldn't find own script tag")
+    return
+  }
 
   var key = script.getAttribute("data-key")
   if (!key) {
     console.warn("[leaddrive-widget] missing data-key attribute")
     return
   }
+  console.log("[leaddrive-widget] key=", key)
 
   var origin = new URL(script.src).origin
   var position = script.getAttribute("data-position") || "bottom-right"
@@ -30,11 +38,12 @@
   fetch(origin + "/api/v1/public/web-chat/config?key=" + encodeURIComponent(key))
     .then(function (r) { return r.json() })
     .then(function (res) {
+      console.log("[leaddrive-widget] config response", res)
       if (!res || !res.success) return
       var cfg = res.data
       renderLauncher(cfg)
     })
-    .catch(function (err) { console.warn("[leaddrive-widget]", err) })
+    .catch(function (err) { console.warn("[leaddrive-widget] fetch failed", err) })
 
   function renderLauncher(cfg) {
     var color = cfg.primaryColor || primaryColor
