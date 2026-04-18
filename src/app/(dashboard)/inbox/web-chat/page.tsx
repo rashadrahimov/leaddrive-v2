@@ -88,6 +88,36 @@ export default function WebChatInboxPage() {
     } catch {}
   }
 
+  // OS-level notification — only when the page is hidden/unfocused; otherwise
+  // the in-page toast is enough and a Notification would be noisy overlap.
+  const showNotification = (title: string, body: string, onOpen: () => void) => {
+    if (typeof window === "undefined" || !("Notification" in window)) return
+    if (document.visibilityState === "visible" && document.hasFocus()) return
+    if (Notification.permission !== "granted") return
+    try {
+      const n = new Notification(title, { body, icon: "/favicon.ico", tag: "ld-webchat" })
+      n.onclick = () => {
+        try { window.focus() } catch {}
+        onOpen()
+        n.close()
+      }
+    } catch {}
+  }
+
+  // Ask permission once on mount (browsers require a user gesture for prompt;
+  // we do it on first focus / first poll to piggy-back on an interaction).
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return
+    if (Notification.permission === "default") {
+      const ask = () => {
+        Notification.requestPermission().catch(() => {})
+        document.removeEventListener("click", ask)
+      }
+      document.addEventListener("click", ask, { once: true })
+      return () => document.removeEventListener("click", ask)
+    }
+  }, [])
+
   const loadSessions = useCallback(async () => {
     const params = new URLSearchParams()
     if (statusFilter) params.set("status", statusFilter)
@@ -101,9 +131,12 @@ export default function WebChatInboxPage() {
         const newest = list.find(s => new Date(s.lastMessageAt).getTime() === newestTs)
         if (newest && newest.id !== selectedId) {
           playPing()
-          toast.message(t("newMessageFrom", { name: newest.visitorName || newest.visitorEmail || t("anonymous") }), {
+          const title = t("newMessageFrom", { name: newest.visitorName || newest.visitorEmail || t("anonymous") })
+          toast.message(title, {
             action: { label: t("open"), onClick: () => setSelectedId(newest.id) },
           })
+          // OS-level notification — only fires when the tab is hidden/unfocused.
+          showNotification(title, (newest as any).lastText || t("open"), () => setSelectedId(newest.id))
         }
       }
       if (newestTs > lastSeenLatest.current) lastSeenLatest.current = newestTs

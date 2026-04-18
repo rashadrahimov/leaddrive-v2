@@ -14,7 +14,7 @@ import {
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
   Trophy, Activity, FileBarChart, Bot, Sparkles,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Logo } from "@/components/logo"
 import { useTranslations } from "next-intl"
 import { useTicketBadge } from "@/contexts/ticket-badge-context"
@@ -142,15 +142,53 @@ export function Sidebar({ org }: SidebarProps) {
   const t = useTranslations("nav")
   const { newTicketCount } = useTicketBadge()
   const [webChatUnread, setWebChatUnread] = useState(0)
+  const prevUnread = useRef(0)
 
   useEffect(() => {
     let cancelled = false
+
+    // Lazy-ask Notification permission on first user click — browsers reject
+    // programmatic calls without a user gesture.
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      const ask = () => {
+        Notification.requestPermission().catch(() => {})
+        document.removeEventListener("click", ask)
+      }
+      document.addEventListener("click", ask, { once: true })
+    }
+
+    const notify = (delta: number) => {
+      if (typeof window === "undefined" || !("Notification" in window)) return
+      if (Notification.permission !== "granted") return
+      // Only fire when the CRM is not actively focused.
+      if (document.visibilityState === "visible" && document.hasFocus()) return
+      try {
+        const n = new Notification("New web chat message", {
+          body: delta === 1 ? "A visitor is waiting" : `${delta} new messages from visitors`,
+          icon: "/favicon.ico",
+          tag: "ld-webchat-global",
+        })
+        n.onclick = () => {
+          try { window.focus() } catch {}
+          window.location.href = "/inbox/web-chat"
+          n.close()
+        }
+      } catch {}
+    }
+
     const tick = async () => {
       try {
         const res = await fetch("/api/v1/web-chat/sessions/unread-count")
         if (!res.ok) return
         const data = await res.json()
-        if (!cancelled && data.success) setWebChatUnread(data.data.count)
+        if (!cancelled && data.success) {
+          const next = data.data.count as number
+          if (next > prevUnread.current && prevUnread.current > 0) {
+            notify(next - prevUnread.current)
+          }
+          prevUnread.current = next
+          setWebChatUnread(next)
+        }
       } catch {}
     }
     tick()
