@@ -83,13 +83,19 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Analytics</h3>
         <div className="flex items-center gap-1 text-xs">
-          {[7, 30, 90].map(d => (
+          {[
+            { v: 7, label: "7d" },
+            { v: 30, label: "30d" },
+            { v: 90, label: "90d" },
+            { v: 365, label: "1y" },
+            { v: 3650, label: "All" },
+          ].map(({ v, label }) => (
             <button
-              key={d}
-              onClick={() => setRange(d)}
-              className={`px-2.5 py-1 rounded-md border ${range === d ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
+              key={v}
+              onClick={() => setRange(v)}
+              className={`px-2.5 py-1 rounded-md border ${range === v ? "bg-primary text-primary-foreground border-primary" : "bg-background hover:bg-muted"}`}
             >
-              {d}d
+              {label}
             </button>
           ))}
         </div>

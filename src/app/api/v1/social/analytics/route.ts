@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { requireAuth, isAuthError } from "@/lib/api-auth"
 
-const MAX_DAYS = 180
+const MAX_DAYS = 3650 // ~10 years; enough to cover any archived mentions
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req, "campaigns", "read")
@@ -36,12 +36,28 @@ export async function GET(req: NextRequest) {
     take: 20000,
   })
 
-  // Daily time-series: mentions + sentiment per day
+  // Pick bucket granularity so the time-series stays readable:
+  //   ≤ 90 days → daily,  ≤ 365 → weekly (ISO Monday),  otherwise monthly.
+  const bucketMode: "day" | "week" | "month" =
+    days <= 90 ? "day" : days <= 365 ? "week" : "month"
+
+  const bucketKey = (d: Date): string => {
+    if (bucketMode === "day") return d.toISOString().slice(0, 10)
+    if (bucketMode === "week") {
+      // Round down to Monday so weeks align across buckets.
+      const copy = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+      const dow = copy.getUTCDay() || 7 // Sunday → 7 so we subtract 6
+      copy.setUTCDate(copy.getUTCDate() - (dow - 1))
+      return copy.toISOString().slice(0, 10)
+    }
+    return d.toISOString().slice(0, 7) + "-01"
+  }
+
   const byDay = new Map<string, { day: string; total: number; positive: number; neutral: number; negative: number; engagement: number }>()
-  for (let i = 0; i < days; i++) {
-    const d = new Date(now.getTime() - i * 86400 * 1000)
-    const key = d.toISOString().slice(0, 10)
-    byDay.set(key, { day: key, total: 0, positive: 0, neutral: 0, negative: 0, engagement: 0 })
+  const stepMs = bucketMode === "day" ? 86400_000 : bucketMode === "week" ? 7 * 86400_000 : 30 * 86400_000
+  for (let t = now.getTime(); t >= since.getTime(); t -= stepMs) {
+    const key = bucketKey(new Date(t))
+    if (!byDay.has(key)) byDay.set(key, { day: key, total: 0, positive: 0, neutral: 0, negative: 0, engagement: 0 })
   }
   const bySentiment = { positive: 0, neutral: 0, negative: 0 }
   const byPlatform = new Map<string, number>()
@@ -54,7 +70,7 @@ export async function GET(req: NextRequest) {
 
   for (const m of mentions) {
     const ts = m.publishedAt || m.createdAt
-    const key = ts.toISOString().slice(0, 10)
+    const key = bucketKey(ts)
     const bucket = byDay.get(key)
     if (bucket) {
       bucket.total++
@@ -82,21 +98,28 @@ export async function GET(req: NextRequest) {
   const topTerms = Array.from(byTerm.entries()).map(([term, count]) => ({ term, count })).sort((a, b) => b.count - a.count).slice(0, 10)
   const topAuthors = Array.from(byAuthor.values()).sort((a, b) => b.count - a.count).slice(0, 10)
 
-  // Spike detection: compare today's negative count against trailing 7-day average
-  const todayKey = now.toISOString().slice(0, 10)
-  const today = byDay.get(todayKey) || { positive: 0, neutral: 0, negative: 0 }
-  let trailing = 0
-  let trailingDays = 0
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(now.getTime() - i * 86400 * 1000).toISOString().slice(0, 10)
-    const b = byDay.get(d)
-    if (b) {
-      trailing += b.negative
-      trailingDays++
+  // Spike detection only applies to the daily view — compare today's negative
+  // count against the trailing 7-day average. For weekly/monthly buckets the
+  // comparison loses meaning, so skip.
+  let negativeSpike: { today: number; avg7d: number } | null = null
+  if (bucketMode === "day") {
+    const todayKey = now.toISOString().slice(0, 10)
+    const today = byDay.get(todayKey) || { positive: 0, neutral: 0, negative: 0 }
+    let trailing = 0
+    let trailingDays = 0
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(now.getTime() - i * 86400_000).toISOString().slice(0, 10)
+      const b = byDay.get(d)
+      if (b) {
+        trailing += b.negative
+        trailingDays++
+      }
+    }
+    const avg = trailingDays > 0 ? trailing / trailingDays : 0
+    if (today.negative >= 3 && today.negative > avg * 2) {
+      negativeSpike = { today: today.negative, avg7d: Number(avg.toFixed(1)) }
     }
   }
-  const avg = trailingDays > 0 ? trailing / trailingDays : 0
-  const negativeSpike = today.negative >= 3 && today.negative > avg * 2 ? { today: today.negative, avg7d: Number(avg.toFixed(1)) } : null
 
   return NextResponse.json({
     success: true,
