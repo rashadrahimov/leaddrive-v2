@@ -48,7 +48,9 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   // /posts returns only the page's own posts (pages_read_engagement is enough),
   // unlike /feed which also needs pages_read_user_content. Using /me bypasses
   // a Meta quirk where /{page_id}/posts errors with #10 even for page admins.
-  const url = `${GRAPH}/me/posts?fields=id,message,story,created_time,permalink_url,reactions.summary(true),comments.summary(true),shares&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}${proofParam}`
+  // Extra fields like reactions.summary / comments.summary re-trigger #10 on
+  // some dev-mode Pages — stick to the minimum that worked in probe calls.
+  const url = `${GRAPH}/me/posts?fields=id,message,story,created_time,permalink_url&limit=50${sinceParam}&access_token=${encodeURIComponent(token)}${proofParam}`
 
   const res = await fetch(url)
   if (!res.ok) {
@@ -73,10 +75,12 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   const keywords = account.keywords || []
 
   for (const post of data.data || []) {
-    // Some posts carry only a `story` (status updates, shares), others carry
-    // a user-authored `message`. Skip posts with neither.
     const text = (post.message || post.story || "").trim()
     if (!text) continue
+    // Skip engagement metrics for now — the reactions/comments summary API
+    // fails with #10 on dev-mode Pages. We'll layer that in once the app has
+    // broader permissions or switches to webhook-based delivery.
+    const engagement = 0
 
     // If keywords configured, require at least one to match.
     let matchedTerm: string | null = null
@@ -89,10 +93,6 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
     }
 
     const sentiment = await classifySentiment(text)
-    const engagement =
-      (post.reactions?.summary?.total_count || 0) +
-      (post.comments?.summary?.total_count || 0) +
-      (post.shares?.count || 0)
 
     try {
       await prisma.socialMention.upsert({
