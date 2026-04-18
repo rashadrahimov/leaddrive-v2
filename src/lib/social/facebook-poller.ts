@@ -72,65 +72,94 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
   }
 
   let ingested = 0
-  const keywords = account.keywords || []
 
-  for (const post of data.data || []) {
-    const text = (post.message || post.story || "").trim()
-    if (!text) continue
-    // Skip engagement metrics for now — the reactions/comments summary API
-    // fails with #10 on dev-mode Pages. We'll layer that in once the app has
-    // broader permissions or switches to webhook-based delivery.
-    const engagement = 0
+  // We deliberately do NOT ingest our own posts — they add noise to the
+  // monitoring inbox and never turn into leads. We only fetch them here so
+  // we can walk each post's comments below.
 
-    // If keywords configured, require at least one to match.
-    let matchedTerm: string | null = null
-    if (keywords.length > 0) {
-      const lower = text.toLowerCase()
-      for (const kw of keywords) {
-        if (lower.includes(kw.toLowerCase())) { matchedTerm = kw; break }
-      }
-      if (!matchedTerm) continue
+  // Pull comments on each recent post — these are the real "mentions" where
+  // leads come from. Requires pages_read_user_content.
+  for (const post of (data.data || []).slice(0, 20)) {
+    const commentsUrl = `${GRAPH}/${post.id}/comments?fields=id,message,from,created_time,like_count&limit=50&access_token=${encodeURIComponent(token)}${proofParam}`
+    const cRes = await fetch(commentsUrl)
+    if (!cRes.ok) continue
+    const cJson = await cRes.json() as {
+      data: Array<{ id: string; message?: string; from?: { id: string; name: string }; created_time: string; like_count?: number }>
     }
-
-    const sentiment = await classifySentiment(text)
-
-    try {
-      await prisma.socialMention.upsert({
-        where: {
-          organizationId_platform_externalId: {
-            organizationId: account.organizationId,
-            platform: "facebook",
-            externalId: post.id,
+    for (const c of cJson.data || []) {
+      const cText = (c.message || "").trim()
+      if (!cText) continue
+      const cSent = await classifySentiment(cText)
+      try {
+        await prisma.socialMention.upsert({
+          where: {
+            organizationId_platform_externalId: {
+              organizationId: account.organizationId,
+              platform: "facebook",
+              externalId: `c:${c.id}`,
+            },
           },
-        },
-        update: {
-          text,
-          sentiment,
-          engagement,
-          url: post.permalink_url || null,
-          authorName: account.displayName,
-          authorHandle: account.handle,
-          publishedAt: new Date(post.created_time),
-        },
-        create: {
-          organizationId: account.organizationId,
-          accountId: account.id,
-          platform: "facebook",
-          externalId: post.id,
-          text,
-          sentiment,
-          matchedTerm,
-          engagement,
-          reach: 0,
-          url: post.permalink_url || null,
-          authorName: account.displayName,
-          authorHandle: account.handle,
-          publishedAt: new Date(post.created_time),
-        },
-      })
-      ingested++
-    } catch (e) {
-      console.error("[facebook-poller] upsert failed for post", post.id, e)
+          update: { text: cText, sentiment: cSent, engagement: c.like_count || 0 },
+          create: {
+            organizationId: account.organizationId,
+            accountId: account.id,
+            platform: "facebook",
+            externalId: `c:${c.id}`,
+            text: cText,
+            sentiment: cSent,
+            matchedTerm: null,
+            engagement: c.like_count || 0,
+            reach: 0,
+            url: post.permalink_url || null,
+            authorName: c.from?.name || null,
+            authorHandle: c.from?.id || null,
+            publishedAt: new Date(c.created_time),
+          },
+        })
+        ingested++
+      } catch {}
+    }
+  }
+
+  // Fetch posts where this page is tagged — these are true external mentions.
+  const taggedUrl = `${GRAPH}/me/tagged?fields=id,message,story,created_time,permalink_url,from&limit=25&access_token=${encodeURIComponent(token)}${proofParam}`
+  const tRes = await fetch(taggedUrl)
+  if (tRes.ok) {
+    const tJson = await tRes.json() as {
+      data: Array<{ id: string; message?: string; story?: string; created_time: string; permalink_url?: string; from?: { id: string; name: string } }>
+    }
+    for (const tp of tJson.data || []) {
+      const tText = (tp.message || tp.story || "").trim()
+      if (!tText) continue
+      const tSent = await classifySentiment(tText)
+      try {
+        await prisma.socialMention.upsert({
+          where: {
+            organizationId_platform_externalId: {
+              organizationId: account.organizationId,
+              platform: "facebook",
+              externalId: `t:${tp.id}`,
+            },
+          },
+          update: { text: tText, sentiment: tSent },
+          create: {
+            organizationId: account.organizationId,
+            accountId: account.id,
+            platform: "facebook",
+            externalId: `t:${tp.id}`,
+            text: tText,
+            sentiment: tSent,
+            matchedTerm: null,
+            engagement: 0,
+            reach: 0,
+            url: tp.permalink_url || null,
+            authorName: tp.from?.name || null,
+            authorHandle: tp.from?.id || null,
+            publishedAt: new Date(tp.created_time),
+          },
+        })
+        ingested++
+      } catch {}
     }
   }
 
@@ -173,59 +202,90 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
   }
 
   let ingested = 0
-  const keywords = account.keywords || []
 
-  for (const m of mediaJson.data || []) {
-    const text = (m.caption || "").trim()
-    if (!text) continue
+  // Own captions are not useful in the monitoring inbox — skip them. We walk
+  // the media list only to pull comments and tags underneath each item.
 
-    let matchedTerm: string | null = null
-    if (keywords.length > 0) {
-      const lower = text.toLowerCase()
-      for (const kw of keywords) {
-        if (lower.includes(kw.toLowerCase())) { matchedTerm = kw; break }
-      }
-      if (!matchedTerm) continue
+  // Pull comments on each recent media. Requires instagram_manage_comments.
+  for (const m of (mediaJson.data || []).slice(0, 20)) {
+    const commentsUrl = `${GRAPH}/${m.id}/comments?fields=id,text,username,timestamp,like_count&limit=50&access_token=${encodeURIComponent(token)}${proofParam}`
+    const cRes = await fetch(commentsUrl)
+    if (!cRes.ok) continue
+    const cJson = await cRes.json() as {
+      data: Array<{ id: string; text?: string; username?: string; timestamp: string; like_count?: number }>
     }
-
-    const sentiment = await classifySentiment(text)
-    const engagement = (m.like_count || 0) + (m.comments_count || 0)
-
-    try {
-      await prisma.socialMention.upsert({
-        where: {
-          organizationId_platform_externalId: {
-            organizationId: account.organizationId,
-            platform: "instagram",
-            externalId: m.id,
+    for (const c of cJson.data || []) {
+      const cText = (c.text || "").trim()
+      if (!cText) continue
+      const cSent = await classifySentiment(cText)
+      try {
+        await prisma.socialMention.upsert({
+          where: {
+            organizationId_platform_externalId: {
+              organizationId: account.organizationId,
+              platform: "instagram",
+              externalId: `c:${c.id}`,
+            },
           },
-        },
-        update: {
-          text,
-          sentiment,
-          engagement,
-          url: m.permalink || null,
-          authorHandle: m.username || null,
-          publishedAt: new Date(m.timestamp),
-        },
-        create: {
-          organizationId: account.organizationId,
-          accountId: account.id,
-          platform: "instagram",
-          externalId: m.id,
-          text,
-          sentiment,
-          matchedTerm,
-          engagement,
-          reach: 0,
-          url: m.permalink || null,
-          authorHandle: m.username || null,
-          publishedAt: new Date(m.timestamp),
-        },
-      })
-      ingested++
-    } catch (e) {
-      console.error("[instagram-poller] upsert failed for media", m.id, e)
+          update: { text: cText, sentiment: cSent, engagement: c.like_count || 0 },
+          create: {
+            organizationId: account.organizationId,
+            accountId: account.id,
+            platform: "instagram",
+            externalId: `c:${c.id}`,
+            text: cText,
+            sentiment: cSent,
+            matchedTerm: null,
+            engagement: c.like_count || 0,
+            reach: 0,
+            url: m.permalink || null,
+            authorHandle: c.username || null,
+            publishedAt: new Date(c.timestamp),
+          },
+        })
+        ingested++
+      } catch {}
+    }
+  }
+
+  // Fetch media where this account is tagged (brand mentions). Same scope.
+  const tagsUrl = `${GRAPH}/${account.handle}/tags?fields=id,caption,permalink,timestamp,username&limit=25&access_token=${encodeURIComponent(token)}${proofParam}`
+  const tRes = await fetch(tagsUrl)
+  if (tRes.ok) {
+    const tJson = await tRes.json() as {
+      data: Array<{ id: string; caption?: string; permalink?: string; timestamp: string; username?: string }>
+    }
+    for (const tm of tJson.data || []) {
+      const tText = (tm.caption || "").trim()
+      if (!tText) continue
+      const tSent = await classifySentiment(tText)
+      try {
+        await prisma.socialMention.upsert({
+          where: {
+            organizationId_platform_externalId: {
+              organizationId: account.organizationId,
+              platform: "instagram",
+              externalId: `t:${tm.id}`,
+            },
+          },
+          update: { text: tText, sentiment: tSent },
+          create: {
+            organizationId: account.organizationId,
+            accountId: account.id,
+            platform: "instagram",
+            externalId: `t:${tm.id}`,
+            text: tText,
+            sentiment: tSent,
+            matchedTerm: null,
+            engagement: 0,
+            reach: 0,
+            url: tm.permalink || null,
+            authorHandle: tm.username || null,
+            publishedAt: new Date(tm.timestamp),
+          },
+        })
+        ingested++
+      } catch {}
     }
   }
 

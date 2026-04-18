@@ -36,15 +36,16 @@ export async function GET(req: NextRequest) {
   const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex")
 
   // Scopes must be enabled in the Meta App's Use Cases > Permissions tab first.
-  // Kept minimal: enough to list admined pages, read their feed, and reach the
-  // linked Instagram Business account. Messaging/publishing scopes can be added
-  // later per-use-case if we grow replying/posting features.
+  // - pages_read_user_content: comments on our posts + /tagged (visitor content)
+  // - instagram_manage_comments: comments on IG media + /tags (brand mentions)
   const scopes = [
     "public_profile",
     "pages_show_list",
     "pages_read_engagement",
+    "pages_read_user_content",
     "business_management",
     "instagram_basic",
+    "instagram_manage_comments",
   ].join(",")
 
   const url = new URL("https://www.facebook.com/v21.0/dialog/oauth")
