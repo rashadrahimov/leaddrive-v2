@@ -12,7 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
-  Trophy, Activity, FileBarChart, Bot, Sparkles,
+  Trophy, Activity, FileBarChart, Bot, Sparkles, Inbox,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Logo } from "@/components/logo"
@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { module: "campaigns", href: "/social-monitoring", icon: Activity, tKey: "socialMonitoring", group: "Marketing" },
   { module: "omnichannel", href: "/inbox", icon: MessageSquare, tKey: "inbox", group: "Communication" },
   { module: "omnichannel", href: "/inbox/web-chat", icon: MessageCircle, tKey: "webChatInbox", group: "Communication" },
+  { module: "ai", href: "/ai/actions", icon: Inbox, tKey: "aiActions", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
   { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
@@ -142,6 +143,7 @@ export function Sidebar({ org }: SidebarProps) {
   const t = useTranslations("nav")
   const { newTicketCount } = useTicketBadge()
   const [webChatUnread, setWebChatUnread] = useState(0)
+  const [aiPendingCount, setAiPendingCount] = useState(0)
   const prevUnread = useRef(0)
 
   useEffect(() => {
@@ -208,7 +210,19 @@ export function Sidebar({ org }: SidebarProps) {
     }
     tick()
     const id = setInterval(tick, 30000)
-    return () => { cancelled = true; clearInterval(id) }
+
+    const pollAi = async () => {
+      try {
+        const res = await fetch("/api/v1/ai-shadow-actions?status=pending&limit=1")
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && data?.pagination) setAiPendingCount(data.pagination.total || 0)
+      } catch {}
+    }
+    pollAi()
+    const aiId = setInterval(pollAi, 60000)
+
+    return () => { cancelled = true; clearInterval(id); clearInterval(aiId) }
   }, [])
 
   // Filter sidebar items based on org modules/features/plan
@@ -288,6 +302,11 @@ export function Sidebar({ org }: SidebarProps) {
                       {item.href === "/inbox/web-chat" && webChatUnread > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
                           {webChatUnread > 99 ? "99+" : webChatUnread}
+                        </span>
+                      )}
+                      {item.href === "/ai/actions" && aiPendingCount > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] rounded-full bg-purple-500 text-white text-[10px] flex items-center justify-center font-bold px-1">
+                          {aiPendingCount > 99 ? "99+" : aiPendingCount}
                         </span>
                       )}
                     </div>

@@ -45,6 +45,7 @@
     "surveys": "Опросы и NPS",
     "socialMonitoring": "Соцмониторинг",
     "webChatInbox": "Веб-чат",
+    "aiActions": "AI-Действия",
     "fieldPermissions": "Права полей",
     "voip": "VoIP",
     "voipCalls": "VoIP Звонки",
@@ -2986,6 +2987,10 @@
     "shadowContractEntity": "Контракт",
     "shadowRenewalReason": "{days} дней до конца. Предложено {uplift} к текущей цене.",
     "shadowRenewalDetail": "Клиенту уйдёт email с proposal-текстом (сгенерированным AI). В CRM создастся сделка «Renewal — <company>» на стадии PROPOSAL с probability 60%."
+  },
+  "aiActions": {
+    "title": "AI-Действия",
+    "subtitle": "Действия, которые AI подготовил для клиентов — проверьте и одобрите перед отправкой. Нажатие «Одобрить» запускает email/задачу/изменение в CRM."
   },
   "tips": {
     "prefix": "А знаете ли вы?",

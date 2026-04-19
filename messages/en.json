@@ -45,6 +45,7 @@
     "surveys": "Surveys & NPS",
     "socialMonitoring": "Social Monitoring",
     "webChatInbox": "Web Chat Inbox",
+    "aiActions": "AI Actions",
     "fieldPermissions": "Field Permissions",
     "voip": "VoIP",
     "voipCalls": "VoIP Calls",
@@ -2986,6 +2987,10 @@
     "shadowContractEntity": "Contract",
     "shadowRenewalReason": "{days} days until end. Proposed {uplift} over current price.",
     "shadowRenewalDetail": "A proposal email (AI-drafted) is sent to the customer. A deal \"Renewal — <company>\" is created in PROPOSAL stage with probability 60%."
+  },
+  "aiActions": {
+    "title": "AI Actions",
+    "subtitle": "Actions AI has prepared for customers — review and approve before they run. Clicking Approve sends the email / creates the task / updates the CRM."
   },
   "tips": {
     "prefix": "Did you know?",

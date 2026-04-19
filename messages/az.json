@@ -45,6 +45,7 @@
     "surveys": "Sorğular və NPS",
     "socialMonitoring": "Sosial monitorinq",
     "webChatInbox": "Veb-çat",
+    "aiActions": "AI Hərəkətlər",
     "fieldPermissions": "Sahə icazələri",
     "voip": "VoIP",
     "voipCalls": "VoIP Zənglər",
@@ -2986,6 +2987,10 @@
     "shadowContractEntity": "Müqavilə",
     "shadowRenewalReason": "{days} gün qaldı. Cari qiymətə {uplift} təklif edilir.",
     "shadowRenewalDetail": "Müştəriyə AI-hazırlanmış proposal email-i göndəriləcək. CRM-də «Renewal — <şirkət>» adlı sövdə PROPOSAL mərhələsində 60% ehtimalla yaradılacaq."
+  },
+  "aiActions": {
+    "title": "AI Hərəkətlər",
+    "subtitle": "AI-nin müştərilər üçün hazırladığı hərəkətlər — icra olunmazdan əvvəl yoxlayın və təsdiqləyin. «Təsdiq et» email göndərir, tapşırıq yaradır və ya CRM-i yeniləyir."
   },
   "tips": {
     "prefix": "Bilirdinizmi?",
