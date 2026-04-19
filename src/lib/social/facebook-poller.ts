@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { decryptToken } from "@/lib/secure-token"
 import { classifySentiment } from "@/lib/sentiment"
+import { ingestMention } from "@/lib/social/ingest-mention"
 import crypto from "crypto"
 
 const GRAPH = "https://graph.facebook.com/v21.0"
@@ -91,32 +92,21 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
       if (!cText) continue
       const cSent = await classifySentiment(cText)
       try {
-        await prisma.socialMention.upsert({
-          where: {
-            organizationId_platform_externalId: {
-              organizationId: account.organizationId,
-              platform: "facebook",
-              externalId: `c:${c.id}`,
-            },
-          },
-          update: { text: cText, sentiment: cSent, engagement: c.like_count || 0 },
-          create: {
-            organizationId: account.organizationId,
-            accountId: account.id,
-            platform: "facebook",
-            externalId: `c:${c.id}`,
-            text: cText,
-            sentiment: cSent,
-            matchedTerm: null,
-            engagement: c.like_count || 0,
-            reach: 0,
-            url: post.permalink_url || null,
-            authorName: c.from?.name || null,
-            authorHandle: c.from?.id || null,
-            publishedAt: new Date(c.created_time),
-          },
+        const isNew = await ingestMention({
+          organizationId: account.organizationId,
+          accountId: account.id,
+          platform: "facebook",
+          externalId: `c:${c.id}`,
+          text: cText,
+          sentiment: cSent,
+          matchedTerm: null,
+          engagement: c.like_count || 0,
+          url: post.permalink_url || null,
+          authorName: c.from?.name || null,
+          authorHandle: c.from?.id || null,
+          publishedAt: new Date(c.created_time),
         })
-        ingested++
+        if (isNew) ingested++
       } catch {}
     }
   }
@@ -133,32 +123,20 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
       if (!tText) continue
       const tSent = await classifySentiment(tText)
       try {
-        await prisma.socialMention.upsert({
-          where: {
-            organizationId_platform_externalId: {
-              organizationId: account.organizationId,
-              platform: "facebook",
-              externalId: `t:${tp.id}`,
-            },
-          },
-          update: { text: tText, sentiment: tSent },
-          create: {
-            organizationId: account.organizationId,
-            accountId: account.id,
-            platform: "facebook",
-            externalId: `t:${tp.id}`,
-            text: tText,
-            sentiment: tSent,
-            matchedTerm: null,
-            engagement: 0,
-            reach: 0,
-            url: tp.permalink_url || null,
-            authorName: tp.from?.name || null,
-            authorHandle: tp.from?.id || null,
-            publishedAt: new Date(tp.created_time),
-          },
+        const isNew = await ingestMention({
+          organizationId: account.organizationId,
+          accountId: account.id,
+          platform: "facebook",
+          externalId: `t:${tp.id}`,
+          text: tText,
+          sentiment: tSent,
+          matchedTerm: null,
+          url: tp.permalink_url || null,
+          authorName: tp.from?.name || null,
+          authorHandle: tp.from?.id || null,
+          publishedAt: new Date(tp.created_time),
         })
-        ingested++
+        if (isNew) ingested++
       } catch {}
     }
   }
@@ -219,31 +197,20 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
       if (!cText) continue
       const cSent = await classifySentiment(cText)
       try {
-        await prisma.socialMention.upsert({
-          where: {
-            organizationId_platform_externalId: {
-              organizationId: account.organizationId,
-              platform: "instagram",
-              externalId: `c:${c.id}`,
-            },
-          },
-          update: { text: cText, sentiment: cSent, engagement: c.like_count || 0 },
-          create: {
-            organizationId: account.organizationId,
-            accountId: account.id,
-            platform: "instagram",
-            externalId: `c:${c.id}`,
-            text: cText,
-            sentiment: cSent,
-            matchedTerm: null,
-            engagement: c.like_count || 0,
-            reach: 0,
-            url: m.permalink || null,
-            authorHandle: c.username || null,
-            publishedAt: new Date(c.timestamp),
-          },
+        const isNew = await ingestMention({
+          organizationId: account.organizationId,
+          accountId: account.id,
+          platform: "instagram",
+          externalId: `c:${c.id}`,
+          text: cText,
+          sentiment: cSent,
+          matchedTerm: null,
+          engagement: c.like_count || 0,
+          url: m.permalink || null,
+          authorHandle: c.username || null,
+          publishedAt: new Date(c.timestamp),
         })
-        ingested++
+        if (isNew) ingested++
       } catch {}
     }
   }
@@ -260,31 +227,19 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
       if (!tText) continue
       const tSent = await classifySentiment(tText)
       try {
-        await prisma.socialMention.upsert({
-          where: {
-            organizationId_platform_externalId: {
-              organizationId: account.organizationId,
-              platform: "instagram",
-              externalId: `t:${tm.id}`,
-            },
-          },
-          update: { text: tText, sentiment: tSent },
-          create: {
-            organizationId: account.organizationId,
-            accountId: account.id,
-            platform: "instagram",
-            externalId: `t:${tm.id}`,
-            text: tText,
-            sentiment: tSent,
-            matchedTerm: null,
-            engagement: 0,
-            reach: 0,
-            url: tm.permalink || null,
-            authorHandle: tm.username || null,
-            publishedAt: new Date(tm.timestamp),
-          },
+        const isNew = await ingestMention({
+          organizationId: account.organizationId,
+          accountId: account.id,
+          platform: "instagram",
+          externalId: `t:${tm.id}`,
+          text: tText,
+          sentiment: tSent,
+          matchedTerm: null,
+          url: tm.permalink || null,
+          authorHandle: tm.username || null,
+          publishedAt: new Date(tm.timestamp),
         })
-        ingested++
+        if (isNew) ingested++
       } catch {}
     }
   }

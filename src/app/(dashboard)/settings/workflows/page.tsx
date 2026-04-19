@@ -45,6 +45,7 @@ const entityIcons: Record<string, any> = {
   task: CheckSquare, tasks: CheckSquare,
   contact: User, contacts: User,
   company: Building2, companies: Building2,
+  social_mention: Bell, social_mentions: Bell,
 }
 
 const actionIcons: Record<string, any> = {
@@ -117,6 +118,8 @@ export default function WorkflowsPage() {
     contacts: t("entityContact"),
     company: t("entityCompany"),
     companies: t("entityCompany"),
+    social_mention: "Social mention",
+    social_mentions: "Social mention",
   }
 
   const triggerLabels: Record<string, string> = {
