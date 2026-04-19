@@ -440,31 +440,31 @@ export default function SocialMonitoringPage() {
                 )}
                 <div className="flex items-center gap-1 ml-auto">
                   <Button
-                    variant="ghost"
+                    variant={m.sentiment === "positive" ? "default" : "ghost"}
                     size="sm"
-                    className={`h-7 w-7 p-0 ${m.sentiment === "positive" ? "bg-green-100 ring-1 ring-green-500 dark:bg-green-900/30" : ""}`}
+                    className={`h-7 w-7 p-0 ${m.sentiment === "positive" ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "positive" })}
                     title="Mark positive"
                   >
-                    <ThumbsUp className="h-3 w-3 text-green-600" />
+                    <ThumbsUp className={`h-3 w-3 ${m.sentiment === "positive" ? "text-white" : "text-green-600"}`} />
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant={m.sentiment === "neutral" ? "default" : "ghost"}
                     size="sm"
-                    className={`h-7 w-7 p-0 ${m.sentiment === "neutral" ? "bg-muted ring-1 ring-muted-foreground/40" : ""}`}
+                    className={`h-7 w-7 p-0 ${m.sentiment === "neutral" ? "bg-muted-foreground hover:bg-muted-foreground/90 text-background" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "neutral" })}
                     title="Mark neutral"
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant={m.sentiment === "negative" ? "default" : "ghost"}
                     size="sm"
-                    className={`h-7 w-7 p-0 ${m.sentiment === "negative" ? "bg-red-100 ring-1 ring-red-500 dark:bg-red-900/30" : ""}`}
+                    className={`h-7 w-7 p-0 ${m.sentiment === "negative" ? "bg-red-500 hover:bg-red-600 text-white" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "negative" })}
                     title="Mark negative"
                   >
-                    <ThumbsDown className="h-3 w-3 text-red-600" />
+                    <ThumbsDown className={`h-3 w-3 ${m.sentiment === "negative" ? "text-white" : "text-red-600"}`} />
                   </Button>
                 </div>
               </div>
