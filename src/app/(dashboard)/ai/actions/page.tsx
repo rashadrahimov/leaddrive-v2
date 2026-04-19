@@ -144,7 +144,7 @@ export default function AiActionsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [filterType, setFilterType] = useState<string>("all")
   const [filterUrgency, setFilterUrgency] = useState<"all" | UrgencyLevel>("all")
-  const [sortMode, setSortMode] = useState<"urgency" | "newest" | "oldest">("urgency")
+  const [sortMode, setSortMode] = useState<"urgency" | "newest" | "oldest">("newest")
   const [search, setSearch] = useState("")
 
   const headers: Record<string, string> = { "Content-Type": "application/json" }
