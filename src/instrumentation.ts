@@ -248,5 +248,41 @@ export async function register() {
 
       console.log("[MTM Cron] Starting auto-checkout — every 15min (first run in 2min)")
     }
+
+    // Social monitoring poll cron — every 15 minutes, first run after 90s.
+    // Polls every active social account, then fires push alerts for negative
+    // sentiment spikes per org.
+    if (!globalObj.__socialPollCronStarted) {
+      globalObj.__socialPollCronStarted = true
+      const SOCIAL_INTERVAL = 15 * 60 * 1000
+      const SOCIAL_FIRST_RUN = 90 * 1000
+
+      const runSocialPoll = async () => {
+        try {
+          const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+          const cronSecret = process.env.CRON_SECRET
+          if (!cronSecret) return
+          const res = await fetch(`${baseUrl}/api/v1/social/cron/poll-all`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${cronSecret}` },
+          })
+          const data = await res.json()
+          if (data?.data?.ingestedTotal > 0 || (data?.data?.spikes?.length || 0) > 0) {
+            console.log(
+              `[Social Cron] polled ${data.data.pollerCount}, ingested ${data.data.ingestedTotal}, spikes ${data.data.spikes.length}`,
+            )
+          }
+        } catch (err: any) {
+          console.error("[Social Cron] Error:", err.message)
+        }
+      }
+
+      setTimeout(() => {
+        runSocialPoll()
+        setInterval(runSocialPoll, SOCIAL_INTERVAL)
+      }, SOCIAL_FIRST_RUN)
+
+      console.log("[Social Cron] Starting poll + spike detection — every 15min (first run in 90s)")
+    }
   }
 }
