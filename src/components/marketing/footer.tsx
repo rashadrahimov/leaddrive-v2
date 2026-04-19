@@ -29,6 +29,7 @@ function useFooterLinks() {
     [t("footer.legal")]: [
       { label: t("footer.privacy"), href: "/legal/privacy" },
       { label: t("footer.terms"), href: "/legal/terms" },
+      { label: t("footer.dataDeletion"), href: "/legal/data-deletion" },
     ],
   }
 }
