@@ -35,11 +35,11 @@ export function Logo({ collapsed = false, size = "md", sidebar = false, classNam
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0"
       >
-        {/* D with single angular notch — LeadDrive mark */}
+        {/* D with chamfered top-left — LeadDrive mark */}
         <path
           fillRule="evenodd"
           className={sidebar ? "fill-white" : "fill-foreground dark:fill-white"}
-          d="M 220 160 L 360 160 A 352 352 0 0 1 360 864 L 220 864 Z M 360 300 A 220 220 0 0 1 360 724 L 360 724 Z M 248 220 L 350 220 L 248 352 Z"
+          d="M 370 160 L 420 160 A 352 352 0 0 1 420 864 L 220 864 L 220 440 Z M 420 292 A 220 220 0 0 1 420 732 L 420 732 Z"
         />
       </svg>
 
