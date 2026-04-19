@@ -3042,7 +3042,17 @@
     "shadowDuplicateLabel": "🔗 Дубликат",
     "shadowContactEntity": "Контакт",
     "shadowDuplicateReason": "{reason} ({score}% similarity)",
-    "shadowDuplicateDetail": "Все Deals/Tickets/Activities с нового контакта переприкрепятся к старому. Новый контакт деактивируется (isActive=false, tag=merged_duplicate). Данные не удаляются — просто скрываются."
+    "shadowDuplicateDetail": "Все Deals/Tickets/Activities с нового контакта переприкрепятся к старому. Новый контакт деактивируется (isActive=false, tag=merged_duplicate). Данные не удаляются — просто скрываются.",
+    "autoCreditLimitShadow": "Предупреждение о кредитном лимите",
+    "autoCreditLimitShadowDesc": "Компания подходит к лимиту дебиторки → предложить review AR — вы одобряете",
+    "autoCreditLimitLive": "Предупреждение о кредитном лимите",
+    "autoCreditLimitLiveDesc": "Автоматически создаёт задачу AR-команде + нотификация admin/manager",
+    "scenarioCreditLimitTitle": "Предупреждение о кредитном лимите",
+    "scenarioCreditLimitDesc": "Компания с outstanding ≥80% от Company.creditLimit (в той же валюте) → создать high-priority task для AR-команды и нотифицировать admin/manager",
+    "shadowCreditLimitLabel": "💳 Лимит",
+    "shadowCompanyEntity": "Компания",
+    "shadowCreditLimitReason": "{percent}% от лимита ({limit} {currency}) · просроченных: {overdue}",
+    "shadowCreditLimitDetail": "Создастся high-priority задача «Credit limit warning» на ответственного senior'a (admin/manager) со сроком +3 дня. Всем senior'ам — warning нотификация. Компания НЕ ставится на hold автоматически — это решение менеджера после review."
   },
   "aiActions": {
     "title": "AI-Действия",

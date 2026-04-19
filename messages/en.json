@@ -3042,7 +3042,17 @@
     "shadowDuplicateLabel": "🔗 Duplicate",
     "shadowContactEntity": "Contact",
     "shadowDuplicateReason": "{reason} ({score}% similarity)",
-    "shadowDuplicateDetail": "All Deals/Tickets/Activities from the new contact are re-linked to the older one. The new contact is deactivated (isActive=false, tag=merged_duplicate). Data is not deleted — just hidden."
+    "shadowDuplicateDetail": "All Deals/Tickets/Activities from the new contact are re-linked to the older one. The new contact is deactivated (isActive=false, tag=merged_duplicate). Data is not deleted — just hidden.",
+    "autoCreditLimitShadow": "Credit limit warning",
+    "autoCreditLimitShadowDesc": "Company nearing AR credit limit → suggest AR review — you approve",
+    "autoCreditLimitLive": "Credit limit warning",
+    "autoCreditLimitLiveDesc": "Automatically creates a task for the AR team + admin/manager notifications",
+    "scenarioCreditLimitTitle": "Credit limit warning",
+    "scenarioCreditLimitDesc": "Company with outstanding ≥80% of Company.creditLimit (same currency) → create a high-priority task for AR and notify admins/managers",
+    "shadowCreditLimitLabel": "💳 Credit",
+    "shadowCompanyEntity": "Company",
+    "shadowCreditLimitReason": "{percent}% of limit ({limit} {currency}) · overdue: {overdue}",
+    "shadowCreditLimitDetail": "A high-priority task \"Credit limit warning\" is created for the first available senior (admin/manager) with +3 days due date. All seniors get a warning notification. The company is NOT placed on hold automatically — that's a manager decision after review."
   },
   "aiActions": {
     "title": "AI Actions",

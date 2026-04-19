@@ -3042,7 +3042,17 @@
     "shadowDuplicateLabel": "🔗 Dublikat",
     "shadowContactEntity": "Kontakt",
     "shadowDuplicateReason": "{reason} ({score}% oxşarlıq)",
-    "shadowDuplicateDetail": "Yeni kontaktdan bütün Deals/Tickets/Activities köhnəyə yenidən bağlanacaq. Yeni kontakt deaktiv olur (isActive=false, tag=merged_duplicate). Məlumatlar silinmir — sadəcə gizlənir."
+    "shadowDuplicateDetail": "Yeni kontaktdan bütün Deals/Tickets/Activities köhnəyə yenidən bağlanacaq. Yeni kontakt deaktiv olur (isActive=false, tag=merged_duplicate). Məlumatlar silinmir — sadəcə gizlənir.",
+    "autoCreditLimitShadow": "Kredit limiti xəbərdarlığı",
+    "autoCreditLimitShadowDesc": "Şirkət AR kredit limitinə yaxınlaşır → AR review təklifi — siz təsdiqləyirsiniz",
+    "autoCreditLimitLive": "Kredit limiti xəbərdarlığı",
+    "autoCreditLimitLiveDesc": "AR komandası üçün avtomatik tapşırıq + admin/manager bildirişləri yaradır",
+    "scenarioCreditLimitTitle": "Kredit limiti xəbərdarlığı",
+    "scenarioCreditLimitDesc": "Company.creditLimit-in ≥80%-nə çatan şirkət (eyni valyutada) → AR üçün yüksək prioritetli tapşırıq və admin/manager-ə bildiriş",
+    "shadowCreditLimitLabel": "💳 Limit",
+    "shadowCompanyEntity": "Şirkət",
+    "shadowCreditLimitReason": "limitin {percent}%-i ({limit} {currency}) · gecikən: {overdue}",
+    "shadowCreditLimitDetail": "İlk mövcud senior (admin/manager) üçün +3 gün müddətlə yüksək prioritetli «Credit limit warning» tapşırığı yaradılır. Bütün senior-lara xəbərdarlıq bildirişi gedir. Şirkət avtomatik hold-a qoyulmur — bu review sonrası menecerin qərarıdır."
   },
   "aiActions": {
     "title": "AI Hərəkətlər",

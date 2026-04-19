@@ -287,6 +287,8 @@ model Company {
   userCount      Int      @default(0)
   costCode       String?
   voen           String?
+  creditLimit    Float?   // AR credit limit; null = no limit enforced
+  creditCurrency String?  // ISO currency code for creditLimit (else fall back to org default)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

@@ -12,13 +12,13 @@ import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags, TrendingUp,
-  AlertTriangle, BookOpen, GitMerge,
+  AlertTriangle, BookOpen, GitMerge, CreditCard,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -55,9 +55,12 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_kb_close", labelKey: "autoKbCloseLive", descKey: "autoKbCloseLiveDesc", category: "autopilot", scenario: "kbClose", mode: "live" },
   { key: "ai_auto_duplicate_shadow", labelKey: "autoDuplicateShadow", descKey: "autoDuplicateShadowDesc", category: "autopilot", scenario: "duplicate", mode: "shadow" },
   { key: "ai_auto_duplicate", labelKey: "autoDuplicateLive", descKey: "autoDuplicateLiveDesc", category: "autopilot", scenario: "duplicate", mode: "live" },
+  { key: "ai_auto_credit_limit_shadow", labelKey: "autoCreditLimitShadow", descKey: "autoCreditLimitShadowDesc", category: "autopilot", scenario: "creditLimit", mode: "shadow" },
+  { key: "ai_auto_credit_limit", labelKey: "autoCreditLimitLive", descKey: "autoCreditLimitLiveDesc", category: "autopilot", scenario: "creditLimit", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
+  { key: "creditLimit", titleKey: "scenarioCreditLimitTitle", descKey: "scenarioCreditLimitDesc", icon: CreditCard, accent: "text-red-600" },
   { key: "sentiment", titleKey: "scenarioSentimentTitle", descKey: "scenarioSentimentDesc", icon: AlertTriangle, accent: "text-orange-600" },
   { key: "hotLead", titleKey: "scenarioHotLeadTitle", descKey: "scenarioHotLeadDesc", icon: Flame, accent: "text-rose-500" },
   { key: "triage", titleKey: "scenarioTriageTitle", descKey: "scenarioTriageDesc", icon: Tags, accent: "text-indigo-500" },

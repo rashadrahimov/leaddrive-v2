@@ -81,6 +81,13 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (s >= 0.99) return "high"
     return "normal"
   }
+  if (feature === "credit_limit") {
+    const pct = p.percentUsed || 0
+    const overdue = p.overdueCount || 0
+    if (pct >= 1.0 || overdue >= 3) return "critical"
+    if (pct >= 0.9 || overdue >= 1) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -105,6 +112,7 @@ function urgencyScore(action: ShadowAction): number {
   else if (feature === "sentiment") secondary = (p.confidence || 0) * 500
   else if (feature === "kb_close") secondary = (p.confidence || 0) * 400
   else if (feature === "duplicate") secondary = (p.similarityScore || 0) * 400
+  else if (feature === "credit_limit") secondary = (p.percentUsed || 0) * 500 + (p.outstandingAmount || 0) * 0.0001
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -120,6 +128,7 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "sentiment") return t("shadowSentimentDetail")
   if (feature === "kb_close") return t("shadowKbCloseDetail")
   if (feature === "duplicate") return t("shadowDuplicateDetail")
+  if (feature === "credit_limit") return t("shadowCreditLimitDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -223,6 +232,17 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowContactEntity"),
       title: `${p.duplicateLabel || "—"} → ${p.primaryLabel || "—"}`.slice(0, 140),
       reason: t("shadowDuplicateReason", { reason: p.reason || "—", score: pct }),
+    }
+  }
+  if (feature === "credit_limit") {
+    const pct = Math.round((p.percentUsed || 0) * 100)
+    return {
+      label: t("shadowCreditLimitLabel"),
+      badgeBg: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+      borderColor: "border-l-red-600",
+      entityLabel: t("shadowCompanyEntity"),
+      title: `${p.companyName || t("shadowCompanyEntity")} — ${(p.outstandingAmount || 0).toLocaleString()} ${p.creditCurrency || "USD"}`,
+      reason: t("shadowCreditLimitReason", { percent: pct, limit: (p.creditLimit || 0).toLocaleString(), currency: p.creditCurrency || "USD", overdue: p.overdueCount || 0 }),
     }
   }
   return {
@@ -432,6 +452,7 @@ export default function AiActionsPage() {
                 {[
                   { key: "all", labelKey: "filterAll", ns: "page" as const },
                   { key: "hot_lead", labelKey: "shadowHotLeadLabel", ns: "settings" as const },
+                  { key: "credit_limit", labelKey: "shadowCreditLimitLabel", ns: "settings" as const },
                   { key: "sentiment", labelKey: "shadowSentimentLabel", ns: "settings" as const },
                   { key: "triage", labelKey: "shadowTriageLabel", ns: "settings" as const },
                   { key: "kb_close", labelKey: "shadowKbCloseLabel", ns: "settings" as const },

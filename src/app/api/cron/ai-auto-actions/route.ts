@@ -7,6 +7,7 @@ import { findTicketsNeedingTriage, generateTriageSuggestion, writeTriageShadowAc
 import { findTicketsForSentimentCheck, classifyTicketSentiment, writeSentimentShadowAction } from "@/lib/ai/sentiment"
 import { findTicketsForKbMatching, matchTicketToKb, writeKbMatchShadowAction } from "@/lib/ai/kb-match"
 import { findDuplicateContacts, filterNewDuplicateCandidates, writeDuplicateContactShadowAction } from "@/lib/ai/duplicates"
+import { findCreditLimitWarnings, filterNewCreditWarnings, writeCreditLimitShadowAction } from "@/lib/ai/credit"
 
 /**
  * AI Auto-Actions Cron Endpoint
@@ -102,6 +103,13 @@ export async function POST(req: NextRequest) {
         results.autoDuplicate = (results.autoDuplicate || 0) + await runDuplicateMerge(org.id, now, false)
       } else if (await isAiFeatureEnabled(org.id, "ai_auto_duplicate_shadow")) {
         results.shadowActions += await runDuplicateMerge(org.id, now, true)
+      }
+
+      // Credit limit warning (company outstanding >= 80% of credit limit)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_credit_limit")) {
+        results.autoCreditLimit = (results.autoCreditLimit || 0) + await runCreditLimit(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_credit_limit_shadow")) {
+        results.shadowActions += await runCreditLimit(org.id, now, true)
       }
     }
 
@@ -711,6 +719,25 @@ async function runDuplicateMerge(orgId: string, now: Date, shadow: boolean): Pro
   return count
 }
 
+// ── Credit Limit Warning ──
+
+async function runCreditLimit(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const rawWarnings = await findCreditLimitWarnings(orgId, now)
+  const warnings = await filterNewCreditWarnings(orgId, rawWarnings, now)
+  if (warnings.length === 0) return 0
+
+  let count = 0
+  for (const w of warnings) {
+    try {
+      await writeCreditLimitShadowAction(orgId, w, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`Credit warning failed for company ${w.companyId}:`, e)
+    }
+  }
+  return count
+}
+
 // ── Execute approved shadow actions ──
 
 async function executeApprovedShadowActions(now: Date): Promise<number> {
@@ -839,6 +866,55 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
             where: { id: action.entityId, organizationId: action.organizationId },
             data: { status: "resolved", resolvedAt: now, firstResponseAt: now },
           })
+          break
+        }
+
+        case "credit_warning": {
+          // Create task for AR/admin team + notify senior users
+          const seniors = await prisma.user.findMany({
+            where: { organizationId: action.organizationId, role: { in: ["admin", "manager"] }, isActive: true },
+            select: { id: true },
+            take: 3,
+          })
+          const owner = seniors[0]?.id
+          if (owner) {
+            const existingTask = await prisma.task.findFirst({
+              where: {
+                organizationId: action.organizationId,
+                relatedType: "company",
+                relatedId: action.entityId,
+                title: { contains: "Credit limit" },
+                createdAt: { gte: new Date(now.getTime() - 7 * 86400000) },
+              },
+            })
+            if (!existingTask) {
+              await prisma.task.create({
+                data: {
+                  organizationId: action.organizationId,
+                  title: `Credit limit warning: ${payload.companyName}`,
+                  description: `${payload.reasoning} ${payload.overdueCount > 0 ? `· ${payload.overdueCount} overdue invoices (oldest ${payload.oldestOverdueDays}d).` : ""} Review exposure + decide on hold/collections.`,
+                  assignedTo: owner,
+                  dueDate: new Date(now.getTime() + 3 * 86400000),
+                  priority: "high",
+                  status: "pending",
+                  relatedType: "company",
+                  relatedId: action.entityId,
+                  createdBy: "system",
+                },
+              })
+            }
+            for (const u of seniors) {
+              await createNotification({
+                organizationId: action.organizationId,
+                userId: u.id,
+                type: "warning",
+                title: `💳 Credit limit: ${payload.companyName}`,
+                message: payload.reasoning,
+                entityType: "company",
+                entityId: action.entityId,
+              })
+            }
+          }
           break
         }
 
