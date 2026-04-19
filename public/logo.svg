@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
-  <!-- Stylized arrow/funnel icon -->
-  <g transform="translate(4, 8)">
-    <!-- Three ascending lines forming funnel-to-arrow shape -->
-    <path d="M4 56 L22 38 L40 56" stroke="#1e3a5f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <path d="M14 48 L28 28 L42 48" stroke="#1e3a5f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <path d="M22 40 L34 14 L46 40" stroke="#0ea5a0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <!-- Growth arrow shooting up-right -->
-    <path d="M34 14 L56 4" stroke="#0ea5a0" stroke-width="4" stroke-linecap="round"/>
-    <path d="M48 2 L56 4 L54 12" stroke="#0ea5a0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<svg viewBox="0 0 960 200" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(0 -410) scale(0.195)">
+    
+<path fill="#001E3C" fill-rule="evenodd" d="
+  M 220 160
+  L 360 160
+  A 352 352 0 0 1 360 864
+  L 220 864
+  Z
+  M 360 300
+  A 220 220 0 0 1 360 724
+  L 360 724 Z
+  M 248 220
+  L 350 220
+  L 248 352
+  Z
+"/>
+
   </g>
-  <!-- Text: Lead Drive -->
-  <text x="76" y="42" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="700" fill="#1e3a5f" letter-spacing="-0.5">
-    Lead
-  </text>
-  <text x="152" y="42" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="800" fill="#1e3a5f" letter-spacing="-0.5">
-    Drive
-  </text>
-  <!-- Separator line -->
-  <line x1="230" y1="20" x2="230" y2="50" stroke="#cbd5e1" stroke-width="1.5"/>
-  <!-- Text: CRM -->
-  <text x="240" y="42" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="400" fill="#64748b" letter-spacing="2">
-    CRM
-  </text>
+  <text x="225" y="110" font-family="Inter, system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="96" font-weight="700" letter-spacing="-3" fill="#001E3C">Lead<tspan font-weight="800">Drive</tspan></text>
+  <text x="700" y="108" font-family="Inter, system-ui, sans-serif"
+    font-size="80" font-weight="300" letter-spacing="8" fill="#001E3C" opacity="0.5">CRM</text>
+  <line x1="680" y1="60" x2="680" y2="140" stroke="#001E3C" stroke-width="2" opacity="0.25"/>
 </svg>

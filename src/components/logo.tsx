@@ -25,53 +25,21 @@ export function Logo({ collapsed = false, size = "md", sidebar = false, classNam
   const crmClass = sidebar
     ? "text-white/50 border-white/20"
     : "text-muted-foreground border-border"
-  // SVG strokes for chevrons
-  const chevronStroke1 = sidebar ? "stroke-white/60" : "stroke-foreground dark:stroke-white/60"
-  const chevronStroke2 = sidebar ? "stroke-white/80" : "stroke-foreground dark:stroke-white/80"
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <svg
         width={s.icon}
         height={s.icon}
-        viewBox="0 0 64 64"
-        fill="none"
+        viewBox="0 0 1024 1024"
         xmlns="http://www.w3.org/2000/svg"
         className="shrink-0"
       >
+        {/* D with single angular notch — LeadDrive mark */}
         <path
-          d="M8 52L20 36L32 52"
-          className={chevronStroke1}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M14 44L24 26L34 44"
-          className={chevronStroke2}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M20 36L30 14L40 36"
-          stroke="#0176D3"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M30 14L50 6"
-          stroke="#0176D3"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M42 4L50 6L48 14"
-          stroke="#0176D3"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          fillRule="evenodd"
+          className={sidebar ? "fill-white" : "fill-foreground dark:fill-white"}
+          d="M 220 160 L 360 160 A 352 352 0 0 1 360 864 L 220 864 Z M 360 300 A 220 220 0 0 1 360 724 L 360 724 Z M 248 220 L 350 220 L 248 352 Z"
         />
       </svg>
 
