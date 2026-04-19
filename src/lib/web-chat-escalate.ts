@@ -62,13 +62,36 @@ export async function escalateWebChatToTicket(
       select: { companyId: true },
     })
     companyId = linked?.companyId ?? null
-  } else if (chat.visitorEmail) {
+  } else if (chat.visitorEmail || chat.visitorPhone) {
+    // Match by email first (more reliable), fall back to phone.
     const existing = await prisma.contact.findFirst({
-      where: { organizationId: chat.organizationId, email: chat.visitorEmail },
+      where: {
+        organizationId: chat.organizationId,
+        OR: [
+          chat.visitorEmail ? { email: chat.visitorEmail } : undefined,
+          chat.visitorPhone ? { phone: chat.visitorPhone } : undefined,
+        ].filter(Boolean) as any,
+      },
       select: { id: true, companyId: true },
     })
-    contactId = existing?.id ?? null
-    companyId = existing?.companyId ?? null
+    if (existing) {
+      contactId = existing.id
+      companyId = existing.companyId ?? null
+    } else {
+      // First-time visitor — create a Contact so downstream triggers
+      // (survey invite via the same web-chat or SMS) have somewhere to
+      // land the phone/email on.
+      const created = await prisma.contact.create({
+        data: {
+          organizationId: chat.organizationId,
+          fullName: chat.visitorName || chat.visitorEmail || chat.visitorPhone || "Web-chat visitor",
+          email: chat.visitorEmail || null,
+          phone: chat.visitorPhone || null,
+          source: "web_chat",
+        },
+      })
+      contactId = created.id
+    }
   }
 
   // Create ticket silently (no hooks fired yet). If the race is lost below,

@@ -7,6 +7,7 @@ export const WIDGET_TRANSLATIONS: Record<WidgetLang, Record<string, string>> = {
   en: {
     nameOptional: "Your name (optional)",
     emailOptional: "Email (optional)",
+    phoneOptional: "Phone (optional)",
     startChat: "Start chat",
     starting: "Starting…",
     typeMessage: "Type a message…",
@@ -17,6 +18,7 @@ export const WIDGET_TRANSLATIONS: Record<WidgetLang, Record<string, string>> = {
   ru: {
     nameOptional: "Ваше имя (необязательно)",
     emailOptional: "Email (необязательно)",
+    phoneOptional: "Телефон (необязательно)",
     startChat: "Начать чат",
     starting: "Запуск…",
     typeMessage: "Введите сообщение…",
@@ -27,6 +29,7 @@ export const WIDGET_TRANSLATIONS: Record<WidgetLang, Record<string, string>> = {
   az: {
     nameOptional: "Adınız (istəyə bağlı)",
     emailOptional: "Email (istəyə bağlı)",
+    phoneOptional: "Telefon (istəyə bağlı)",
     startChat: "Çatı başlat",
     starting: "Başlayır…",
     typeMessage: "Mesajınızı yazın…",

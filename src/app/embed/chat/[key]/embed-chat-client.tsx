@@ -37,6 +37,7 @@ export function EmbedChatClient({ publicKey, title, greeting, primaryColor, orga
   const [sending, setSending] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [started, setStarted] = useState(false)
   const [lastTs, setLastTs] = useState(0)
   const [agentTyping, setAgentTyping] = useState(false)
@@ -95,6 +96,7 @@ export function EmbedChatClient({ publicKey, title, greeting, primaryColor, orga
           key: publicKey,
           visitorName: name || undefined,
           visitorEmail: email || undefined,
+          visitorPhone: phone || undefined,
           pageUrl: typeof window !== "undefined" ? document.referrer : undefined,
         }),
       })
@@ -266,6 +268,13 @@ export function EmbedChatClient({ publicKey, title, greeting, primaryColor, orga
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder={L("emailOptional")}
+            className="w-full rounded-lg border px-3 py-2 text-sm bg-background"
+          />
+          <input
+            type="tel"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder={L("phoneOptional")}
             className="w-full rounded-lg border px-3 py-2 text-sm bg-background"
           />
           <button
