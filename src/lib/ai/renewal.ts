@@ -134,11 +134,12 @@ Output STRICT JSON only (no markdown, no code fences):
   }
 
   const fallbackValue = Math.max(1, Math.round(currentValue * 1.05))
+  const rawBody = String(parsed.emailBody || defaultEmailBody(contactName, endDateIso, fallbackValue, currency, orgName, lang)).slice(0, 5000)
   const draft: RenewalDraft = {
     proposedValue: Number(parsed.proposedValue) > 0 ? Number(parsed.proposedValue) : fallbackValue,
     reasoning: String(parsed.reasoning || "Standard 5% renewal uplift").slice(0, 240),
     emailSubject: String(parsed.emailSubject || defaultSubject(companyName, lang)).slice(0, 200),
-    emailBody: String(parsed.emailBody || defaultEmailBody(contactName, endDateIso, fallbackValue, currency, orgName, lang)).slice(0, 5000),
+    emailBody: wrapBrandedHtml(rawBody, orgName, lang),
   }
 
   const inputTokens = response.usage?.input_tokens || 0
@@ -159,6 +160,26 @@ Output STRICT JSON only (no markdown, no code fences):
   }).catch(() => {})
 
   return draft
+}
+
+function wrapBrandedHtml(innerHtml: string, orgName: string, lang: string): string {
+  const footerNote = lang === "ru"
+    ? `Это письмо отправлено от ${orgName}. Ответьте напрямую, чтобы связаться.`
+    : lang === "az"
+    ? `Bu məktub ${orgName} tərəfindən göndərilmişdir. Cavab vermək üçün birbaşa cavablayın.`
+    : `This email was sent by ${orgName}. Reply directly to respond.`
+  const escapedOrgName = orgName.replace(/[<>&]/g, c => c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;")
+  return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1a1a1a;background:#ffffff;line-height:1.5;">
+  <div style="border-bottom:2px solid #0a0a0a;padding-bottom:16px;margin-bottom:28px;">
+    <h2 style="margin:0;color:#0a0a0a;font-size:22px;font-weight:700;letter-spacing:-0.02em;">${escapedOrgName}</h2>
+  </div>
+  <div style="font-size:15px;color:#1a1a1a;">
+${innerHtml}
+  </div>
+  <div style="border-top:1px solid #e5e5e5;padding-top:16px;margin-top:36px;color:#737373;font-size:12px;line-height:1.4;">
+    ${footerNote}
+  </div>
+</div>`
 }
 
 function defaultSubject(companyName: string, lang: string): string {

@@ -109,6 +109,10 @@ export async function POST(req: NextRequest) {
     const executedCount = await executeApprovedShadowActions(now)
     results.executedApproved = executedCount
 
+    // Purge stale shadow actions (pending >30d, rejected >14d)
+    const purgedCount = await purgeStaleShadowActions(now)
+    results.purged = purgedCount
+
     return NextResponse.json({
       success: true,
       data: { ...results, timestamp: now.toISOString() },
@@ -977,4 +981,22 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
   }
 
   return executed
+}
+
+// ── Purge stale shadow actions ──
+
+async function purgeStaleShadowActions(now: Date): Promise<number> {
+  const pendingCutoff = new Date(now.getTime() - 30 * 86400000)
+  const rejectedCutoff = new Date(now.getTime() - 14 * 86400000)
+
+  const [pendingPurge, rejectedPurge] = await Promise.all([
+    prisma.aiShadowAction.deleteMany({
+      where: { approved: null, createdAt: { lt: pendingCutoff } },
+    }),
+    prisma.aiShadowAction.deleteMany({
+      where: { approved: false, reviewedAt: { lt: rejectedCutoff } },
+    }),
+  ])
+
+  return pendingPurge.count + rejectedPurge.count
 }
