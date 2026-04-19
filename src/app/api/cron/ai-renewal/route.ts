@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const orgs = await prisma.organization.findMany({
       where: { isActive: true },
-      select: { id: true, name: true },
+      select: { id: true, name: true, settings: true },
     })
 
     for (const org of orgs) {
@@ -42,12 +42,16 @@ export async function POST(req: NextRequest) {
         continue
       }
 
+      const orgSettings = (org.settings as Record<string, any>) || {}
+      const orgLang = orgSettings.language || orgSettings.locale || "ru"
+
       results.orgsScanned++
       const contracts = await findContractsForRenewal(org.id, now)
 
       for (const contract of contracts) {
         try {
-          const draft = await generateRenewalProposal(contract, org.name)
+          const lang = contract.contact?.preferredLanguage || orgLang
+          const draft = await generateRenewalProposal(contract, org.name, lang)
           if (!draft) { results.errors++; continue }
           await writeRenewalShadowAction(org.id, contract, draft, now, !liveEnabled)
           results.drafted++

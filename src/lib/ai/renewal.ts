@@ -11,7 +11,7 @@ const WINDOW_DAYS_END = 32
 type ContractWithRefs = Prisma.ContractGetPayload<{
   include: {
     company: { select: { id: true; name: true } }
-    contact: { select: { id: true; fullName: true; email: true } }
+    contact: { select: { id: true; fullName: true; email: true; preferredLanguage: true } }
   }
 }>
 
@@ -27,9 +27,20 @@ async function fetchContractsInWindow(orgId: string, now: Date): Promise<Contrac
     },
     include: {
       company: { select: { id: true, name: true } },
-      contact: { select: { id: true, fullName: true, email: true } },
+      contact: { select: { id: true, fullName: true, email: true, preferredLanguage: true } },
     },
   })
+}
+
+function languageInstructions(lang: string): { name: string; directive: string } {
+  switch (lang) {
+    case "ru":
+      return { name: "Russian", directive: "Write the email body in Russian (formal business tone). Subject in Russian too." }
+    case "az":
+      return { name: "Azerbaijani", directive: "Write the email body in Azerbaijani (formal business tone, Latin alphabet). Subject in Azerbaijani too." }
+    default:
+      return { name: "English", directive: "Write the email body in English (formal business tone). Subject in English too." }
+  }
 }
 
 export async function findContractsForRenewal(orgId: string, now: Date) {
@@ -62,6 +73,7 @@ export interface RenewalDraft {
 export async function generateRenewalProposal(
   contract: ContractWithRefs,
   orgName: string,
+  lang: string = "en",
 ): Promise<RenewalDraft | null> {
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const currentValue = contract.valueAmount || 0
@@ -70,6 +82,7 @@ export async function generateRenewalProposal(
   const contactName = contract.contact?.fullName?.trim() || "there"
   const contactEmail = contract.contact?.email || ""
   const endDateIso = contract.endDate ? contract.endDate.toISOString().slice(0, 10) : "soon"
+  const langCfg = languageInstructions(lang)
 
   const prompt = `You are a CRM assistant drafting a contract renewal proposal.
 
@@ -86,12 +99,14 @@ Pricing guidance (be conservative):
 - value 100–1000 → increase 3-5%
 - value > 1000 → increase 2-3%, round to nearest 100
 
-Draft a renewal proposal. Output STRICT JSON only (no markdown, no code fences):
+Language: ${langCfg.directive}
+
+Output STRICT JSON only (no markdown, no code fences):
 {
   "proposedValue": <number>,
-  "reasoning": "<one short sentence>",
-  "emailSubject": "<subject line>",
-  "emailBody": "<HTML email body, 80–120 words. Address ${contactName} by name. Mention end date, proposed value and currency, call-to-action. Sign as '${orgName}'. Use <p> tags only.>"
+  "reasoning": "<one short sentence IN ENGLISH, describing the pricing logic for internal review>",
+  "emailSubject": "<subject line in ${langCfg.name}>",
+  "emailBody": "<HTML email body in ${langCfg.name}, 80–120 words. Address ${contactName} by name. Mention end date, proposed value and currency, call-to-action. Sign as '${orgName}'. Use <p> tags only.>"
 }`
 
   const start = Date.now()
@@ -122,8 +137,8 @@ Draft a renewal proposal. Output STRICT JSON only (no markdown, no code fences):
   const draft: RenewalDraft = {
     proposedValue: Number(parsed.proposedValue) > 0 ? Number(parsed.proposedValue) : fallbackValue,
     reasoning: String(parsed.reasoning || "Standard 5% renewal uplift").slice(0, 240),
-    emailSubject: String(parsed.emailSubject || `${companyName} — Contract Renewal Proposal`).slice(0, 200),
-    emailBody: String(parsed.emailBody || defaultEmailBody(contactName, endDateIso, fallbackValue, currency, orgName)).slice(0, 5000),
+    emailSubject: String(parsed.emailSubject || defaultSubject(companyName, lang)).slice(0, 200),
+    emailBody: String(parsed.emailBody || defaultEmailBody(contactName, endDateIso, fallbackValue, currency, orgName, lang)).slice(0, 5000),
   }
 
   const inputTokens = response.usage?.input_tokens || 0
@@ -146,7 +161,25 @@ Draft a renewal proposal. Output STRICT JSON only (no markdown, no code fences):
   return draft
 }
 
-function defaultEmailBody(contactName: string, endDate: string, value: number, currency: string, orgName: string) {
+function defaultSubject(companyName: string, lang: string): string {
+  if (lang === "ru") return `${companyName} — Предложение о продлении договора`
+  if (lang === "az") return `${companyName} — Müqavilənin yenilənməsi təklifi`
+  return `${companyName} — Contract Renewal Proposal`
+}
+
+function defaultEmailBody(contactName: string, endDate: string, value: number, currency: string, orgName: string, lang: string) {
+  if (lang === "ru") {
+    return `<p>Здравствуйте, ${contactName}!</p>
+<p>Ваш текущий договор с ${orgName} заканчивается ${endDate}. Мы предлагаем продление на новый срок по цене ${value} ${currency}.</p>
+<p>Пожалуйста, ответьте на это письмо для подтверждения или предложите удобное время для короткого звонка.</p>
+<p>— ${orgName}</p>`
+  }
+  if (lang === "az") {
+    return `<p>Salam, ${contactName}!</p>
+<p>${orgName} ilə mövcud müqaviləniz ${endDate} tarixində başa çatır. Növbəti dövr üçün ${value} ${currency} məbləğində yenilənməni təklif edirik.</p>
+<p>Təsdiq üçün bu məktuba cavab verin və ya qısa görüş üçün uyğun vaxtı bildirin.</p>
+<p>— ${orgName}</p>`
+  }
   return `<p>Hello ${contactName},</p>
 <p>Your current agreement with ${orgName} ends on ${endDate}. We'd like to propose renewing at ${value} ${currency} for the next term.</p>
 <p>Reply to confirm, or let us know a good time for a quick call to discuss adjustments.</p>
