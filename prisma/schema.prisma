@@ -3631,6 +3631,7 @@ model SurveyResponse {
   category       String?   // promoter | passive | detractor (NPS)
   answers        Json     @default("{}")    // keyed by question id
   comment        String?
+  commentSentiment String? // positive | neutral | negative — AI-classified from comment
   channel        String?   // email | sms | link | portal
   completedAt    DateTime @default(now())
   ipAddress      String?

@@ -33,6 +33,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       score: true,
       category: true,
       comment: true,
+      commentSentiment: true,
       channel: true,
       answers: true,
       completedAt: true,
@@ -62,6 +63,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   let promoters = 0, passives = 0, detractors = 0
   let totalScore = 0, scoredCount = 0
   const wordCounts = new Map<string, number>()
+  const commentSentiment = { positive: 0, neutral: 0, negative: 0, unknown: 0 }
 
   for (const r of responses) {
     const bk = bucketKey(r.completedAt)
@@ -83,6 +85,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       // Crude word frequency: 4+ char words, lowercased, stripped of punctuation
       const words = r.comment.toLowerCase().replace(/[^\p{L}\s]/gu, " ").split(/\s+/).filter(w => w.length >= 4)
       for (const w of words) wordCounts.set(w, (wordCounts.get(w) || 0) + 1)
+
+      const cs = r.commentSentiment as "positive" | "neutral" | "negative" | null
+      if (cs === "positive" || cs === "neutral" || cs === "negative") commentSentiment[cs]++
+      else commentSentiment.unknown++
     }
   }
 
@@ -124,6 +130,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         detractors,
       },
       channels: Array.from(byChannel.entries()).map(([channel, count]) => ({ channel, count })),
+      commentSentiment,
       trend,
       topWords,
     },

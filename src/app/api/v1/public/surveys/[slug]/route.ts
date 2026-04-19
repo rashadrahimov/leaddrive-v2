@@ -140,6 +140,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     },
   })
 
+  // Classify free-text comment in the background — don't block the user's
+  // submit-response round-trip. Skips when no comment.
+  if (parsed.data.comment && parsed.data.comment.trim().length >= 3) {
+    ;(async () => {
+      try {
+        const { classifySentiment } = await import("@/lib/sentiment")
+        const s = await classifySentiment(parsed.data.comment as string)
+        await prisma.surveyResponse.update({ where: { id: response.id }, data: { commentSentiment: s } })
+      } catch (e) {
+        console.error("[surveys] comment sentiment failed:", e)
+      }
+    })()
+  }
+
   await prisma.survey.update({
     where: { id: survey.id },
     data: { totalResponses: { increment: 1 } },

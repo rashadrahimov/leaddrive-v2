@@ -18,6 +18,7 @@ interface AnalyticsData {
     detractors: number
   }
   channels: { channel: string; count: number }[]
+  commentSentiment?: { positive: number; neutral: number; negative: number; unknown: number }
   trend: { day: string; total: number; promoters: number; passives: number; detractors: number; avgScore: number | null; nps: number | null }[]
   topWords: { word: string; count: number }[]
 }
@@ -143,6 +144,30 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
               </ResponsiveContainer>
             )}
           </div>
+
+          {data.commentSentiment && (data.commentSentiment.positive + data.commentSentiment.neutral + data.commentSentiment.negative + data.commentSentiment.unknown) > 0 && (
+            <div className="rounded-lg border bg-card p-4 md:col-span-2">
+              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Comment sentiment (AI)</h4>
+              <div className="grid grid-cols-4 gap-3 text-sm">
+                <div className="text-center">
+                  <p className="text-xl font-bold text-emerald-600">{data.commentSentiment.positive}</p>
+                  <p className="text-xs text-muted-foreground">Positive</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-muted-foreground">{data.commentSentiment.neutral}</p>
+                  <p className="text-xs text-muted-foreground">Neutral</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-red-600">{data.commentSentiment.negative}</p>
+                  <p className="text-xs text-muted-foreground">Negative</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-muted-foreground/60">{data.commentSentiment.unknown}</p>
+                  <p className="text-xs text-muted-foreground">Pending</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {topWords.length > 0 && (
             <div className="rounded-lg border bg-card p-4 md:col-span-2">
