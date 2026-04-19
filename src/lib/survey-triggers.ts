@@ -58,7 +58,14 @@ export async function sendSurveyInvite({
   if (!survey) return { ok: false, error: "survey not active" }
 
   const appUrl = baseUrl || process.env.NEXTAUTH_URL || process.env.APP_URL || ""
-  const link = `${appUrl.replace(/\/$/, "")}/s/${survey.publicSlug}`
+  // Include email/phone as query params so the survey form can pre-fill with
+  // the recipient's prior response (if any) and let them edit instead of
+  // hitting "already submitted".
+  const qs = new URLSearchParams()
+  if (email) qs.set("e", email)
+  if (phone) qs.set("p", phone)
+  const qsStr = qs.toString()
+  const link = `${appUrl.replace(/\/$/, "")}/s/${survey.publicSlug}${qsStr ? `?${qsStr}` : ""}`
 
   if (channel === "whatsapp") {
     if (!phone) return { ok: false, error: "no phone" }

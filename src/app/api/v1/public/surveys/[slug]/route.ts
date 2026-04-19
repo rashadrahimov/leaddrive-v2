@@ -25,6 +25,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   if (!survey || survey.status !== "active") {
     return NextResponse.json({ error: "Survey not available" }, { status: 404, headers })
   }
+
+  // Optionally return the caller's prior response so the client can pre-fill
+  // and offer "edit" instead of a cold form. Matched by ?e=email or ?p=phone.
+  const url = new URL(req.url)
+  const lookupEmail = (url.searchParams.get("e") || "").toLowerCase().trim() || null
+  const lookupPhone = url.searchParams.get("p") || null
+  let priorResponse: { id: string; score: number | null; comment: string | null; completedAt: Date } | null = null
+  if (lookupEmail || lookupPhone) {
+    const or: any[] = []
+    if (lookupEmail) or.push({ email: lookupEmail })
+    if (lookupPhone) or.push({ phone: lookupPhone })
+    priorResponse = await prisma.surveyResponse.findFirst({
+      where: { surveyId: survey.id, OR: or },
+      orderBy: { completedAt: "desc" },
+      select: { id: true, score: true, comment: true, completedAt: true },
+    })
+  }
+
   return NextResponse.json(
     {
       success: true,
@@ -36,6 +54,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
         questions: survey.questions,
         thankYouText: survey.thankYouText,
         organizationName: survey.organization.name,
+        priorResponse,
       },
     },
     { headers },
@@ -104,24 +123,50 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     return NextResponse.json({ error: "Survey not available" }, { status: 404, headers })
   }
 
-  // Reject duplicate responses from the same email/phone within 6 hours
+  const category = computeCategory(survey.type, parsed.data.score)
+
+  // If the same email/phone already responded within 30 days, UPDATE that
+  // response instead of creating a new one — lets recipients revise their
+  // answer by reopening the same link from a different channel (SMS after
+  // WhatsApp, etc.). Outside the window a brand-new response is recorded.
+  let existing: { id: string } | null = null
   if (parsed.data.email || parsed.data.phone) {
-    const cutoff = new Date(Date.now() - 6 * 3600 * 1000)
+    const cutoff = new Date(Date.now() - 30 * 86400 * 1000)
     const orClauses: any[] = []
     if (parsed.data.email) orClauses.push({ email: parsed.data.email })
     if (parsed.data.phone) orClauses.push({ phone: parsed.data.phone })
     if (orClauses.length > 0) {
-      const dup = await prisma.surveyResponse.findFirst({
+      existing = await prisma.surveyResponse.findFirst({
         where: { surveyId: survey.id, completedAt: { gt: cutoff }, OR: orClauses },
+        orderBy: { completedAt: "desc" },
         select: { id: true },
       })
-      if (dup) {
-        return NextResponse.json({ error: "You've already submitted this survey recently" }, { status: 409, headers })
-      }
     }
   }
 
-  const category = computeCategory(survey.type, parsed.data.score)
+  if (existing) {
+    const updated = await prisma.surveyResponse.update({
+      where: { id: existing.id },
+      data: {
+        score: parsed.data.score,
+        category,
+        answers: parsed.data.answers || {},
+        comment: parsed.data.comment,
+        completedAt: new Date(),
+        commentSentiment: null, // will be re-classified below
+      },
+    })
+    if (parsed.data.comment && parsed.data.comment.trim().length >= 3) {
+      ;(async () => {
+        try {
+          const { classifySentiment } = await import("@/lib/sentiment")
+          const s = await classifySentiment(parsed.data.comment as string)
+          await prisma.surveyResponse.update({ where: { id: updated.id }, data: { commentSentiment: s } })
+        } catch {}
+      })()
+    }
+    return NextResponse.json({ success: true, data: { id: updated.id, edited: true } }, { headers })
+  }
 
   const response = await prisma.surveyResponse.create({
     data: {

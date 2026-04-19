@@ -18,9 +18,14 @@ interface Props {
   questions: Question[]
   thankYouText: string
   primaryColor?: string
+  initialScore?: number | null
+  initialComment?: string | null
+  initialEmail?: string | null
+  initialPhone?: string | null
 }
 
-export function SurveyForm({ slug, type, questions, thankYouText, primaryColor = "#0176D3" }: Props) {
+export function SurveyForm({ slug, type, questions, thankYouText, primaryColor = "#0176D3", initialScore, initialComment, initialEmail, initialPhone }: Props) {
+  const isRevisiting = initialScore !== null && initialScore !== undefined
   const effective: Question[] = questions && questions.length > 0 ? questions : [
     {
       id: "score",
@@ -34,9 +39,18 @@ export function SurveyForm({ slug, type, questions, thankYouText, primaryColor =
     },
   ]
 
-  const [answers, setAnswers] = useState<Record<string, any>>({})
-  const [comment, setComment] = useState("")
-  const [email, setEmail] = useState("")
+  // Seed the score field from the prior response (so reopening from a second
+  // channel shows what they picked last time).
+  const [answers, setAnswers] = useState<Record<string, any>>(() => {
+    const init: Record<string, any> = {}
+    if (initialScore != null) {
+      const q = effective.find(q => q.type === "nps" || q.type === "rating")
+      if (q) init[q.id] = initialScore
+    }
+    return init
+  })
+  const [comment, setComment] = useState(initialComment || "")
+  const [email, setEmail] = useState(initialEmail || "")
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState("")
@@ -63,6 +77,7 @@ export function SurveyForm({ slug, type, questions, thankYouText, primaryColor =
           score: typeof primaryScore === "number" ? primaryScore : undefined,
           comment: comment || undefined,
           email: email || undefined,
+          phone: initialPhone || undefined,
           answers,
         }),
       })
@@ -89,6 +104,16 @@ export function SurveyForm({ slug, type, questions, thankYouText, primaryColor =
 
   return (
     <div className="space-y-6">
+      {isRevisiting && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3 text-sm">
+          <p className="font-medium text-blue-900 dark:text-blue-200">
+            You&apos;ve already rated this ({initialScore}).
+          </p>
+          <p className="text-xs text-blue-800/80 dark:text-blue-300/80 mt-0.5">
+            Change your score or comment below and hit Update to revise your response.
+          </p>
+        </div>
+      )}
       {effective.map(q => (
         <QuestionInput
           key={q.id}
@@ -128,7 +153,7 @@ export function SurveyForm({ slug, type, questions, thankYouText, primaryColor =
         className="w-full rounded-lg text-white py-2.5 text-sm font-medium disabled:opacity-50"
         style={{ backgroundColor: primaryColor }}
       >
-        {submitting ? "Submitting…" : "Submit feedback"}
+        {submitting ? "Submitting…" : isRevisiting ? "Update response" : "Submit feedback"}
       </button>
     </div>
   )

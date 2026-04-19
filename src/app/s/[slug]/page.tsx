@@ -4,13 +4,36 @@ import { SurveyForm } from "./survey-form"
 
 export const dynamic = "force-dynamic"
 
-export default async function PublicSurveyPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicSurveyPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>
+  searchParams: Promise<Record<string, string | undefined>>
+}) {
   const { slug } = await params
+  const sp = await searchParams
   const survey = await prisma.survey.findUnique({
     where: { publicSlug: slug },
     include: { organization: { select: { name: true, branding: true, logo: true } } },
   })
   if (!survey || survey.status !== "active") notFound()
+
+  // If the link includes ?e=email or ?p=phone, look up a prior response so
+  // we can pre-fill the form instead of showing a "already submitted" wall.
+  const lookupEmail = sp.e?.toLowerCase().trim() || null
+  const lookupPhone = sp.p || null
+  let priorResponse: { score: number | null; comment: string | null } | null = null
+  if (lookupEmail || lookupPhone) {
+    const or: any[] = []
+    if (lookupEmail) or.push({ email: lookupEmail })
+    if (lookupPhone) or.push({ phone: lookupPhone })
+    priorResponse = await prisma.surveyResponse.findFirst({
+      where: { surveyId: survey.id, OR: or },
+      orderBy: { completedAt: "desc" },
+      select: { score: true, comment: true },
+    })
+  }
 
   const branding = (survey.organization.branding as any) || {}
   const primaryColor: string = branding.primaryColor || "#0176D3"
@@ -37,6 +60,10 @@ export default async function PublicSurveyPage({ params }: { params: Promise<{ s
           questions={(survey.questions as any[]) || []}
           thankYouText={survey.thankYouText}
           primaryColor={primaryColor}
+          initialScore={priorResponse?.score ?? null}
+          initialComment={priorResponse?.comment ?? null}
+          initialEmail={lookupEmail}
+          initialPhone={lookupPhone}
         />
       </div>
     </div>
