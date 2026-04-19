@@ -189,7 +189,11 @@ export function Sidebar({ org }: SidebarProps) {
 
     const tick = async () => {
       try {
-        const res = await fetch("/api/v1/web-chat/sessions/unread-count")
+        const since = typeof window !== "undefined" ? localStorage.getItem("webChatLastReadAt") : null
+        const url = since
+          ? `/api/v1/web-chat/sessions/unread-count?since=${encodeURIComponent(since)}`
+          : "/api/v1/web-chat/sessions/unread-count"
+        const res = await fetch(url)
         if (!res.ok) return
         const data = await res.json()
         if (!cancelled && data.success) {

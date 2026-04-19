@@ -105,6 +105,13 @@ export default function WebChatInboxPage() {
     } catch {}
   }
 
+  // Mark web-chat as read — stamp localStorage so sidebar badge clears.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("webChatLastReadAt", new Date().toISOString())
+    }
+  }, [])
+
   // Ask permission once on mount (browsers require a user gesture for prompt;
   // we do it on first focus / first poll to piggy-back on an interaction).
   useEffect(() => {
