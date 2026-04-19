@@ -415,7 +415,7 @@ export default function AiAutomationPage() {
           ) : (
             <div className="space-y-2">
               {shadowActions.map(action => {
-                const info = getShadowInfo(action)
+                const info = getShadowInfo(action, t)
                 return (
                   <div key={action.id} className={`flex items-start justify-between p-3.5 rounded-lg border-l-[3px] bg-card border border-border ${info.borderColor}`}>
                     <div className="min-w-0 space-y-1.5">
@@ -425,7 +425,7 @@ export default function AiAutomationPage() {
                       </div>
                       <p className="text-sm font-medium text-foreground">{info.title}</p>
                       {info.reason && <p className="text-xs text-muted-foreground">{info.reason}</p>}
-                      <p className="text-[10px] text-muted-foreground">{timeAgo(action.createdAt)}</p>
+                      <p className="text-[10px] text-muted-foreground">{timeAgo(action.createdAt, t)}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 ml-4">
                       <Button
@@ -458,50 +458,50 @@ export default function AiAutomationPage() {
   )
 }
 
-function getShadowInfo(action: ShadowAction): { label: string; badgeBg: string; borderColor: string; entityLabel: string; title: string; reason: string } {
+function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => string): { label: string; badgeBg: string; borderColor: string; entityLabel: string; title: string; reason: string } {
   const p = action.payload as any || {}
   const feature = action.featureName.replace("ai_auto_", "")
 
   if (feature === "payment_reminder") {
     return {
-      label: "💰 Payment",
+      label: t("shadowPaymentLabel"),
       badgeBg: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
       borderColor: "border-l-red-500",
-      entityLabel: `Invoice`,
-      title: `${p.invoiceNumber || "Invoice"} — $${(p.amount || 0).toLocaleString()}`,
-      reason: `${p.daysOverdue || 0} days overdue${p.companyName ? ` · ${p.companyName}` : ""}. Will enroll in payment reminder journey.`,
+      entityLabel: t("shadowInvoiceEntity"),
+      title: `${p.invoiceNumber || t("shadowInvoiceEntity")} — $${(p.amount || 0).toLocaleString()}`,
+      reason: t("shadowPaymentReason", { days: p.daysOverdue || 0 }) + (p.companyName ? ` · ${p.companyName}` : ""),
     }
   }
 
   if (feature === "acknowledge") {
     return {
-      label: "⚡ SLA Response",
+      label: t("shadowAcknowledgeLabel"),
       badgeBg: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
       borderColor: "border-l-amber-500",
-      entityLabel: `Ticket`,
-      title: p.ticketNumber || "Ticket",
-      reason: `SLA ${p.percentElapsed || 0}% elapsed, no response yet. Will send auto-acknowledgment to customer.`,
+      entityLabel: t("shadowTicketEntity"),
+      title: p.ticketNumber || t("shadowTicketEntity"),
+      reason: t("shadowAcknowledgeReason", { percent: p.percentElapsed || 0 }),
     }
   }
 
   // followup
   return {
-    label: "📋 Follow-up",
+    label: t("shadowFollowupLabel"),
     badgeBg: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     borderColor: "border-l-blue-500",
-    entityLabel: `Deal`,
+    entityLabel: t("shadowDealEntity"),
     title: p.title || action.entityId,
-    reason: `${p.daysSinceActivity || 0} days without activity. Will create a follow-up task.`,
+    reason: t("shadowFollowupReason", { days: p.daysSinceActivity || 0 }),
   }
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(dateStr: string, t: (key: string, vars?: any) => string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return "Just now"
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return t("timeAgoJustNow")
+  if (mins < 60) return t("timeAgoMinutes", { m: mins })
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t("timeAgoHours", { h: hours })
   const days = Math.floor(hours / 24)
-  return `${days}d ago`
+  return t("timeAgoDays", { d: days })
 }
