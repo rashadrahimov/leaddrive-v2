@@ -11,7 +11,7 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import {
   Radio, Plus, ExternalLink, MessageSquare, ThumbsUp, ThumbsDown,
   Minus, Check, Eye, Archive, Ticket, TrendingUp, Filter, RefreshCw, Link as LinkIcon,
-  UserPlus, CheckSquare,
+  UserPlus, CheckSquare, Reply, Send,
 } from "lucide-react"
 import { SocialAnalyticsPanel } from "@/components/social/analytics-panel"
 import { SocialOnboardingChecklist } from "@/components/social/onboarding-checklist"
@@ -81,6 +81,10 @@ export default function SocialMonitoringPage() {
   const [newAccPlatform, setNewAccPlatform] = useState("twitter")
   const [newAccHandle, setNewAccHandle] = useState("")
   const [newAccKeywords, setNewAccKeywords] = useState("")
+
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState("")
+  const [replySending, setReplySending] = useState(false)
 
   const loadAccounts = async () => {
     const res = await fetch("/api/v1/social/accounts", { headers })
@@ -179,6 +183,28 @@ export default function SocialMonitoringPage() {
       loadMentions()
     } else {
       alert(data.error || "Failed to create lead")
+    }
+  }
+
+  const sendReply = async (id: string) => {
+    if (!replyText.trim() || replySending) return
+    setReplySending(true)
+    try {
+      const res = await fetch(`/api/v1/social/mentions/${id}/reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ text: replyText.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setReplyOpenId(null)
+        setReplyText("")
+        loadMentions()
+      } else {
+        alert(data.error || "Reply failed")
+      }
+    } finally {
+      setReplySending(false)
     }
   }
 
@@ -330,9 +356,23 @@ export default function SocialMonitoringPage() {
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "reviewed" })}>
                   <Check className="h-3 w-3" /> Reviewed
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "replied" })}>
-                  <MessageSquare className="h-3 w-3" /> Replied
-                </Button>
+                {["twitter", "facebook", "instagram"].includes(m.platform) ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => {
+                      setReplyOpenId(replyOpenId === m.id ? null : m.id)
+                      setReplyText("")
+                    }}
+                  >
+                    <Reply className="h-3 w-3" /> Reply
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "replied" })}>
+                    <MessageSquare className="h-3 w-3" /> Replied
+                  </Button>
+                )}
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "ignored" })}>
                   <Archive className="h-3 w-3" /> Ignore
                 </Button>
@@ -381,6 +421,27 @@ export default function SocialMonitoringPage() {
                   </Button>
                 </div>
               </div>
+              {replyOpenId === m.id && (
+                <div className="border-t pt-2 mt-1 space-y-2">
+                  <textarea
+                    value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    placeholder={`Reply on ${m.platform}…`}
+                    rows={2}
+                    className="w-full text-sm rounded-md border bg-background px-2.5 py-1.5 resize-y"
+                    autoFocus
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setReplyOpenId(null); setReplyText("") }}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" className="gap-1.5" disabled={!replyText.trim() || replySending} onClick={() => sendReply(m.id)}>
+                      <Send className="h-3.5 w-3.5" />
+                      {replySending ? "Sending…" : "Send reply"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
