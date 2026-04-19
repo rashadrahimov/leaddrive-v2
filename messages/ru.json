@@ -7897,6 +7897,8 @@
     "publicFormSubmitting": "Отправка…",
     "publicFormOptionalEmail": "Email (необязательно)",
     "publicFormCommentLabel": "Комментарий (необязательно)",
-    "publicFormCommentPlaceholder": "Расскажите подробнее…"
+    "publicFormCommentPlaceholder": "Расскажите подробнее…",
+    "smsBackup": "Дублировать в SMS",
+    "smsBackupHint": "Если основной канал — email/WhatsApp/веб-чат, дополнительно отправить то же приглашение в SMS (если у контакта есть телефон)."
   }
 }

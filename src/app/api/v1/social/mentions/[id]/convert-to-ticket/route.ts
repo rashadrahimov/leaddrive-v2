@@ -48,6 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     category: "general",
     tags: ["social", mention.platform],
     createdBy: session?.userId || null,
+    source: mention.platform, // facebook | instagram | twitter | ...
+    sourceMeta: { externalId: mention.externalId, mentionId: mention.id },
     fireHooks: false,
   })
 

@@ -889,6 +889,8 @@ model Ticket {
   closedAt       DateTime?
   satisfactionRating Int?
   satisfactionComment String?
+  source             String?   // portal | email | whatsapp | web_chat | facebook | instagram | agent | telegram — used to route survey invites back to the original channel
+  sourceMeta         Json?     // channel-specific context: whatsapp phone, web_chat sessionId, fb/ig externalId
   tags              String[]  @default([])
   escalationLevel   Int       @default(0)
   lastEscalatedAt   DateTime?

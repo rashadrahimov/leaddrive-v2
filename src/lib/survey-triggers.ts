@@ -10,7 +10,9 @@ interface SendInviteInput {
   phone?: string | null
   contactId?: string | null
   ticketId?: string | null
-  channel?: "email" | "sms" | "link"
+  channel?: "email" | "sms" | "link" | "whatsapp" | "web_chat"
+  // For channel=web_chat — the session the bot should post into
+  webChatSessionId?: string | null
   baseUrl?: string
 }
 
@@ -47,6 +49,7 @@ export async function sendSurveyInvite({
   contactId,
   ticketId,
   channel = "email",
+  webChatSessionId,
   baseUrl,
 }: SendInviteInput): Promise<{ ok: boolean; error?: string }> {
   const survey = await prisma.survey.findFirst({
@@ -56,6 +59,39 @@ export async function sendSurveyInvite({
 
   const appUrl = baseUrl || process.env.NEXTAUTH_URL || process.env.APP_URL || ""
   const link = `${appUrl.replace(/\/$/, "")}/s/${survey.publicSlug}`
+
+  if (channel === "whatsapp") {
+    if (!phone) return { ok: false, error: "no phone" }
+    try {
+      const { sendWhatsAppMessage } = await import("@/lib/whatsapp")
+      const body = `${survey.name}\n${survey.description || ""}\n\n${link}`
+      const r = await sendWhatsAppMessage({ to: phone, message: body, organizationId, contactId: contactId || undefined })
+      if (!(r as { success?: boolean }).success) return { ok: false, error: "whatsapp send failed" }
+      await prisma.survey.update({ where: { id: survey.id }, data: { totalSent: { increment: 1 } } })
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e?.message || "whatsapp error" }
+    }
+  }
+
+  if (channel === "web_chat") {
+    if (!webChatSessionId) return { ok: false, error: "no web-chat session" }
+    try {
+      const body = `${survey.name}\n${link}`
+      await prisma.webChatMessage.create({
+        data: {
+          organizationId,
+          sessionId: webChatSessionId,
+          fromRole: "bot",
+          text: body,
+        },
+      })
+      await prisma.survey.update({ where: { id: survey.id }, data: { totalSent: { increment: 1 } } })
+      return { ok: true }
+    } catch (e: any) {
+      return { ok: false, error: e?.message || "web-chat error" }
+    }
+  }
 
   if (channel === "sms") {
     if (!phone) return { ok: false, error: "no phone" }
@@ -129,43 +165,85 @@ export async function sendSurveyInvite({
  */
 export async function triggerSurveysOnTicketResolved(
   orgId: string,
-  ticket: { id: string; contactId: string | null; ticketNumber: string },
+  ticket: { id: string; contactId: string | null; ticketNumber: string; source?: string | null; sourceMeta?: any },
 ): Promise<void> {
   if (!ticket.contactId) return
 
   const contact = await prisma.contact.findFirst({
     where: { id: ticket.contactId, organizationId: orgId },
-    select: { email: true, id: true },
+    select: { email: true, phone: true, id: true },
   })
-  if (!contact?.email) return
+  if (!contact || (!contact.email && !contact.phone && !ticket.source)) return
+
+  // Pick the best channel based on ticket origin — closed-loop: if the
+  // customer wrote in WhatsApp, the survey goes back via WhatsApp.
+  const source = ticket.source
+  let preferredChannel: "email" | "whatsapp" | "web_chat" | "sms" = "email"
+  let webChatSessionId: string | null = null
+
+  if (source === "whatsapp" && contact.phone) {
+    preferredChannel = "whatsapp"
+  } else if (source === "web_chat" && ticket.sourceMeta?.sessionId) {
+    preferredChannel = "web_chat"
+    webChatSessionId = ticket.sourceMeta.sessionId
+  } else if (contact.email) {
+    preferredChannel = "email"
+  } else if (contact.phone) {
+    preferredChannel = "sms"
+  } else {
+    return // nothing we can do
+  }
 
   const surveys = await prisma.survey.findMany({
-    where: {
-      organizationId: orgId,
-      status: "active",
-      channels: { has: "email" },
-    },
+    where: { organizationId: orgId, status: "active" },
   })
 
   for (const s of surveys) {
     const triggers = (s.triggers as any) || {}
     if (!triggers.afterTicketResolve) continue
 
-    // Avoid spamming: skip if contact already responded to this survey for this ticket
     const already = await prisma.surveyResponse.findFirst({
       where: { surveyId: s.id, ticketId: ticket.id },
       select: { id: true },
     })
     if (already) continue
 
-    await sendSurveyInvite({
+    const result = await sendSurveyInvite({
       surveyId: s.id,
       organizationId: orgId,
       email: contact.email,
+      phone: contact.phone,
       contactId: contact.id,
       ticketId: ticket.id,
-      channel: "email",
+      channel: preferredChannel,
+      webChatSessionId,
     })
+
+    // Fallback to email if primary channel failed and email is available.
+    if (!result.ok && preferredChannel !== "email" && contact.email) {
+      await sendSurveyInvite({
+        surveyId: s.id,
+        organizationId: orgId,
+        email: contact.email,
+        contactId: contact.id,
+        ticketId: ticket.id,
+        channel: "email",
+      })
+    }
+
+    // Optional SMS duplicate — when the survey's triggers flag smsBackup and
+    // the contact has a phone, always send an SMS too (even on top of a
+    // successful primary channel). Lets operators guarantee reach.
+    if (triggers.smsBackup && contact.phone && preferredChannel !== "sms") {
+      await sendSurveyInvite({
+        surveyId: s.id,
+        organizationId: orgId,
+        phone: contact.phone,
+        contactId: contact.id,
+        ticketId: ticket.id,
+        channel: "sms",
+      }).catch(() => {})
+    }
   }
 }
 
@@ -210,6 +288,15 @@ async function runSurveyTrigger(
       contactId: contact.id,
       channel,
     })
+    if (triggers.smsBackup && contact.phone && channel !== "sms") {
+      await sendSurveyInvite({
+        surveyId: s.id,
+        organizationId: orgId,
+        phone: contact.phone,
+        contactId: contact.id,
+        channel: "sms",
+      }).catch(() => {})
+    }
   }
 }
 

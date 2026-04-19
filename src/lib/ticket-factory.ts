@@ -16,6 +16,8 @@ export interface CreateTicketInput {
   assignedTo?: string | null
   createdBy?: string | null
   tags?: string[]
+  source?: string | null          // portal | email | whatsapp | web_chat | facebook | instagram | agent
+  sourceMeta?: Record<string, any> // channel-specific context (phone, sessionId, externalId)
 }
 
 /**
@@ -110,6 +112,8 @@ export async function createTicketWithAssignment(
       assignedTo: input.assignedTo || null,
       createdBy: input.createdBy || null,
       tags: input.tags || [],
+      source: input.source || null,
+      sourceMeta: input.sourceMeta || undefined,
       ...(slaDueAt ? { slaDueAt } : {}),
       ...(slaFirstResponseDueAt ? { slaFirstResponseDueAt } : {}),
       ...(slaPolicy ? { slaPolicyName: slaPolicy.name } : {}),

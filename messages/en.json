@@ -7897,6 +7897,8 @@
     "publicFormSubmitting": "Submitting…",
     "publicFormOptionalEmail": "Email (optional)",
     "publicFormCommentLabel": "Comment (optional)",
-    "publicFormCommentPlaceholder": "Tell us more…"
+    "publicFormCommentPlaceholder": "Tell us more…",
+    "smsBackup": "Also send SMS copy",
+    "smsBackupHint": "When the primary channel is email/WhatsApp/web-chat, additionally send the same invite by SMS if the contact has a phone number."
   }
 }

@@ -133,5 +133,43 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     },
   })
 
+  // Mirror the portal CSAT into SurveyResponse so it shows up in the Surveys
+  // analytics alongside invite-based responses — but only if the org has a
+  // CSAT survey wired to the ticket-resolved trigger and the ticket isn't
+  // already recorded against it (dedup by surveyId+ticketId).
+  ;(async () => {
+    try {
+      const csatSurveys = await prisma.survey.findMany({
+        where: { organizationId: user.organizationId, status: "active", type: "csat" },
+      })
+      for (const s of csatSurveys) {
+        const triggers = (s.triggers as any) || {}
+        if (!triggers.afterTicketResolve) continue
+        const already = await prisma.surveyResponse.findFirst({
+          where: { surveyId: s.id, ticketId: id },
+          select: { id: true },
+        })
+        if (already) continue
+        // CSAT 1-5 maps to NPS-style buckets: 5 = promoter, 4 = passive, ≤3 = detractor
+        const category = satisfactionRating === 5 ? "promoter" : satisfactionRating === 4 ? "passive" : "detractor"
+        await prisma.surveyResponse.create({
+          data: {
+            organizationId: user.organizationId,
+            surveyId: s.id,
+            ticketId: id,
+            contactId: user.contactId,
+            score: satisfactionRating,
+            category,
+            comment: satisfactionComment || null,
+            channel: "portal",
+            answers: {},
+          },
+        })
+      }
+    } catch (e) {
+      console.error("[portal-csat] survey mirror failed:", e)
+    }
+  })()
+
   return NextResponse.json({ success: true })
 }

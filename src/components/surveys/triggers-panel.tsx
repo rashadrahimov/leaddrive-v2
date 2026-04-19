@@ -11,7 +11,7 @@ interface Props {
   initialTriggers: Record<string, any>
 }
 
-const TRIGGER_KEYS = ["afterTicketResolve", "afterDealWon", "afterLeadConverted", "afterInvoicePaid"] as const
+const TRIGGER_KEYS = ["afterTicketResolve", "afterDealWon", "afterLeadConverted", "afterInvoicePaid", "smsBackup"] as const
 
 export function SurveyTriggersPanel({ surveyId, orgId, initialTriggers }: Props) {
   const t = useTranslations("surveys")
@@ -20,6 +20,7 @@ export function SurveyTriggersPanel({ surveyId, orgId, initialTriggers }: Props)
     { key: "afterDealWon", label: t("triggerDealWon"), hint: t("triggerDealWonHint") },
     { key: "afterLeadConverted", label: t("triggerLeadConverted"), hint: t("triggerLeadConvertedHint") },
     { key: "afterInvoicePaid", label: t("triggerInvoicePaid"), hint: t("triggerInvoicePaidHint") },
+    { key: "smsBackup", label: t("smsBackup"), hint: t("smsBackupHint") },
   ]
   const [triggers, setTriggers] = useState<Record<string, boolean>>(() => {
     const out: Record<string, boolean> = {}

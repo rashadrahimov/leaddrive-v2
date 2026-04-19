@@ -617,6 +617,8 @@ async function handleAiAutoReply(
             category: "ai_escalation",
             contactId: contactId || null,
             tags: ["whatsapp", shouldEscalate ? "ai_escalation" : "ai_ticket", "auto_created"],
+            source: "whatsapp",
+            sourceMeta: { phone: waPhone },
           },
         })
 

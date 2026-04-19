@@ -7897,6 +7897,8 @@
     "publicFormSubmitting": "Göndərilir…",
     "publicFormOptionalEmail": "Email (istəyə bağlı)",
     "publicFormCommentLabel": "Şərh (istəyə bağlı)",
-    "publicFormCommentPlaceholder": "Daha ətraflı yazın…"
+    "publicFormCommentPlaceholder": "Daha ətraflı yazın…",
+    "smsBackup": "SMS ilə də göndər",
+    "smsBackupHint": "Əsas kanal email/WhatsApp/veb-çat olduqda, kontaktın telefonu varsa eyni dəvət SMS ilə də göndərilsin."
   }
 }

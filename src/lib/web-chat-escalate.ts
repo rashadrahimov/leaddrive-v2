@@ -83,6 +83,8 @@ export async function escalateWebChatToTicket(
     companyId,
     createdBy: actingUserId || null,
     tags: ["web-chat"],
+    source: "web_chat",
+    sourceMeta: { sessionId: chat.id },
     fireHooks: false,
   })
 

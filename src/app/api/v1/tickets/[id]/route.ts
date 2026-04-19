@@ -154,6 +154,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
           id: updated.id,
           contactId: updated.contactId,
           ticketNumber: updated.ticketNumber,
+          source: updated.source,
+          sourceMeta: updated.sourceMeta,
         }).catch(err => console.error("[survey-trigger] ticket.resolved:", err))
       }
     }
