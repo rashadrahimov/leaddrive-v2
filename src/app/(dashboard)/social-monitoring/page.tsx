@@ -140,6 +140,31 @@ export default function SocialMonitoringPage() {
     loadAccounts()
   }
 
+  const [pollingAll, setPollingAll] = useState(false)
+  const pollAll = async () => {
+    if (pollingAll || accounts.length === 0) return
+    setPollingAll(true)
+    try {
+      const results = await Promise.all(
+        accounts.map(a =>
+          fetch(`/api/v1/social/accounts/${a.id}/poll`, { method: "POST", headers })
+            .then(r => r.json())
+            .then(d => ({ account: a.displayName || a.handle, ingested: d.data?.ingested || 0, error: d.data?.error })),
+        ),
+      )
+      const total = results.reduce((s, r) => s + r.ingested, 0)
+      const errors = results.filter(r => r.error)
+      const msg = errors.length
+        ? `Ingested ${total} mention(s). Errors: ${errors.map(e => `${e.account}=${e.error}`).join(", ")}`
+        : `Ingested ${total} new mention(s) across ${results.length} account(s).`
+      alert(msg)
+      loadAccounts()
+      loadMentions()
+    } finally {
+      setPollingAll(false)
+    }
+  }
+
   const pollAccount = async (id: string) => {
     const res = await fetch(`/api/v1/social/accounts/${id}/poll`, { method: "POST", headers })
     const data = await res.json()
@@ -235,6 +260,10 @@ export default function SocialMonitoringPage() {
           <p className="text-sm text-muted-foreground">Track brand mentions across social networks (§5)</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={pollAll} disabled={pollingAll || accounts.length === 0} className="gap-1.5">
+            <RefreshCw className={`h-4 w-4 ${pollingAll ? "animate-spin" : ""}`} />
+            {pollingAll ? "Polling…" : "Refresh all"}
+          </Button>
           <Button variant="outline" asChild className="gap-1.5">
             <a href="/api/v1/social/oauth/twitter/start">
               <LinkIcon className="h-4 w-4" /> Connect Twitter
