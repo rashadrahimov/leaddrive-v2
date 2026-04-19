@@ -256,7 +256,7 @@ const authMiddleware = auth((req) => {
   }
 
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
-  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/calls/webhook") || pathname.startsWith("/api/v1/calls/twiml") || pathname.startsWith("/api/cron/")) {
+  if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/calls/webhook") || pathname.startsWith("/api/v1/calls/twiml") || pathname.startsWith("/api/cron/") || pathname.startsWith("/api/v1/social/cron/")) {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
