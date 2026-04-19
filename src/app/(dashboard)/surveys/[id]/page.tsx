@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Download, TrendingUp, ThumbsUp, ThumbsDown, Minus, Users, Save } from "lucide-react"
 import { QuestionBuilder, type Question } from "@/components/surveys/question-builder"
+import { SurveyAnalyticsDashboard } from "@/components/surveys/analytics-dashboard"
 
 interface Survey {
   id: string
@@ -130,15 +131,7 @@ export default function SurveyDetailPage() {
         </Button>
       </div>
 
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <StatTile icon={Users} label="Responses" value={stats.total} />
-          <StatTile icon={TrendingUp} label="Sent" value={survey.totalSent} />
-          <StatTile icon={ThumbsUp} label="Promoters" value={stats.promoters} color="text-green-600" />
-          <StatTile icon={Minus} label="Passives" value={stats.passives} color="text-amber-600" />
-          <StatTile icon={ThumbsDown} label="Detractors" value={stats.detractors} color="text-red-600" />
-        </div>
-      )}
+      <SurveyAnalyticsDashboard surveyId={survey.id} orgId={orgId} />
 
       {stats && stats.nps != null && (
         <div className="rounded-lg border bg-card p-5">
