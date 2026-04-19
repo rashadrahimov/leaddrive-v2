@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, TrendingUp, ThumbsUp, ThumbsDown, Minus, Users, Save } from "lucide-react"
+import { ArrowLeft, Download, TrendingUp, ThumbsUp, ThumbsDown, Minus, Users, Save, Ticket as TicketIcon, User, ExternalLink, MessageSquare, Mail, Phone } from "lucide-react"
 import { QuestionBuilder, type Question } from "@/components/surveys/question-builder"
 import { SurveyAnalyticsDashboard } from "@/components/surveys/analytics-dashboard"
 import { SurveyUnsubscribesPanel } from "@/components/surveys/unsubscribes-panel"
@@ -31,11 +31,14 @@ interface Response {
   score: number | null
   category: string | null
   comment: string | null
+  commentSentiment: string | null
   email: string | null
   phone: string | null
   channel: string | null
   answers: Record<string, any>
   completedAt: string
+  contact: { id: string; fullName: string; email: string | null; phone: string | null } | null
+  ticket: { id: string; ticketNumber: string; subject: string; source: string | null } | null
 }
 
 interface Stats {
@@ -189,9 +192,9 @@ export default function SurveyDetailPage() {
         ) : (
           <div className="divide-y">
             {responses.map(r => (
-              <div key={r.id} className="p-4 space-y-2">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold text-sm ${
+              <div key={r.id} className="p-4 space-y-2.5">
+                <div className="flex items-start gap-3 flex-wrap">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-base shrink-0 ${
                     r.category === "promoter" ? "bg-green-100 text-green-700" :
                     r.category === "detractor" ? "bg-red-100 text-red-700" :
                     r.category === "passive" ? "bg-amber-100 text-amber-700" :
@@ -199,13 +202,52 @@ export default function SurveyDetailPage() {
                   }`}>
                     {r.score ?? "—"}
                   </div>
-                  {r.category && <Badge variant="outline" className="text-[10px] uppercase">{r.category}</Badge>}
-                  <span className="text-xs text-muted-foreground">{new Date(r.completedAt).toLocaleString()}</span>
-                  {r.email && <span className="text-xs text-muted-foreground">{r.email}</span>}
-                  {r.channel && <Badge variant="secondary" className="text-[10px]">{r.channel}</Badge>}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {r.category && <Badge variant="outline" className="text-[10px] uppercase">{r.category}</Badge>}
+                      {r.channel && <Badge variant="secondary" className="text-[10px]">{r.channel}</Badge>}
+                      {r.ticket?.source && r.ticket.source !== r.channel && (
+                        <Badge variant="outline" className="text-[10px]">source: {r.ticket.source}</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground ml-auto">{new Date(r.completedAt).toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                      {r.contact ? (
+                        <a href={`/contacts/${r.contact.id}`} className="inline-flex items-center gap-1 hover:text-foreground hover:underline">
+                          <User className="h-3 w-3" /> {r.contact.fullName}
+                        </a>
+                      ) : (r.email || r.phone) ? (
+                        <span className="inline-flex items-center gap-1">
+                          <User className="h-3 w-3" /> {r.email || r.phone}
+                        </span>
+                      ) : null}
+                      {r.contact?.email && <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" />{r.contact.email}</span>}
+                      {r.contact?.phone && <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" />{r.contact.phone}</span>}
+                      {r.ticket && (
+                        <a href={`/tickets/${r.ticket.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          <TicketIcon className="h-3 w-3" /> {r.ticket.ticketNumber}
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 {r.comment && (
-                  <p className="text-sm bg-muted/40 rounded-lg p-2.5">{r.comment}</p>
+                  <div className="ml-13 flex items-start gap-2 bg-muted/40 rounded-lg p-2.5">
+                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0 text-sm">
+                      <p>{r.comment}</p>
+                      {r.commentSentiment && (
+                        <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wide ${
+                          r.commentSentiment === "positive" ? "bg-emerald-100 text-emerald-700" :
+                          r.commentSentiment === "negative" ? "bg-red-100 text-red-700" :
+                          "bg-muted text-muted-foreground"
+                        }`}>
+                          AI: {r.commentSentiment}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
                 {r.answers && Object.keys(r.answers).length > 0 && (
                   <details className="text-xs">

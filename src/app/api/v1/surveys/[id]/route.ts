@@ -18,6 +18,32 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     take: 500,
   })
 
+  // Hydrate response rows with linked entity display data — cheap bulk
+  // lookups so the detail page doesn't have to N+1 through contacts/tickets.
+  const contactIds = [...new Set(responses.map(r => r.contactId).filter(Boolean) as string[])]
+  const ticketIds = [...new Set(responses.map(r => r.ticketId).filter(Boolean) as string[])]
+  const [contacts, tickets] = await Promise.all([
+    contactIds.length > 0
+      ? prisma.contact.findMany({
+          where: { id: { in: contactIds }, organizationId: orgId },
+          select: { id: true, fullName: true, email: true, phone: true },
+        })
+      : Promise.resolve([]),
+    ticketIds.length > 0
+      ? prisma.ticket.findMany({
+          where: { id: { in: ticketIds }, organizationId: orgId },
+          select: { id: true, ticketNumber: true, subject: true, source: true },
+        })
+      : Promise.resolve([]),
+  ])
+  const contactMap = new Map(contacts.map(c => [c.id, c]))
+  const ticketMap = new Map(tickets.map(t => [t.id, t]))
+  const hydrated = responses.map(r => ({
+    ...r,
+    contact: r.contactId ? contactMap.get(r.contactId) : null,
+    ticket: r.ticketId ? ticketMap.get(r.ticketId) : null,
+  }))
+
   type R = { category: string | null; score: number | null }
   const total = responses.length
   const promoters = responses.filter((r: R) => r.category === "promoter").length
@@ -29,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     success: true,
     data: {
       survey,
-      responses,
+      responses: hydrated,
       stats: { total, promoters, passives, detractors, nps },
     },
   })
