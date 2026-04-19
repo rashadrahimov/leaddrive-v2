@@ -11,7 +11,7 @@ const WINDOW_DAYS_END = 32
 type ContractWithRefs = Prisma.ContractGetPayload<{
   include: {
     company: { select: { id: true; name: true } }
-    contact: { select: { id: true; firstName: true; lastName: true; email: true } }
+    contact: { select: { id: true; fullName: true; email: true } }
   }
 }>
 
@@ -27,7 +27,7 @@ async function fetchContractsInWindow(orgId: string, now: Date): Promise<Contrac
     },
     include: {
       company: { select: { id: true, name: true } },
-      contact: { select: { id: true, firstName: true, lastName: true, email: true } },
+      contact: { select: { id: true, fullName: true, email: true } },
     },
   })
 }
@@ -67,9 +67,7 @@ export async function generateRenewalProposal(
   const currentValue = contract.valueAmount || 0
   const currency = contract.currency || "USD"
   const companyName = contract.company?.name || "the client"
-  const contactName = contract.contact
-    ? `${contract.contact.firstName} ${contract.contact.lastName || ""}`.trim()
-    : "there"
+  const contactName = contract.contact?.fullName?.trim() || "there"
   const contactEmail = contract.contact?.email || ""
   const endDateIso = contract.endDate ? contract.endDate.toISOString().slice(0, 10) : "soon"
 
