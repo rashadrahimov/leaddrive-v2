@@ -46,6 +46,18 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (days <= 14) return "high"
     return "normal"
   }
+  if (feature === "hot_lead") {
+    const score = p.score || 0
+    if (score >= 95) return "critical"
+    if (score >= 85) return "high"
+    return "normal"
+  }
+  if (feature === "triage") {
+    const pr = p.suggestedPriority as string | undefined
+    if (pr === "urgent") return "critical"
+    if (pr === "high") return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -61,6 +73,11 @@ function urgencyScore(action: ShadowAction): number {
   if (feature === "payment_reminder") secondary = (p.daysOverdue || 0) * 5 + (p.amount || 0) * 0.001
   else if (feature === "acknowledge") secondary = p.percentElapsed || 0
   else if (feature === "renewal") secondary = Math.max(0, 30 - (p.daysUntilEnd ?? 30)) * 10 + (p.proposedValue || 0) * 0.001
+  else if (feature === "hot_lead") secondary = p.score || 0
+  else if (feature === "triage") {
+    const pr = p.suggestedPriority
+    secondary = pr === "urgent" ? 400 : pr === "high" ? 200 : pr === "medium" ? 100 : 0
+  }
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -70,6 +87,8 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "payment_reminder") return t("shadowPaymentDetail")
   if (feature === "acknowledge") return t("shadowAckDetail")
   if (feature === "renewal") return t("shadowRenewalDetail")
+  if (feature === "hot_lead") return t("shadowHotLeadDetail")
+  if (feature === "triage") return t("shadowTriageDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -110,6 +129,26 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowContractEntity"),
       title: `${p.companyName || p.contractNumber || t("shadowContractEntity")} — ${proposedValue.toLocaleString()} ${currency}`,
       reason: t("shadowRenewalReason", { days: p.daysUntilEnd ?? 0, uplift: upliftStr }),
+    }
+  }
+  if (feature === "hot_lead") {
+    return {
+      label: t("shadowHotLeadLabel"),
+      badgeBg: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+      borderColor: "border-l-rose-500",
+      entityLabel: t("shadowLeadEntity"),
+      title: `${p.leadName || t("shadowLeadEntity")}${p.companyName ? ` · ${p.companyName}` : ""}`,
+      reason: t("shadowHotLeadReason", { score: p.score || 0, assignee: p.suggestedAssigneeName || "—" }),
+    }
+  }
+  if (feature === "triage") {
+    return {
+      label: t("shadowTriageLabel"),
+      badgeBg: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
+      borderColor: "border-l-indigo-500",
+      entityLabel: t("shadowTicketEntity"),
+      title: `${p.ticketNumber || t("shadowTicketEntity")} — ${p.subject || ""}`.slice(0, 120),
+      reason: t("shadowTriageReason", { category: p.suggestedCategory || "—", priority: p.suggestedPriority || "—" }),
     }
   }
   return {
@@ -318,10 +357,12 @@ export default function AiActionsPage() {
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
                   { key: "all", labelKey: "filterAll", ns: "page" as const },
+                  { key: "hot_lead", labelKey: "shadowHotLeadLabel", ns: "settings" as const },
+                  { key: "triage", labelKey: "shadowTriageLabel", ns: "settings" as const },
+                  { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
                   { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },
                   { key: "acknowledge", labelKey: "shadowAcknowledgeLabel", ns: "settings" as const },
                   { key: "followup", labelKey: "shadowFollowupLabel", ns: "settings" as const },
-                  { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
                 ].filter(ft => ft.key === "all" || availableTypes.has(ft.key)).map(ft => {
                   const label = ft.ns === "page" ? tPage(ft.labelKey as any) : t(ft.labelKey as any)
                   const active = filterType === ft.key

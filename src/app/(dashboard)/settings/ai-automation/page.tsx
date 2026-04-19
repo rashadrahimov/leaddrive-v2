@@ -11,13 +11,13 @@ import { MotionPage } from "@/components/ui/motion"
 import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
-  Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox,
+  Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -42,13 +42,19 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_payment_reminder", labelKey: "paymentReminderLive", descKey: "paymentReminderLiveDesc", category: "autopilot", scenario: "payment", mode: "live" },
   { key: "ai_auto_renewal_shadow", labelKey: "autoRenewalShadow", descKey: "autoRenewalShadowDesc", category: "autopilot", scenario: "renewal", mode: "shadow" },
   { key: "ai_auto_renewal", labelKey: "autoRenewalLive", descKey: "autoRenewalLiveDesc", category: "autopilot", scenario: "renewal", mode: "live" },
+  { key: "ai_auto_hot_lead_shadow", labelKey: "autoHotLeadShadow", descKey: "autoHotLeadShadowDesc", category: "autopilot", scenario: "hotLead", mode: "shadow" },
+  { key: "ai_auto_hot_lead", labelKey: "autoHotLeadLive", descKey: "autoHotLeadLiveDesc", category: "autopilot", scenario: "hotLead", mode: "live" },
+  { key: "ai_auto_triage_shadow", labelKey: "autoTriageShadow", descKey: "autoTriageShadowDesc", category: "autopilot", scenario: "triage", mode: "shadow" },
+  { key: "ai_auto_triage", labelKey: "autoTriageLive", descKey: "autoTriageLiveDesc", category: "autopilot", scenario: "triage", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
+  { key: "hotLead", titleKey: "scenarioHotLeadTitle", descKey: "scenarioHotLeadDesc", icon: Flame, accent: "text-rose-500" },
+  { key: "triage", titleKey: "scenarioTriageTitle", descKey: "scenarioTriageDesc", icon: Tags, accent: "text-indigo-500" },
+  { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },
   { key: "followup", titleKey: "scenarioFollowupTitle", descKey: "scenarioFollowupDesc", icon: MessageSquare, accent: "text-blue-500" },
   { key: "payment", titleKey: "scenarioPaymentTitle", descKey: "scenarioPaymentDesc", icon: Mail, accent: "text-red-500" },
-  { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
 ]
 
 const ANALYTICS_PREVIEW_KEYS: Record<string, string> = {
