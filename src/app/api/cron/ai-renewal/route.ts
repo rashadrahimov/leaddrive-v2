@@ -1,0 +1,69 @@
+import { NextRequest, NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma"
+import { isAiFeatureEnabled, checkAiBudget } from "@/lib/ai/budget"
+import { findContractsForRenewal, generateRenewalProposal, writeRenewalShadowAction } from "@/lib/ai/renewal"
+
+/**
+ * AI Renewal Cron Endpoint
+ * Called daily (recommended: 02:00 server time)
+ * Scans contracts ending in 28–32 days, drafts renewal proposals via AI,
+ * writes to AiShadowAction for manual review (or auto-approves in live mode).
+ *
+ * Execution of approved actions happens in ai-auto-actions cron.
+ */
+export async function POST(req: NextRequest) {
+  const cronSecret =
+    req.headers.get("x-cron-secret") ||
+    req.headers.get("authorization")?.replace("Bearer ", "")
+  if (!cronSecret || cronSecret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const now = new Date()
+  const results = { orgsScanned: 0, orgsSkipped: 0, drafted: 0, errors: 0 }
+
+  try {
+    const orgs = await prisma.organization.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true },
+    })
+
+    for (const org of orgs) {
+      const liveEnabled = await isAiFeatureEnabled(org.id, "ai_auto_renewal")
+      const shadowEnabled = await isAiFeatureEnabled(org.id, "ai_auto_renewal_shadow")
+      if (!liveEnabled && !shadowEnabled) {
+        results.orgsSkipped++
+        continue
+      }
+
+      const budget = await checkAiBudget(org.id)
+      if (!budget.allowed) {
+        results.orgsSkipped++
+        continue
+      }
+
+      results.orgsScanned++
+      const contracts = await findContractsForRenewal(org.id, now)
+
+      for (const contract of contracts) {
+        try {
+          const draft = await generateRenewalProposal(contract, org.name)
+          if (!draft) { results.errors++; continue }
+          await writeRenewalShadowAction(org.id, contract, draft, now, !liveEnabled)
+          results.drafted++
+        } catch (e) {
+          console.error(`Renewal draft failed for contract ${contract.id}:`, e)
+          results.errors++
+        }
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { ...results, timestamp: now.toISOString() },
+    })
+  } catch (e) {
+    console.error("AI Renewal cron error:", e)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

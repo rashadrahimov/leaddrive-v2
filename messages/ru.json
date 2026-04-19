@@ -2975,7 +2975,17 @@
     "toastRejected": "Отклонено",
     "toastUndo": "Отменить",
     "toastApprovedAll": "Одобрено {n}",
-    "toastRejectedAll": "Отклонено {n}"
+    "toastRejectedAll": "Отклонено {n}",
+    "autoRenewalShadow": "Продление контракта",
+    "autoRenewalShadowDesc": "AI готовит email с предложением продления — вы одобряете отправку",
+    "autoRenewalLive": "Продление контракта",
+    "autoRenewalLiveDesc": "AI автоматически отправляет proposal и создаёт сделку в стадии PROPOSAL",
+    "scenarioRenewalTitle": "Предложение о продлении",
+    "scenarioRenewalDesc": "За 30 дней до конца контракта AI готовит email-proposal с новой ценой и создаёт сделку на стадии PROPOSAL",
+    "shadowRenewalLabel": "🔄 Продление",
+    "shadowContractEntity": "Контракт",
+    "shadowRenewalReason": "{days} дней до конца. Предложено {uplift} к текущей цене.",
+    "shadowRenewalDetail": "Клиенту уйдёт email с proposal-текстом (сгенерированным AI). В CRM создастся сделка «Renewal — <company>» на стадии PROPOSAL с probability 60%."
   },
   "tips": {
     "prefix": "А знаете ли вы?",

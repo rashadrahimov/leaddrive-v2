@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { isAiFeatureEnabled, checkAiBudget } from "@/lib/ai/budget"
+import { sendEmail } from "@/lib/email"
 
 /**
  * AI Auto-Actions Cron Endpoint
@@ -481,6 +482,46 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
                 },
               })
             }
+          }
+          break
+        }
+
+        case "send_renewal_proposal": {
+          if (!payload.contactEmail || !payload.emailSubject || !payload.emailBody) break
+          const emailResult = await sendEmail({
+            to: payload.contactEmail,
+            subject: payload.emailSubject,
+            html: payload.emailBody,
+            organizationId: action.organizationId,
+            contactId: payload.contactId || undefined,
+          })
+          if (!emailResult.success) {
+            throw new Error(`Renewal email failed: ${emailResult.error || "unknown"}`)
+          }
+          const existingDeal = await prisma.deal.findFirst({
+            where: {
+              organizationId: action.organizationId,
+              companyId: payload.companyId || undefined,
+              name: { contains: "Renewal" },
+              stage: { notIn: ["WON", "LOST"] },
+              createdAt: { gte: new Date(now.getTime() - 60 * 86400000) },
+            },
+          })
+          if (!existingDeal) {
+            await prisma.deal.create({
+              data: {
+                organizationId: action.organizationId,
+                companyId: payload.companyId || null,
+                contactId: payload.contactId || null,
+                name: `Renewal — ${payload.companyName || payload.contractNumber || "contract"}`,
+                stage: "PROPOSAL",
+                valueAmount: Number(payload.proposedValue) || 0,
+                currency: payload.currency || "USD",
+                probability: 60,
+                expectedClose: payload.endDate ? new Date(payload.endDate) : null,
+                notes: `Auto-created from AI renewal proposal. Reasoning: ${payload.reasoning || ""}`,
+              },
+            })
           }
           break
         }

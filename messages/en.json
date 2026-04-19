@@ -2975,7 +2975,17 @@
     "toastRejected": "Rejected",
     "toastUndo": "Undo",
     "toastApprovedAll": "{n} approved",
-    "toastRejectedAll": "{n} rejected"
+    "toastRejectedAll": "{n} rejected",
+    "autoRenewalShadow": "Contract renewal",
+    "autoRenewalShadowDesc": "AI drafts a renewal email — you approve sending",
+    "autoRenewalLive": "Contract renewal",
+    "autoRenewalLiveDesc": "AI auto-sends the proposal and creates a deal in PROPOSAL stage",
+    "scenarioRenewalTitle": "Renewal proposal",
+    "scenarioRenewalDesc": "30 days before contract end, AI drafts a proposal email with a new price and creates a deal in PROPOSAL stage",
+    "shadowRenewalLabel": "🔄 Renewal",
+    "shadowContractEntity": "Contract",
+    "shadowRenewalReason": "{days} days until end. Proposed {uplift} over current price.",
+    "shadowRenewalDetail": "A proposal email (AI-drafted) is sent to the customer. A deal \"Renewal — <company>\" is created in PROPOSAL stage with probability 60%."
   },
   "tips": {
     "prefix": "Did you know?",

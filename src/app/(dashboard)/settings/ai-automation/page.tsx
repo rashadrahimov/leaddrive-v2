@@ -28,7 +28,7 @@ interface ShadowAction {
   createdAt: string
 }
 
-type Scenario = "acknowledge" | "followup" | "payment"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -51,12 +51,15 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_acknowledge", labelKey: "autoAcknowledgeLive", descKey: "autoAcknowledgeLiveDesc", category: "autopilot", scenario: "acknowledge", mode: "live" },
   { key: "ai_auto_followup", labelKey: "autoFollowupLive", descKey: "autoFollowupLiveDesc", category: "autopilot", scenario: "followup", mode: "live" },
   { key: "ai_auto_payment_reminder", labelKey: "paymentReminderLive", descKey: "paymentReminderLiveDesc", category: "autopilot", scenario: "payment", mode: "live" },
+  { key: "ai_auto_renewal_shadow", labelKey: "autoRenewalShadow", descKey: "autoRenewalShadowDesc", category: "autopilot", scenario: "renewal", mode: "shadow" },
+  { key: "ai_auto_renewal", labelKey: "autoRenewalLive", descKey: "autoRenewalLiveDesc", category: "autopilot", scenario: "renewal", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },
   { key: "followup", titleKey: "scenarioFollowupTitle", descKey: "scenarioFollowupDesc", icon: MessageSquare, accent: "text-blue-500" },
   { key: "payment", titleKey: "scenarioPaymentTitle", descKey: "scenarioPaymentDesc", icon: Mail, accent: "text-red-500" },
+  { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
 ]
 
 const ANALYTICS_PREVIEW_KEYS: Record<string, string> = {
@@ -830,7 +833,7 @@ type UrgencyLevel = "critical" | "high" | "normal"
 
 function urgencyLevel(action: ShadowAction): UrgencyLevel {
   const p = action.payload as any || {}
-  const feature = action.featureName.replace("ai_auto_", "")
+  const feature = action.featureName.replace("ai_auto_", "").replace("_shadow", "")
   if (feature === "payment_reminder") {
     const days = p.daysOverdue || 0
     if (days >= 30) return "critical"
@@ -843,6 +846,12 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (percent >= 70) return "high"
     return "normal"
   }
+  if (feature === "renewal") {
+    const days = p.daysUntilEnd ?? 30
+    if (days <= 7) return "critical"
+    if (days <= 14) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -853,24 +862,26 @@ function urgencyScore(action: ShadowAction): number {
   const level = urgencyLevel(action)
   const base = level === "critical" ? 3000 : level === "high" ? 2000 : 1000
   const p = action.payload as any || {}
-  const feature = action.featureName.replace("ai_auto_", "")
+  const feature = action.featureName.replace("ai_auto_", "").replace("_shadow", "")
   let secondary = 0
   if (feature === "payment_reminder") secondary = (p.daysOverdue || 0) * 5 + (p.amount || 0) * 0.001
   else if (feature === "acknowledge") secondary = p.percentElapsed || 0
+  else if (feature === "renewal") secondary = Math.max(0, 30 - (p.daysUntilEnd ?? 30)) * 10 + (p.proposedValue || 0) * 0.001
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
 
 function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => string): string {
-  const feature = action.featureName.replace("ai_auto_", "")
+  const feature = action.featureName.replace("ai_auto_", "").replace("_shadow", "")
   if (feature === "payment_reminder") return t("shadowPaymentDetail")
   if (feature === "acknowledge") return t("shadowAckDetail")
+  if (feature === "renewal") return t("shadowRenewalDetail")
   return t("shadowFollowupDetail")
 }
 
 function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => string): { label: string; badgeBg: string; borderColor: string; entityLabel: string; title: string; reason: string } {
   const p = action.payload as any || {}
-  const feature = action.featureName.replace("ai_auto_", "")
+  const feature = action.featureName.replace("ai_auto_", "").replace("_shadow", "")
 
   if (feature === "payment_reminder") {
     return {
@@ -891,6 +902,22 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowTicketEntity"),
       title: p.ticketNumber || t("shadowTicketEntity"),
       reason: t("shadowAcknowledgeReason", { percent: p.percentElapsed || 0 }),
+    }
+  }
+
+  if (feature === "renewal") {
+    const currency = p.currency || "USD"
+    const currentValue = Number(p.currentValue || 0)
+    const proposedValue = Number(p.proposedValue || 0)
+    const uplift = currentValue > 0 ? Math.round(((proposedValue - currentValue) / currentValue) * 100) : 0
+    const upliftStr = uplift > 0 ? `+${uplift}%` : `${uplift}%`
+    return {
+      label: t("shadowRenewalLabel"),
+      badgeBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      borderColor: "border-l-emerald-500",
+      entityLabel: t("shadowContractEntity"),
+      title: `${p.companyName || p.contractNumber || t("shadowContractEntity")} — ${proposedValue.toLocaleString()} ${currency}`,
+      reason: t("shadowRenewalReason", { days: p.daysUntilEnd ?? 0, uplift: upliftStr }),
     }
   }
 
