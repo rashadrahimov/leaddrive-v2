@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MotionPage } from "@/components/ui/motion"
 import {
-  Shield, CheckCircle2, XCircle, Loader2, RefreshCw, ChevronDown, Inbox,
+  Shield, CheckCircle2, XCircle, Loader2, RefreshCw, ChevronDown, Inbox, Search, X,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -142,6 +142,10 @@ export default function AiActionsPage() {
   const [shadowTotal, setShadowTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [filterType, setFilterType] = useState<string>("all")
+  const [filterUrgency, setFilterUrgency] = useState<"all" | UrgencyLevel>("all")
+  const [sortMode, setSortMode] = useState<"urgency" | "newest" | "oldest">("urgency")
+  const [search, setSearch] = useState("")
 
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (orgId) headers["x-organization-id"] = orgId
@@ -159,6 +163,50 @@ export default function AiActionsPage() {
   }
 
   useEffect(() => { fetchData() }, [orgId])
+
+  const filteredActions = useMemo(() => {
+    let list = shadowActions
+    if (filterType !== "all") {
+      list = list.filter(a => {
+        const f = a.featureName.replace("ai_auto_", "").replace("_shadow", "")
+        return f === filterType
+      })
+    }
+    if (filterUrgency !== "all") {
+      list = list.filter(a => urgencyLevel(a) === filterUrgency)
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase()
+      list = list.filter(a => {
+        const p = (a.payload as any) || {}
+        const haystack = [
+          p.companyName, p.contractNumber, p.invoiceNumber,
+          p.ticketNumber, p.contractTitle, p.title, p.contactEmail,
+        ].filter(Boolean).join(" ").toLowerCase()
+        return haystack.includes(q)
+      })
+    }
+    const sorted = [...list]
+    if (sortMode === "urgency") {
+      sorted.sort((a, b) => {
+        const levelRank = (l: UrgencyLevel) => l === "critical" ? 3 : l === "high" ? 2 : 1
+        const lv = levelRank(urgencyLevel(b)) - levelRank(urgencyLevel(a))
+        if (lv !== 0) return lv
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
+    } else if (sortMode === "newest") {
+      sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    } else {
+      sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    }
+    return sorted
+  }, [shadowActions, filterType, filterUrgency, sortMode, search])
+
+  const availableTypes = useMemo(() => {
+    const s = new Set<string>()
+    for (const a of shadowActions) s.add(a.featureName.replace("ai_auto_", "").replace("_shadow", ""))
+    return s
+  }, [shadowActions])
 
   const handleReviewWithUndo = (action: ShadowAction, decision: "approve" | "reject") => {
     setShadowActions(prev => prev.filter(a => a.id !== action.id))
@@ -263,20 +311,113 @@ export default function AiActionsPage() {
           <p className="text-xs text-muted-foreground">{t("shadowActionsDesc")}</p>
         </CardHeader>
         <CardContent>
+          {/* Filter & sort bar */}
+          {!loading && shadowActions.length > 0 && (
+            <div className="mb-4 space-y-2.5 pb-3 border-b border-border/60">
+              {/* Type pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { key: "all", labelKey: "filterAll", ns: "page" as const },
+                  { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },
+                  { key: "acknowledge", labelKey: "shadowAcknowledgeLabel", ns: "settings" as const },
+                  { key: "followup", labelKey: "shadowFollowupLabel", ns: "settings" as const },
+                  { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
+                ].filter(ft => ft.key === "all" || availableTypes.has(ft.key)).map(ft => {
+                  const label = ft.ns === "page" ? tPage(ft.labelKey as any) : t(ft.labelKey as any)
+                  const active = filterType === ft.key
+                  return (
+                    <button
+                      key={ft.key}
+                      type="button"
+                      onClick={() => setFilterType(ft.key)}
+                      className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                        active
+                          ? "bg-primary/10 text-primary border-primary/30"
+                          : "bg-card text-muted-foreground border-border hover:bg-muted"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Urgency pills + Sort + Search */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex gap-1">
+                  {(["all", "critical", "high", "normal"] as const).map(u => {
+                    const labelKey = u === "all" ? "filterAll" : `filterUrgency${u.charAt(0).toUpperCase() + u.slice(1)}`
+                    const active = filterUrgency === u
+                    const color = u === "critical" ? "text-red-600" : u === "high" ? "text-amber-600" : u === "normal" ? "text-muted-foreground" : ""
+                    return (
+                      <button
+                        key={u}
+                        type="button"
+                        onClick={() => setFilterUrgency(u)}
+                        className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                          active
+                            ? `bg-muted border-border ${color}`
+                            : "bg-transparent text-muted-foreground border-transparent hover:border-border"
+                        }`}
+                      >
+                        {tPage(labelKey as any)}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <select
+                  value={sortMode}
+                  onChange={e => setSortMode(e.target.value as any)}
+                  className="h-7 text-[11px] border border-border rounded-md px-2 bg-background ml-auto"
+                  aria-label={tPage("sortBy")}
+                >
+                  <option value="urgency">{tPage("sortUrgency")}</option>
+                  <option value="newest">{tPage("sortNewest")}</option>
+                  <option value="oldest">{tPage("sortOldest")}</option>
+                </select>
+
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder={tPage("searchPlaceholder")}
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="h-7 w-56 text-[11px] border border-border rounded-md pl-6 pr-6 bg-background"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label="clear search"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {filteredActions.length !== shadowActions.length && (
+                <p className="text-[10px] text-muted-foreground">
+                  {tPage("showing", { n: filteredActions.length, total: shadowActions.length })}
+                </p>
+              )}
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : shadowActions.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">{t("noPendingShadow")}</p>
+          ) : filteredActions.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">{tPage("filterEmpty")}</p>
           ) : (
             <div className="space-y-2">
-              {[...shadowActions].sort((a, b) => {
-                const levelRank = (l: UrgencyLevel) => l === "critical" ? 3 : l === "high" ? 2 : 1
-                const lv = levelRank(urgencyLevel(b)) - levelRank(urgencyLevel(a))
-                if (lv !== 0) return lv
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-              }).map(action => {
+              {filteredActions.map(action => {
                 const info = getShadowInfo(action, t)
                 const urgency = urgencyLevel(action)
                 const urgencyBadge = urgency === "critical"

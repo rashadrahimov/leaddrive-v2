@@ -2990,7 +2990,18 @@
   },
   "aiActions": {
     "title": "AI Hərəkətlər",
-    "subtitle": "AI-nin müştərilər üçün hazırladığı hərəkətlər — icra olunmazdan əvvəl yoxlayın və təsdiqləyin. «Təsdiq et» email göndərir, tapşırıq yaradır və ya CRM-i yeniləyir."
+    "subtitle": "AI-nin müştərilər üçün hazırladığı hərəkətlər — icra olunmazdan əvvəl yoxlayın və təsdiqləyin. «Təsdiq et» email göndərir, tapşırıq yaradır və ya CRM-i yeniləyir.",
+    "filterAll": "Hamısı",
+    "filterUrgencyCritical": "Təcili",
+    "filterUrgencyHigh": "Vacib",
+    "filterUrgencyNormal": "Normal",
+    "sortBy": "Sırala",
+    "sortUrgency": "Təciliklə",
+    "sortNewest": "Ən yenilər əvvəl",
+    "sortOldest": "Ən köhnələr əvvəl",
+    "searchPlaceholder": "Axtar — şirkət, nömrə, başlıq",
+    "filterEmpty": "Bu filtrlərə uyğun hərəkət yoxdur",
+    "showing": "{n} / {total}"
   },
   "tips": {
     "prefix": "Bilirdinizmi?",
