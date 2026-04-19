@@ -12,12 +12,13 @@ import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags, TrendingUp,
+  AlertTriangle, BookOpen, GitMerge,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -48,13 +49,22 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_triage", labelKey: "autoTriageLive", descKey: "autoTriageLiveDesc", category: "autopilot", scenario: "triage", mode: "live" },
   { key: "ai_auto_stage_advance_shadow", labelKey: "autoStageAdvanceShadow", descKey: "autoStageAdvanceShadowDesc", category: "autopilot", scenario: "stageAdvance", mode: "shadow" },
   { key: "ai_auto_stage_advance", labelKey: "autoStageAdvanceLive", descKey: "autoStageAdvanceLiveDesc", category: "autopilot", scenario: "stageAdvance", mode: "live" },
+  { key: "ai_auto_sentiment_shadow", labelKey: "autoSentimentShadow", descKey: "autoSentimentShadowDesc", category: "autopilot", scenario: "sentiment", mode: "shadow" },
+  { key: "ai_auto_sentiment", labelKey: "autoSentimentLive", descKey: "autoSentimentLiveDesc", category: "autopilot", scenario: "sentiment", mode: "live" },
+  { key: "ai_auto_kb_close_shadow", labelKey: "autoKbCloseShadow", descKey: "autoKbCloseShadowDesc", category: "autopilot", scenario: "kbClose", mode: "shadow" },
+  { key: "ai_auto_kb_close", labelKey: "autoKbCloseLive", descKey: "autoKbCloseLiveDesc", category: "autopilot", scenario: "kbClose", mode: "live" },
+  { key: "ai_auto_duplicate_shadow", labelKey: "autoDuplicateShadow", descKey: "autoDuplicateShadowDesc", category: "autopilot", scenario: "duplicate", mode: "shadow" },
+  { key: "ai_auto_duplicate", labelKey: "autoDuplicateLive", descKey: "autoDuplicateLiveDesc", category: "autopilot", scenario: "duplicate", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
+  { key: "sentiment", titleKey: "scenarioSentimentTitle", descKey: "scenarioSentimentDesc", icon: AlertTriangle, accent: "text-orange-600" },
   { key: "hotLead", titleKey: "scenarioHotLeadTitle", descKey: "scenarioHotLeadDesc", icon: Flame, accent: "text-rose-500" },
   { key: "triage", titleKey: "scenarioTriageTitle", descKey: "scenarioTriageDesc", icon: Tags, accent: "text-indigo-500" },
+  { key: "kbClose", titleKey: "scenarioKbCloseTitle", descKey: "scenarioKbCloseDesc", icon: BookOpen, accent: "text-cyan-500" },
   { key: "stageAdvance", titleKey: "scenarioStageAdvanceTitle", descKey: "scenarioStageAdvanceDesc", icon: TrendingUp, accent: "text-purple-500" },
   { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
+  { key: "duplicate", titleKey: "scenarioDuplicateTitle", descKey: "scenarioDuplicateDesc", icon: GitMerge, accent: "text-slate-500" },
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },
   { key: "followup", titleKey: "scenarioFollowupTitle", descKey: "scenarioFollowupDesc", icon: MessageSquare, accent: "text-blue-500" },
   { key: "payment", titleKey: "scenarioPaymentTitle", descKey: "scenarioPaymentDesc", icon: Mail, accent: "text-red-500" },

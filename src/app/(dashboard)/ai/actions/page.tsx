@@ -65,6 +65,22 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (prob >= 70 || days >= 21) return "high"
     return "normal"
   }
+  if (feature === "sentiment") {
+    const conf = p.confidence || 0
+    if (conf >= 0.9) return "critical"
+    if (conf >= 0.75) return "high"
+    return "normal"
+  }
+  if (feature === "kb_close") {
+    const conf = p.confidence || 0
+    if (conf >= 0.95) return "high"
+    return "normal"
+  }
+  if (feature === "duplicate") {
+    const s = p.similarityScore || 0
+    if (s >= 0.99) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -86,6 +102,9 @@ function urgencyScore(action: ShadowAction): number {
     secondary = pr === "urgent" ? 400 : pr === "high" ? 200 : pr === "medium" ? 100 : 0
   }
   else if (feature === "stage_advance") secondary = (p.probability || 0) + (p.daysInStage || 0) * 0.5
+  else if (feature === "sentiment") secondary = (p.confidence || 0) * 500
+  else if (feature === "kb_close") secondary = (p.confidence || 0) * 400
+  else if (feature === "duplicate") secondary = (p.similarityScore || 0) * 400
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -98,6 +117,9 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "hot_lead") return t("shadowHotLeadDetail")
   if (feature === "triage") return t("shadowTriageDetail")
   if (feature === "stage_advance") return t("shadowStageAdvanceDetail")
+  if (feature === "sentiment") return t("shadowSentimentDetail")
+  if (feature === "kb_close") return t("shadowKbCloseDetail")
+  if (feature === "duplicate") return t("shadowDuplicateDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -168,6 +190,39 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowDealEntity"),
       title: `${p.dealName || t("shadowDealEntity")} · ${p.currentStage || "—"} → ${p.suggestedStage || "—"}`,
       reason: t("shadowStageAdvanceReason", { days: p.daysInStage || 0, prob: p.probability || 0 }),
+    }
+  }
+  if (feature === "sentiment") {
+    const pct = Math.round((p.confidence || 0) * 100)
+    return {
+      label: t("shadowSentimentLabel"),
+      badgeBg: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+      borderColor: "border-l-orange-500",
+      entityLabel: t("shadowTicketEntity"),
+      title: `${p.ticketNumber || t("shadowTicketEntity")} — ${p.subject || ""}`.slice(0, 120),
+      reason: t("shadowSentimentReason", { confidence: pct, assignee: p.suggestedAssigneeName || "—" }),
+    }
+  }
+  if (feature === "kb_close") {
+    const pct = Math.round((p.confidence || 0) * 100)
+    return {
+      label: t("shadowKbCloseLabel"),
+      badgeBg: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400",
+      borderColor: "border-l-cyan-500",
+      entityLabel: t("shadowTicketEntity"),
+      title: `${p.ticketNumber || t("shadowTicketEntity")} — ${p.subject || ""}`.slice(0, 120),
+      reason: t("shadowKbCloseReason", { article: (p.articleTitle || "").slice(0, 60), confidence: pct }),
+    }
+  }
+  if (feature === "duplicate") {
+    const pct = Math.round((p.similarityScore || 0) * 100)
+    return {
+      label: t("shadowDuplicateLabel"),
+      badgeBg: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400",
+      borderColor: "border-l-slate-400",
+      entityLabel: t("shadowContactEntity"),
+      title: `${p.duplicateLabel || "—"} → ${p.primaryLabel || "—"}`.slice(0, 140),
+      reason: t("shadowDuplicateReason", { reason: p.reason || "—", score: pct }),
     }
   }
   return {
@@ -377,9 +432,12 @@ export default function AiActionsPage() {
                 {[
                   { key: "all", labelKey: "filterAll", ns: "page" as const },
                   { key: "hot_lead", labelKey: "shadowHotLeadLabel", ns: "settings" as const },
+                  { key: "sentiment", labelKey: "shadowSentimentLabel", ns: "settings" as const },
                   { key: "triage", labelKey: "shadowTriageLabel", ns: "settings" as const },
+                  { key: "kb_close", labelKey: "shadowKbCloseLabel", ns: "settings" as const },
                   { key: "stage_advance", labelKey: "shadowStageAdvanceLabel", ns: "settings" as const },
                   { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
+                  { key: "duplicate", labelKey: "shadowDuplicateLabel", ns: "settings" as const },
                   { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },
                   { key: "acknowledge", labelKey: "shadowAcknowledgeLabel", ns: "settings" as const },
                   { key: "followup", labelKey: "shadowFollowupLabel", ns: "settings" as const },

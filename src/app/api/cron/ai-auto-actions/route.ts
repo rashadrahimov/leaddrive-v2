@@ -4,6 +4,9 @@ import { createNotification } from "@/lib/notifications"
 import { isAiFeatureEnabled, checkAiBudget } from "@/lib/ai/budget"
 import { sendEmail } from "@/lib/email"
 import { findTicketsNeedingTriage, generateTriageSuggestion, writeTriageShadowAction } from "@/lib/ai/triage"
+import { findTicketsForSentimentCheck, classifyTicketSentiment, writeSentimentShadowAction } from "@/lib/ai/sentiment"
+import { findTicketsForKbMatching, matchTicketToKb, writeKbMatchShadowAction } from "@/lib/ai/kb-match"
+import { findDuplicateContacts, filterNewDuplicateCandidates, writeDuplicateContactShadowAction } from "@/lib/ai/duplicates"
 
 /**
  * AI Auto-Actions Cron Endpoint
@@ -78,6 +81,27 @@ export async function POST(req: NextRequest) {
         results.autoStageAdvance = (results.autoStageAdvance || 0) + await runStageAdvance(org.id, now, false)
       } else if (await isAiFeatureEnabled(org.id, "ai_auto_stage_advance_shadow")) {
         results.shadowActions += await runStageAdvance(org.id, now, true)
+      }
+
+      // Negative sentiment (AI detects churn signals → escalate to senior)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_sentiment")) {
+        results.autoSentiment = (results.autoSentiment || 0) + await runSentiment(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_sentiment_shadow")) {
+        results.shadowActions += await runSentiment(org.id, now, true)
+      }
+
+      // KB auto-close (ticket matches KB article → suggest close with link)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_kb_close")) {
+        results.autoKbClose = (results.autoKbClose || 0) + await runKbClose(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_kb_close_shadow")) {
+        results.shadowActions += await runKbClose(org.id, now, true)
+      }
+
+      // Duplicate merge (similar contacts → suggest merge; rule-based, no AI)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_duplicate")) {
+        results.autoDuplicate = (results.autoDuplicate || 0) + await runDuplicateMerge(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_duplicate_shadow")) {
+        results.shadowActions += await runDuplicateMerge(org.id, now, true)
       }
     }
 
@@ -616,6 +640,73 @@ async function runAutoTriage(orgId: string, now: Date, shadow: boolean): Promise
   return count
 }
 
+// ── Negative Sentiment Escalation ──
+
+async function runSentiment(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const tickets = await findTicketsForSentimentCheck(orgId, now)
+  if (tickets.length === 0) return 0
+
+  const seniors = await prisma.user.findMany({
+    where: { organizationId: orgId, role: { in: ["admin", "manager"] }, isActive: true },
+    select: { id: true, name: true, email: true },
+  })
+  if (seniors.length === 0) return 0
+
+  let count = 0
+  for (const ticket of tickets) {
+    try {
+      const sentiment = await classifyTicketSentiment(ticket)
+      if (!sentiment) continue
+      if (sentiment.level !== "negative_high" || sentiment.confidence < 0.7) continue
+      const senior = seniors[count % seniors.length]
+      await writeSentimentShadowAction(orgId, ticket, sentiment, senior.id, senior.name || senior.email, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`Sentiment failed for ticket ${ticket.id}:`, e)
+    }
+  }
+  return count
+}
+
+// ── KB Auto-Close Suggester ──
+
+async function runKbClose(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const tickets = await findTicketsForKbMatching(orgId, now)
+  if (tickets.length === 0) return 0
+
+  let count = 0
+  for (const ticket of tickets) {
+    try {
+      const match = await matchTicketToKb(ticket)
+      if (!match) continue
+      await writeKbMatchShadowAction(orgId, ticket, match, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`KB match failed for ticket ${ticket.id}:`, e)
+    }
+  }
+  return count
+}
+
+// ── Duplicate Contact Merge ──
+
+async function runDuplicateMerge(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const rawCandidates = await findDuplicateContacts(orgId, now)
+  const candidates = await filterNewDuplicateCandidates(orgId, rawCandidates, now)
+  if (candidates.length === 0) return 0
+
+  let count = 0
+  for (const cand of candidates) {
+    try {
+      await writeDuplicateContactShadowAction(orgId, cand, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`Duplicate merge failed for ${cand.duplicateId}:`, e)
+    }
+  }
+  return count
+}
+
 // ── Execute approved shadow actions ──
 
 async function executeApprovedShadowActions(now: Date): Promise<number> {
@@ -703,6 +794,70 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
               })
             }
           }
+          break
+        }
+
+        case "escalate_ticket": {
+          await prisma.ticket.updateMany({
+            where: { id: action.entityId, organizationId: action.organizationId },
+            data: {
+              assignedTo: payload.suggestedAssigneeId,
+              priority: "urgent",
+              escalationLevel: 1,
+              lastEscalatedAt: now,
+            },
+          })
+          if (payload.suggestedAssigneeId) {
+            await createNotification({
+              organizationId: action.organizationId,
+              userId: payload.suggestedAssigneeId,
+              type: "warning",
+              title: `⚠️ Negative sentiment: ${payload.ticketNumber || action.entityId}`,
+              message: `${payload.reasoning || "AI detected frustrated customer"}. Key phrases: ${(payload.keyPhrases || []).slice(0, 2).join(" · ")}`,
+              entityType: "ticket",
+              entityId: action.entityId,
+            })
+          }
+          break
+        }
+
+        case "kb_close_ticket": {
+          if (!payload.articleId || !payload.articleTitle) break
+          await prisma.ticketComment.create({
+            data: {
+              ticketId: action.entityId,
+              comment: `📖 Knowledge-base article that answers this: **${payload.articleTitle}**\n\nArticle ID: ${payload.articleId}\n\nIf this solved your issue, great! If not, reply and we'll dig deeper.`,
+              isInternal: false,
+              userId: null,
+            },
+          })
+          await prisma.ticket.updateMany({
+            where: { id: action.entityId, organizationId: action.organizationId },
+            data: { status: "resolved", resolvedAt: now, firstResponseAt: now },
+          })
+          break
+        }
+
+        case "merge_contact": {
+          if (!payload.primaryId || !payload.duplicateId) break
+          // Reassign relations from duplicate → primary
+          await prisma.deal.updateMany({
+            where: { organizationId: action.organizationId, contactId: payload.duplicateId },
+            data: { contactId: payload.primaryId },
+          })
+          await prisma.ticket.updateMany({
+            where: { organizationId: action.organizationId, contactId: payload.duplicateId },
+            data: { contactId: payload.primaryId },
+          })
+          await prisma.activity.updateMany({
+            where: { organizationId: action.organizationId, contactId: payload.duplicateId },
+            data: { contactId: payload.primaryId },
+          })
+          // Soft-delete duplicate
+          await prisma.contact.updateMany({
+            where: { id: payload.duplicateId, organizationId: action.organizationId },
+            data: { isActive: false, tags: { set: ["merged_duplicate"] } },
+          })
           break
         }
 
