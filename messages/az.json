@@ -3005,7 +3005,16 @@
     "scenarioTriageDesc": "Yeni biletlər üçün AI subject/description oxuyur və category (billing/technical/complaint/…), priority (low/medium/high/urgent) və teqlər təyin edir",
     "shadowTriageLabel": "🏷 Təsnifat",
     "shadowTriageReason": "Kateqoriya: {category}, prioritet: {priority}",
-    "shadowTriageDetail": "Bilet AI-nin təklif etdiyi category, priority və tags ilə yenilənəcək. Mövcud tags əvəzlənəcək. Təsnifat səhvdirsə — sadəcə Rədd edin; bilet olduğu kimi qalacaq."
+    "shadowTriageDetail": "Bilet AI-nin təklif etdiyi category, priority və tags ilə yenilənəcək. Mövcud tags əvəzlənəcək. Təsnifat səhvdirsə — sadəcə Rədd edin; bilet olduğu kimi qalacaq.",
+    "autoStageAdvanceShadow": "Sövdə mərhələsinin irəliləməsi",
+    "autoStageAdvanceShadowDesc": "Durğun yüksək ehtimallı sövdələr → növbəti pipeline mərhələsi təklif edir",
+    "autoStageAdvanceLive": "Sövdə mərhələsinin irəliləməsi",
+    "autoStageAdvanceLiveDesc": "Durğun yüksək ehtimallı sövdələri növbəti pipeline mərhələsinə avtomatik keçirir",
+    "scenarioStageAdvanceTitle": "Sövdə mərhələsinin irəliləməsi",
+    "scenarioStageAdvanceDesc": "Probability ≥60% olan və mövcud mərhələdə ≥14 gün qalan sövdələr → növbəti pipeline mərhələsinə keçidi təklif et",
+    "shadowStageAdvanceLabel": "📈 Mərhələ",
+    "shadowStageAdvanceReason": "{days} gün mərhələdə, ehtimal {prob}%",
+    "shadowStageAdvanceDetail": "Sövdə növbəti pipeline mərhələsinə keçəcək. stageChangedAt yenilənəcək. Keçid vaxtından əvvəldirsə — Rədd edin; sövdə yerində qalır."
   },
   "aiActions": {
     "title": "AI Hərəkətlər",

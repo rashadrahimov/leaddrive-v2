@@ -58,6 +58,13 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (pr === "high") return "high"
     return "normal"
   }
+  if (feature === "stage_advance") {
+    const prob = p.probability || 0
+    const days = p.daysInStage || 0
+    if (prob >= 80 && days >= 30) return "critical"
+    if (prob >= 70 || days >= 21) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -78,6 +85,7 @@ function urgencyScore(action: ShadowAction): number {
     const pr = p.suggestedPriority
     secondary = pr === "urgent" ? 400 : pr === "high" ? 200 : pr === "medium" ? 100 : 0
   }
+  else if (feature === "stage_advance") secondary = (p.probability || 0) + (p.daysInStage || 0) * 0.5
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -89,6 +97,7 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "renewal") return t("shadowRenewalDetail")
   if (feature === "hot_lead") return t("shadowHotLeadDetail")
   if (feature === "triage") return t("shadowTriageDetail")
+  if (feature === "stage_advance") return t("shadowStageAdvanceDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -149,6 +158,16 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowTicketEntity"),
       title: `${p.ticketNumber || t("shadowTicketEntity")} — ${p.subject || ""}`.slice(0, 120),
       reason: t("shadowTriageReason", { category: p.suggestedCategory || "—", priority: p.suggestedPriority || "—" }),
+    }
+  }
+  if (feature === "stage_advance") {
+    return {
+      label: t("shadowStageAdvanceLabel"),
+      badgeBg: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      borderColor: "border-l-purple-500",
+      entityLabel: t("shadowDealEntity"),
+      title: `${p.dealName || t("shadowDealEntity")} · ${p.currentStage || "—"} → ${p.suggestedStage || "—"}`,
+      reason: t("shadowStageAdvanceReason", { days: p.daysInStage || 0, prob: p.probability || 0 }),
     }
   }
   return {
@@ -359,6 +378,7 @@ export default function AiActionsPage() {
                   { key: "all", labelKey: "filterAll", ns: "page" as const },
                   { key: "hot_lead", labelKey: "shadowHotLeadLabel", ns: "settings" as const },
                   { key: "triage", labelKey: "shadowTriageLabel", ns: "settings" as const },
+                  { key: "stage_advance", labelKey: "shadowStageAdvanceLabel", ns: "settings" as const },
                   { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
                   { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },
                   { key: "acknowledge", labelKey: "shadowAcknowledgeLabel", ns: "settings" as const },

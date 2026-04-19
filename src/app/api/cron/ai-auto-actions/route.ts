@@ -72,6 +72,13 @@ export async function POST(req: NextRequest) {
       } else if (await isAiFeatureEnabled(org.id, "ai_auto_triage_shadow")) {
         results.shadowActions += await runAutoTriage(org.id, now, true)
       }
+
+      // Deal stage advance (stuck high-probability deals → suggest next stage)
+      if (await isAiFeatureEnabled(org.id, "ai_auto_stage_advance")) {
+        results.autoStageAdvance = (results.autoStageAdvance || 0) + await runStageAdvance(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_stage_advance_shadow")) {
+        results.shadowActions += await runStageAdvance(org.id, now, true)
+      }
     }
 
     // Execute approved shadow actions
@@ -484,6 +491,111 @@ async function runHotLeadEscalation(orgId: string, now: Date, shadow: boolean): 
   return count
 }
 
+// ── Deal Stage Advance: stuck high-probability deals → suggest next stage ──
+
+const DEFAULT_STAGE_ORDER = ["LEAD", "QUALIFIED", "DEMO", "PROPOSAL", "NEGOTIATION", "WON"]
+
+function getNextStageFallback(current: string): string | null {
+  const idx = DEFAULT_STAGE_ORDER.findIndex(s => s.toLowerCase() === (current || "").toLowerCase())
+  if (idx === -1 || idx >= DEFAULT_STAGE_ORDER.length - 1) return null
+  return DEFAULT_STAGE_ORDER[idx + 1]
+}
+
+async function runStageAdvance(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const stuckSince = new Date(now.getTime() - 14 * 86400000)
+
+  const deals = await prisma.deal.findMany({
+    where: {
+      organizationId: orgId,
+      probability: { gte: 60 },
+      stage: { notIn: ["WON", "LOST", "won", "lost"] },
+      OR: [
+        { stageChangedAt: { lte: stuckSince } },
+        { AND: [{ stageChangedAt: null }, { createdAt: { lte: stuckSince } }] },
+      ],
+    },
+    select: {
+      id: true, name: true, stage: true, probability: true, valueAmount: true,
+      currency: true, stageChangedAt: true, createdAt: true, pipelineId: true,
+    },
+    take: 25,
+  })
+  if (deals.length === 0) return 0
+
+  const existing = await prisma.aiShadowAction.findMany({
+    where: {
+      organizationId: orgId,
+      featureName: { in: ["ai_auto_stage_advance", "ai_auto_stage_advance_shadow"] },
+      entityType: "deal",
+      entityId: { in: deals.map((d: { id: string }) => d.id) },
+      OR: [{ approved: null }, { reviewedAt: { gte: new Date(now.getTime() - 7 * 86400000) } }],
+    },
+    select: { entityId: true },
+  })
+  const skip = new Set(existing.map((e: { entityId: string }) => e.entityId))
+
+  // Preload pipeline stages once for pipelines in play
+  const pipelineIds = Array.from(new Set(deals.map((d: any) => d.pipelineId).filter(Boolean))) as string[]
+  const stages = pipelineIds.length > 0
+    ? await prisma.pipelineStage.findMany({
+        where: { pipelineId: { in: pipelineIds }, isActive: true },
+        select: { pipelineId: true, name: true, sortOrder: true, isWon: true, isLost: true },
+        orderBy: { sortOrder: "asc" },
+      })
+    : []
+  const stagesByPipeline = new Map<string, typeof stages>()
+  for (const s of stages) {
+    if (!s.pipelineId) continue
+    const list = stagesByPipeline.get(s.pipelineId) || []
+    list.push(s)
+    stagesByPipeline.set(s.pipelineId, list)
+  }
+
+  let count = 0
+  for (const deal of deals) {
+    if (skip.has(deal.id)) continue
+
+    let nextStage: string | null = null
+    if (deal.pipelineId && stagesByPipeline.has(deal.pipelineId)) {
+      const list = stagesByPipeline.get(deal.pipelineId)!
+      const idx = list.findIndex((s: { name: string }) => s.name === deal.stage)
+      if (idx !== -1 && idx < list.length - 1 && !list[idx + 1].isLost) {
+        nextStage = list[idx + 1].name
+      }
+    }
+    if (!nextStage) nextStage = getNextStageFallback(deal.stage)
+    if (!nextStage) continue
+
+    const stageStart = deal.stageChangedAt || deal.createdAt
+    const daysInStage = stageStart ? Math.floor((now.getTime() - stageStart.getTime()) / 86400000) : 0
+
+    await prisma.aiShadowAction.create({
+      data: {
+        organizationId: orgId,
+        featureName: shadow ? "ai_auto_stage_advance_shadow" : "ai_auto_stage_advance",
+        entityType: "deal",
+        entityId: deal.id,
+        actionType: "advance_deal_stage",
+        payload: {
+          dealName: deal.name,
+          currentStage: deal.stage,
+          suggestedStage: nextStage,
+          probability: deal.probability,
+          valueAmount: deal.valueAmount || 0,
+          currency: deal.currency || "USD",
+          daysInStage,
+          reasoning: `Stuck in ${deal.stage} for ${daysInStage} days with ${deal.probability}% probability`,
+        },
+        approved: shadow ? null : true,
+        reviewedAt: shadow ? null : now,
+        reviewedBy: shadow ? null : "system",
+      },
+    })
+    count++
+  }
+  return count
+}
+
 // ── Auto-Triage Tickets ──
 
 async function runAutoTriage(orgId: string, now: Date, shadow: boolean): Promise<number> {
@@ -591,6 +703,15 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
               })
             }
           }
+          break
+        }
+
+        case "advance_deal_stage": {
+          if (!payload.suggestedStage) break
+          await prisma.deal.updateMany({
+            where: { id: action.entityId, organizationId: action.organizationId },
+            data: { stage: payload.suggestedStage, stageChangedAt: now },
+          })
           break
         }
 

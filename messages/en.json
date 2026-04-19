@@ -3005,7 +3005,16 @@
     "scenarioTriageDesc": "For new tickets, AI reads subject/description and assigns category (billing/technical/complaint/…), priority (low/medium/high/urgent) and tags",
     "shadowTriageLabel": "🏷 Triage",
     "shadowTriageReason": "Category: {category}, priority: {priority}",
-    "shadowTriageDetail": "The ticket will be updated with AI-suggested category, priority and tags. Existing tags will be replaced. If classification is wrong — just Reject; the ticket stays as-is."
+    "shadowTriageDetail": "The ticket will be updated with AI-suggested category, priority and tags. Existing tags will be replaced. If classification is wrong — just Reject; the ticket stays as-is.",
+    "autoStageAdvanceShadow": "Deal stage advance",
+    "autoStageAdvanceShadowDesc": "Stuck high-probability deals → suggest next pipeline stage",
+    "autoStageAdvanceLive": "Deal stage advance",
+    "autoStageAdvanceLiveDesc": "Automatically advances stuck high-probability deals to the next pipeline stage",
+    "scenarioStageAdvanceTitle": "Deal stage advance",
+    "scenarioStageAdvanceDesc": "Deals with probability ≥60% stuck in current stage ≥14 days → suggest advancing to the next pipeline stage",
+    "shadowStageAdvanceLabel": "📈 Stage",
+    "shadowStageAdvanceReason": "{days} days in stage, {prob}% probability",
+    "shadowStageAdvanceDetail": "The deal will move to the next pipeline stage. stageChangedAt resets. If the move is premature — Reject; the deal stays put."
   },
   "aiActions": {
     "title": "AI Actions",

@@ -3005,7 +3005,16 @@
     "scenarioTriageDesc": "Для новых тикетов AI читает subject/description и выставляет category (billing/technical/complaint/…), priority (low/medium/high/urgent) и теги",
     "shadowTriageLabel": "🏷 Triage",
     "shadowTriageReason": "Категория: {category}, приоритет: {priority}",
-    "shadowTriageDetail": "Тикету будут выставлены AI-предложенные category, priority и tags. Существующие tags будут заменены. Если классификация некорректна — просто Отклоните; тикет останется как есть."
+    "shadowTriageDetail": "Тикету будут выставлены AI-предложенные category, priority и tags. Существующие tags будут заменены. Если классификация некорректна — просто Отклоните; тикет останется как есть.",
+    "autoStageAdvanceShadow": "Сдвиг стадии сделки",
+    "autoStageAdvanceShadowDesc": "Застрявшие сделки с высокой вероятностью → предложить следующую стадию",
+    "autoStageAdvanceLive": "Сдвиг стадии сделки",
+    "autoStageAdvanceLiveDesc": "Автоматически переводит застрявшие high-probability сделки на следующую стадию",
+    "scenarioStageAdvanceTitle": "Сдвиг стадии сделки",
+    "scenarioStageAdvanceDesc": "Сделки с probability ≥60% застрявшие в текущей стадии ≥14 дней → предложить переход на следующую стадию pipeline",
+    "shadowStageAdvanceLabel": "📈 Стадия",
+    "shadowStageAdvanceReason": "{days} дн. в стадии, вероятность {prob}%",
+    "shadowStageAdvanceDetail": "Сделка будет переведена на следующую стадию pipeline. stageChangedAt обновится. Если сдвиг преждевременный — Отклони, сделка остаётся на месте."
   },
   "aiActions": {
     "title": "AI-Действия",

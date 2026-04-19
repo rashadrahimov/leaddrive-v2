@@ -11,13 +11,13 @@ import { MotionPage } from "@/components/ui/motion"
 import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
-  Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags,
+  Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags, TrendingUp,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -46,11 +46,14 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_hot_lead", labelKey: "autoHotLeadLive", descKey: "autoHotLeadLiveDesc", category: "autopilot", scenario: "hotLead", mode: "live" },
   { key: "ai_auto_triage_shadow", labelKey: "autoTriageShadow", descKey: "autoTriageShadowDesc", category: "autopilot", scenario: "triage", mode: "shadow" },
   { key: "ai_auto_triage", labelKey: "autoTriageLive", descKey: "autoTriageLiveDesc", category: "autopilot", scenario: "triage", mode: "live" },
+  { key: "ai_auto_stage_advance_shadow", labelKey: "autoStageAdvanceShadow", descKey: "autoStageAdvanceShadowDesc", category: "autopilot", scenario: "stageAdvance", mode: "shadow" },
+  { key: "ai_auto_stage_advance", labelKey: "autoStageAdvanceLive", descKey: "autoStageAdvanceLiveDesc", category: "autopilot", scenario: "stageAdvance", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
   { key: "hotLead", titleKey: "scenarioHotLeadTitle", descKey: "scenarioHotLeadDesc", icon: Flame, accent: "text-rose-500" },
   { key: "triage", titleKey: "scenarioTriageTitle", descKey: "scenarioTriageDesc", icon: Tags, accent: "text-indigo-500" },
+  { key: "stageAdvance", titleKey: "scenarioStageAdvanceTitle", descKey: "scenarioStageAdvanceDesc", icon: TrendingUp, accent: "text-purple-500" },
   { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },
   { key: "followup", titleKey: "scenarioFollowupTitle", descKey: "scenarioFollowupDesc", icon: MessageSquare, accent: "text-blue-500" },
