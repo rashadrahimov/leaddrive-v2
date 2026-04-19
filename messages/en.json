@@ -3052,7 +3052,16 @@
     "shadowCreditLimitLabel": "💳 Credit",
     "shadowCompanyEntity": "Company",
     "shadowCreditLimitReason": "{percent}% of limit ({limit} {currency}) · overdue: {overdue}",
-    "shadowCreditLimitDetail": "A high-priority task \"Credit limit warning\" is created for the first available senior (admin/manager) with +3 days due date. All seniors get a warning notification. The company is NOT placed on hold automatically — that's a manager decision after review."
+    "shadowCreditLimitDetail": "A high-priority task \"Credit limit warning\" is created for the first available senior (admin/manager) with +3 days due date. All seniors get a warning notification. The company is NOT placed on hold automatically — that's a manager decision after review.",
+    "autoMeetingRecapShadow": "Meeting recap",
+    "autoMeetingRecapShadowDesc": "After a call (Fireflies/Zoom/Meet) AI drafts a recap email and next steps — you approve",
+    "autoMeetingRecapLive": "Meeting recap",
+    "autoMeetingRecapLiveDesc": "Automatically sends the AI recap to the customer and creates tasks for next steps",
+    "scenarioMeetingRecapTitle": "Meeting recap",
+    "scenarioMeetingRecapDesc": "Webhook endpoint /api/v1/webhooks/meeting-recap receives transcripts from Fireflies/Otter/custom. AI writes a summary + next steps, matched against a CRM contact and the most recent open deal",
+    "shadowMeetingRecapLabel": "🎙 Meeting",
+    "shadowMeetingRecapReason": "To: {email} · next-steps: {steps}",
+    "shadowMeetingRecapDetail": "A recap email (AI-drafted) is sent to the customer. Up to 5 tasks are created in CRM for next steps (priority=medium, due +5 days). If no webhook is firing — configure Fireflies to POST to https://app.leaddrivecrm.org/api/v1/webhooks/meeting-recap with header x-meeting-webhook-secret."
   },
   "aiActions": {
     "title": "AI Actions",

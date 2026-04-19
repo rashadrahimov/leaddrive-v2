@@ -12,13 +12,13 @@ import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags, TrendingUp,
-  AlertTriangle, BookOpen, GitMerge, CreditCard,
+  AlertTriangle, BookOpen, GitMerge, CreditCard, Video,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit" | "meetingRecap"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -57,6 +57,8 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_duplicate", labelKey: "autoDuplicateLive", descKey: "autoDuplicateLiveDesc", category: "autopilot", scenario: "duplicate", mode: "live" },
   { key: "ai_auto_credit_limit_shadow", labelKey: "autoCreditLimitShadow", descKey: "autoCreditLimitShadowDesc", category: "autopilot", scenario: "creditLimit", mode: "shadow" },
   { key: "ai_auto_credit_limit", labelKey: "autoCreditLimitLive", descKey: "autoCreditLimitLiveDesc", category: "autopilot", scenario: "creditLimit", mode: "live" },
+  { key: "ai_auto_meeting_recap_shadow", labelKey: "autoMeetingRecapShadow", descKey: "autoMeetingRecapShadowDesc", category: "autopilot", scenario: "meetingRecap", mode: "shadow" },
+  { key: "ai_auto_meeting_recap", labelKey: "autoMeetingRecapLive", descKey: "autoMeetingRecapLiveDesc", category: "autopilot", scenario: "meetingRecap", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
@@ -66,6 +68,7 @@ const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; 
   { key: "triage", titleKey: "scenarioTriageTitle", descKey: "scenarioTriageDesc", icon: Tags, accent: "text-indigo-500" },
   { key: "kbClose", titleKey: "scenarioKbCloseTitle", descKey: "scenarioKbCloseDesc", icon: BookOpen, accent: "text-cyan-500" },
   { key: "stageAdvance", titleKey: "scenarioStageAdvanceTitle", descKey: "scenarioStageAdvanceDesc", icon: TrendingUp, accent: "text-purple-500" },
+  { key: "meetingRecap", titleKey: "scenarioMeetingRecapTitle", descKey: "scenarioMeetingRecapDesc", icon: Video, accent: "text-teal-500" },
   { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
   { key: "duplicate", titleKey: "scenarioDuplicateTitle", descKey: "scenarioDuplicateDesc", icon: GitMerge, accent: "text-slate-500" },
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },

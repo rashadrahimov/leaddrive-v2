@@ -88,6 +88,12 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (pct >= 0.9 || overdue >= 1) return "high"
     return "normal"
   }
+  if (feature === "meeting_recap") {
+    // Recaps are time-sensitive — fresher = more urgent
+    const age = p.meetingDate ? (Date.now() - new Date(p.meetingDate).getTime()) / 3600000 : 0
+    if (age < 6) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -113,6 +119,7 @@ function urgencyScore(action: ShadowAction): number {
   else if (feature === "kb_close") secondary = (p.confidence || 0) * 400
   else if (feature === "duplicate") secondary = (p.similarityScore || 0) * 400
   else if (feature === "credit_limit") secondary = (p.percentUsed || 0) * 500 + (p.outstandingAmount || 0) * 0.0001
+  else if (feature === "meeting_recap") secondary = p.meetingDate ? Math.max(0, 48 - (Date.now() - new Date(p.meetingDate).getTime()) / 3600000) : 0
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -129,6 +136,7 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "kb_close") return t("shadowKbCloseDetail")
   if (feature === "duplicate") return t("shadowDuplicateDetail")
   if (feature === "credit_limit") return t("shadowCreditLimitDetail")
+  if (feature === "meeting_recap") return t("shadowMeetingRecapDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -243,6 +251,17 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: t("shadowCompanyEntity"),
       title: `${p.companyName || t("shadowCompanyEntity")} — ${(p.outstandingAmount || 0).toLocaleString()} ${p.creditCurrency || "USD"}`,
       reason: t("shadowCreditLimitReason", { percent: pct, limit: (p.creditLimit || 0).toLocaleString(), currency: p.creditCurrency || "USD", overdue: p.overdueCount || 0 }),
+    }
+  }
+  if (feature === "meeting_recap") {
+    const stepCount = Array.isArray(p.nextSteps) ? p.nextSteps.length : 0
+    return {
+      label: t("shadowMeetingRecapLabel"),
+      badgeBg: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+      borderColor: "border-l-teal-500",
+      entityLabel: p.dealId ? t("shadowDealEntity") : t("shadowContactEntity"),
+      title: (p.meetingTitle || t("shadowMeetingRecapLabel")).slice(0, 140),
+      reason: t("shadowMeetingRecapReason", { steps: stepCount, email: p.customerEmail || "—" }),
     }
   }
   return {
@@ -457,6 +476,7 @@ export default function AiActionsPage() {
                   { key: "triage", labelKey: "shadowTriageLabel", ns: "settings" as const },
                   { key: "kb_close", labelKey: "shadowKbCloseLabel", ns: "settings" as const },
                   { key: "stage_advance", labelKey: "shadowStageAdvanceLabel", ns: "settings" as const },
+                  { key: "meeting_recap", labelKey: "shadowMeetingRecapLabel", ns: "settings" as const },
                   { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
                   { key: "duplicate", labelKey: "shadowDuplicateLabel", ns: "settings" as const },
                   { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },

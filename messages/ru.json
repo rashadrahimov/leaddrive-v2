@@ -3052,7 +3052,16 @@
     "shadowCreditLimitLabel": "💳 Лимит",
     "shadowCompanyEntity": "Компания",
     "shadowCreditLimitReason": "{percent}% от лимита ({limit} {currency}) · просроченных: {overdue}",
-    "shadowCreditLimitDetail": "Создастся high-priority задача «Credit limit warning» на ответственного senior'a (admin/manager) со сроком +3 дня. Всем senior'ам — warning нотификация. Компания НЕ ставится на hold автоматически — это решение менеджера после review."
+    "shadowCreditLimitDetail": "Создастся high-priority задача «Credit limit warning» на ответственного senior'a (admin/manager) со сроком +3 дня. Всем senior'ам — warning нотификация. Компания НЕ ставится на hold автоматически — это решение менеджера после review.",
+    "autoMeetingRecapShadow": "Meeting recap",
+    "autoMeetingRecapShadowDesc": "После звонка (Fireflies/Zoom/Meet) AI готовит email-саммари и next-steps — вы одобряете",
+    "autoMeetingRecapLive": "Meeting recap",
+    "autoMeetingRecapLiveDesc": "Автоматически отправляет клиенту AI-саммари звонка и создаёт задачи под next steps",
+    "scenarioMeetingRecapTitle": "Meeting recap",
+    "scenarioMeetingRecapDesc": "Webhook-endpoint /api/v1/webhooks/meeting-recap принимает транскрипт от Fireflies/Otter/кастома. AI пишет саммари + next steps, матчит с CRM-контактом и последней открытой сделкой",
+    "shadowMeetingRecapLabel": "🎙 Meeting",
+    "shadowMeetingRecapReason": "Клиенту: {email} · next-steps: {steps}",
+    "shadowMeetingRecapDetail": "Клиенту уйдёт email с recap-текстом (AI-сгенерированным). В CRM создастся до 5 задач по next-steps на связанного менеджера (priority=medium, due +5 дней). Если webhook не прилетел — настройте в Fireflies URL: https://app.leaddrivecrm.org/api/v1/webhooks/meeting-recap с header x-meeting-webhook-secret."
   },
   "aiActions": {
     "title": "AI-Действия",

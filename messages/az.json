@@ -3052,7 +3052,16 @@
     "shadowCreditLimitLabel": "💳 Limit",
     "shadowCompanyEntity": "Şirkət",
     "shadowCreditLimitReason": "limitin {percent}%-i ({limit} {currency}) · gecikən: {overdue}",
-    "shadowCreditLimitDetail": "İlk mövcud senior (admin/manager) üçün +3 gün müddətlə yüksək prioritetli «Credit limit warning» tapşırığı yaradılır. Bütün senior-lara xəbərdarlıq bildirişi gedir. Şirkət avtomatik hold-a qoyulmur — bu review sonrası menecerin qərarıdır."
+    "shadowCreditLimitDetail": "İlk mövcud senior (admin/manager) üçün +3 gün müddətlə yüksək prioritetli «Credit limit warning» tapşırığı yaradılır. Bütün senior-lara xəbərdarlıq bildirişi gedir. Şirkət avtomatik hold-a qoyulmur — bu review sonrası menecerin qərarıdır.",
+    "autoMeetingRecapShadow": "Görüş xülasəsi",
+    "autoMeetingRecapShadowDesc": "Zəngdən sonra (Fireflies/Zoom/Meet) AI xülasə və növbəti addımlar hazırlayır — siz təsdiqləyirsiniz",
+    "autoMeetingRecapLive": "Görüş xülasəsi",
+    "autoMeetingRecapLiveDesc": "AI xülasəsini avtomatik müştəriyə göndərir və növbəti addımlar üçün tapşırıqlar yaradır",
+    "scenarioMeetingRecapTitle": "Görüş xülasəsi",
+    "scenarioMeetingRecapDesc": "Webhook /api/v1/webhooks/meeting-recap Fireflies/Otter/custom-dan transkriptləri qəbul edir. AI xülasə və növbəti addımlar yazır, CRM kontaktı və son açıq sövdə ilə uyğunlaşdırır",
+    "shadowMeetingRecapLabel": "🎙 Görüş",
+    "shadowMeetingRecapReason": "Kimə: {email} · növbəti addımlar: {steps}",
+    "shadowMeetingRecapDetail": "Müştəriyə AI-hazırlanmış xülasə email-i göndəriləcək. Növbəti addımlar üçün CRM-də 5-ə qədər tapşırıq yaradılır (priority=medium, due +5 gün). Webhook gəlmirsə — Fireflies-də URL konfiqurasiya edin: https://app.leaddrivecrm.org/api/v1/webhooks/meeting-recap header x-meeting-webhook-secret."
   },
   "aiActions": {
     "title": "AI Hərəkətlər",

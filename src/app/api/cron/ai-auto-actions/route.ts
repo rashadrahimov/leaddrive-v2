@@ -983,6 +983,48 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
           break
         }
 
+        case "send_meeting_recap": {
+          if (!payload.customerEmail || !payload.emailSubject || !payload.emailBody) break
+          const emailResult = await sendEmail({
+            to: payload.customerEmail,
+            subject: payload.emailSubject,
+            html: payload.emailBody,
+            organizationId: action.organizationId,
+            contactId: payload.contactId || undefined,
+          })
+          if (!emailResult.success) {
+            throw new Error(`Meeting recap email failed: ${emailResult.error || "unknown"}`)
+          }
+          // Create tasks for each next-step
+          if (Array.isArray(payload.nextSteps) && payload.nextSteps.length > 0) {
+            const admins = await prisma.user.findMany({
+              where: { organizationId: action.organizationId, role: { in: ["admin", "manager", "sales"] }, isActive: true },
+              select: { id: true },
+              take: 1,
+            })
+            const ownerId = admins[0]?.id
+            if (ownerId) {
+              for (const step of payload.nextSteps.slice(0, 5)) {
+                await prisma.task.create({
+                  data: {
+                    organizationId: action.organizationId,
+                    title: String(step).slice(0, 200),
+                    description: `From meeting "${payload.meetingTitle}" · ${payload.meetingDate ? new Date(payload.meetingDate).toISOString().slice(0, 10) : ""}`,
+                    assignedTo: ownerId,
+                    dueDate: new Date(now.getTime() + 5 * 86400000),
+                    priority: "medium",
+                    status: "pending",
+                    relatedType: payload.dealId ? "deal" : "contact",
+                    relatedId: payload.dealId || payload.contactId || "",
+                    createdBy: "system",
+                  },
+                })
+              }
+            }
+          }
+          break
+        }
+
         case "send_renewal_proposal": {
           if (!payload.contactEmail || !payload.emailSubject || !payload.emailBody) break
           const emailResult = await sendEmail({
