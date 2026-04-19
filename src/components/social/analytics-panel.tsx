@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, Legend,
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
+  const t = useTranslations("socialMonitoring")
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [range, setRange] = useState(days)
   const [loading, setLoading] = useState(true)
@@ -75,13 +77,13 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
         <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-3 flex items-center gap-2 text-sm">
           <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
           <span>
-            <b>Negative spike today</b> — {data.negativeSpike.today} negative mentions vs 7-day avg {data.negativeSpike.avg7d}.
+            <b>{t("negativeSpikeTitle")}</b> — {t("negativeSpikeMsg", { today: data.negativeSpike.today, avg: data.negativeSpike.avg7d })}
           </span>
         </div>
       )}
 
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Analytics</h3>
+        <h3 className="text-sm font-semibold">{t("analytics")}</h3>
         <div className="flex items-center gap-1 text-xs">
           {[
             { v: 7, label: "7d" },
@@ -103,12 +105,12 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
 
       {!hasData ? (
         <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-          No mentions in the last {range} days.
+          {t("noMentionsRange", { days: range })}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Mentions over time</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("metricsOverTime")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={data.timeseries}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
@@ -123,7 +125,7 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Sentiment</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("sentimentLabel")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={sentimentPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
@@ -136,7 +138,7 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Top platforms</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("topPlatforms")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data.topPlatforms} layout="vertical" margin={{ left: 40, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
@@ -151,9 +153,9 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Top authors</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("topAuthors")}</h4>
             {data.topAuthors.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No author data yet.</p>
+              <p className="text-xs text-muted-foreground">{t("noAuthorData")}</p>
             ) : (
               <ul className="space-y-1.5">
                 {data.topAuthors.slice(0, 8).map(a => (
@@ -172,7 +174,7 @@ export function SocialAnalyticsPanel({ orgId, days = 30 }: Props) {
 
           {data.topTerms.length > 0 && (
             <div className="rounded-lg border bg-card p-4 md:col-span-2">
-              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Top matched keywords</h4>
+              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("topKeywords")}</h4>
               <div className="flex flex-wrap gap-2">
                 {data.topTerms.map(t => (
                   <span key={t.term} className="inline-flex items-center gap-1.5 text-xs rounded-full border bg-background px-3 py-1">

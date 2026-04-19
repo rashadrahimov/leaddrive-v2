@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -68,6 +69,7 @@ export default function SocialMonitoringPage() {
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
+  const t = useTranslations("socialMonitoring")
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [mentions, setMentions] = useState<Mention[]>([])
@@ -135,7 +137,7 @@ export default function SocialMonitoringPage() {
   }
 
   const removeAccount = async (id: string) => {
-    if (!confirm("Remove this monitored handle?")) return
+    if (!confirm(t("removeHandleConfirm"))) return
     await fetch(`/api/v1/social/accounts/${id}`, { method: "DELETE", headers })
     loadAccounts()
   }
@@ -255,22 +257,22 @@ export default function SocialMonitoringPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Radio className="h-6 w-6 text-orange-500" /> Social Monitoring
+            <Radio className="h-6 w-6 text-orange-500" /> {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">Track brand mentions across social networks (§5)</p>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={pollAll} disabled={pollingAll || accounts.length === 0} className="gap-1.5">
             <RefreshCw className={`h-4 w-4 ${pollingAll ? "animate-spin" : ""}`} />
-            {pollingAll ? "Polling…" : "Refresh all"}
+            {pollingAll ? t("polling") : t("refreshAll")}
           </Button>
           <Button variant="outline" asChild className="gap-1.5">
             <a href="/api/v1/social/oauth/twitter/start">
-              <LinkIcon className="h-4 w-4" /> Connect Twitter
+              <LinkIcon className="h-4 w-4" /> {t("connectTwitter")}
             </a>
           </Button>
           <Button onClick={() => setShowAddAccount(true)} className="gap-1.5">
-            <Plus className="h-4 w-4" /> Monitor handle
+            <Plus className="h-4 w-4" /> {t("monitorHandle")}
           </Button>
         </div>
       </div>
@@ -282,11 +284,11 @@ export default function SocialMonitoringPage() {
 
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <StatCard icon={TrendingUp} label="Total mentions" value={stats.total} color="primary" />
-          <StatCard icon={Eye} label="New" value={stats.byStatus.new ?? 0} color="blue" />
-          <StatCard icon={ThumbsUp} label="Positive" value={stats.bySentiment.positive ?? 0} color="green" />
-          <StatCard icon={ThumbsDown} label="Negative" value={stats.bySentiment.negative ?? 0} color="red" />
-          <StatCard icon={Ticket} label="Tickets created" value={stats.byStatus.converted_to_ticket ?? 0} color="amber" />
+          <StatCard icon={TrendingUp} label={t("totalMentions")} value={stats.total} color="primary" />
+          <StatCard icon={Eye} label={t("newCount")} value={stats.byStatus.new ?? 0} color="blue" />
+          <StatCard icon={ThumbsUp} label={t("positive")} value={stats.bySentiment.positive ?? 0} color="green" />
+          <StatCard icon={ThumbsDown} label={t("negative")} value={stats.bySentiment.negative ?? 0} color="red" />
+          <StatCard icon={Ticket} label={t("ticketsCreated")} value={stats.byStatus.converted_to_ticket ?? 0} color="amber" />
         </div>
       )}
 
@@ -294,9 +296,9 @@ export default function SocialMonitoringPage() {
 
 
       <div className="rounded-lg border bg-card p-4 space-y-3">
-        <h3 className="text-sm font-semibold flex items-center gap-2"><Radio className="h-4 w-4" /> Monitored handles</h3>
+        <h3 className="text-sm font-semibold flex items-center gap-2"><Radio className="h-4 w-4" /> {t("monitoredHandles")}</h3>
         {accounts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No handles yet. Add one to start tracking.</p>
+          <p className="text-sm text-muted-foreground">{t("noHandlesYet")}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {accounts.map(a => (
@@ -321,21 +323,21 @@ export default function SocialMonitoringPage() {
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={platformFilter} onChange={e => setPlatformFilter(e.target.value)} className="h-9 w-auto text-xs">
-          <option value="">All platforms</option>
+          <option value="">{t("allPlatforms")}</option>
           {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
         </Select>
         <Select value={sentimentFilter} onChange={e => setSentimentFilter(e.target.value)} className="h-9 w-auto text-xs">
-          <option value="">Any sentiment</option>
-          <option value="positive">Positive</option>
-          <option value="neutral">Neutral</option>
-          <option value="negative">Negative</option>
+          <option value="">{t("anySentiment")}</option>
+          <option value="positive">{t("positive")}</option>
+          <option value="neutral">{t("neutral")}</option>
+          <option value="negative">{t("negative")}</option>
         </Select>
         <Select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-9 w-auto text-xs">
-          <option value="">Any status</option>
-          <option value="new">New</option>
-          <option value="reviewed">Reviewed</option>
-          <option value="replied">Replied</option>
-          <option value="ignored">Ignored</option>
+          <option value="">{t("anyStatus")}</option>
+          <option value="new">{t("statusNew")}</option>
+          <option value="reviewed">{t("statusReviewed")}</option>
+          <option value="replied">{t("statusReplied")}</option>
+          <option value="ignored">{t("statusIgnored")}</option>
         </Select>
       </div>
 
@@ -383,7 +385,7 @@ export default function SocialMonitoringPage() {
               </div>
               <div className="flex items-center gap-1 pt-1 border-t">
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "reviewed" })}>
-                  <Check className="h-3 w-3" /> Reviewed
+                  <Check className="h-3 w-3" /> {t("actionReviewed")}
                 </Button>
                 {["twitter", "facebook", "instagram"].includes(m.platform) ? (
                   <Button
@@ -395,47 +397,47 @@ export default function SocialMonitoringPage() {
                       setReplyText("")
                     }}
                   >
-                    <Reply className="h-3 w-3" /> Reply
+                    <Reply className="h-3 w-3" /> {t("actionReply")}
                   </Button>
                 ) : (
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "replied" })}>
-                    <MessageSquare className="h-3 w-3" /> Replied
+                    <MessageSquare className="h-3 w-3" /> {t("actionReplied")}
                   </Button>
                 )}
                 <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => updateMention(m.id, { status: "ignored" })}>
-                  <Archive className="h-3 w-3" /> Ignore
+                  <Archive className="h-3 w-3" /> {t("actionIgnore")}
                 </Button>
                 {m.ticketId ? (
                   <a href={`/tickets/${m.ticketId}`} target="_blank" rel="noreferrer">
                     <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
-                      <Ticket className="h-3 w-3" /> Ticket ↗
+                      <Ticket className="h-3 w-3" /> {t("viewTicket")}
                     </Button>
                   </a>
                 ) : (
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToTicket(m.id)}>
-                    <Ticket className="h-3 w-3" /> → Ticket
+                    <Ticket className="h-3 w-3" /> {t("actionTicket")}
                   </Button>
                 )}
                 {m.leadId ? (
                   <a href={`/leads/${m.leadId}`} target="_blank" rel="noreferrer">
                     <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
-                      <UserPlus className="h-3 w-3" /> Lead ↗
+                      <UserPlus className="h-3 w-3" /> {t("viewLead")}
                     </Button>
                   </a>
                 ) : (
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToLead(m.id)}>
-                    <UserPlus className="h-3 w-3" /> → Lead
+                    <UserPlus className="h-3 w-3" /> {t("actionLead")}
                   </Button>
                 )}
                 {m.taskId ? (
                   <a href={`/tasks/${m.taskId}`} target="_blank" rel="noreferrer">
                     <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-emerald-600">
-                      <CheckSquare className="h-3 w-3" /> Task ↗
+                      <CheckSquare className="h-3 w-3" /> {t("viewTask")}
                     </Button>
                   </a>
                 ) : (
                   <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => convertToTask(m.id)}>
-                    <CheckSquare className="h-3 w-3" /> → Task
+                    <CheckSquare className="h-3 w-3" /> {t("actionTask")}
                   </Button>
                 )}
                 <div className="flex items-center gap-1 ml-auto">
@@ -444,7 +446,7 @@ export default function SocialMonitoringPage() {
                     size="sm"
                     className={`h-7 w-7 p-0 ${m.sentiment === "positive" ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "positive" })}
-                    title="Mark positive"
+                    title={t("markPositive")}
                   >
                     <ThumbsUp className={`h-3 w-3 ${m.sentiment === "positive" ? "text-white" : "text-green-600"}`} />
                   </Button>
@@ -453,7 +455,7 @@ export default function SocialMonitoringPage() {
                     size="sm"
                     className={`h-7 w-7 p-0 ${m.sentiment === "neutral" ? "bg-muted-foreground hover:bg-muted-foreground/90 text-background" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "neutral" })}
-                    title="Mark neutral"
+                    title={t("markNeutral")}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -462,7 +464,7 @@ export default function SocialMonitoringPage() {
                     size="sm"
                     className={`h-7 w-7 p-0 ${m.sentiment === "negative" ? "bg-red-500 hover:bg-red-600 text-white" : ""}`}
                     onClick={() => updateMention(m.id, { sentiment: "negative" })}
-                    title="Mark negative"
+                    title={t("markNegative")}
                   >
                     <ThumbsDown className={`h-3 w-3 ${m.sentiment === "negative" ? "text-white" : "text-red-600"}`} />
                   </Button>
@@ -473,18 +475,18 @@ export default function SocialMonitoringPage() {
                   <textarea
                     value={replyText}
                     onChange={e => setReplyText(e.target.value)}
-                    placeholder={`Reply on ${m.platform}…`}
+                    placeholder={t("replyPlaceholder", { platform: m.platform })}
                     rows={2}
                     className="w-full text-sm rounded-md border bg-background px-2.5 py-1.5 resize-y"
                     autoFocus
                   />
                   <div className="flex items-center justify-end gap-2">
                     <Button variant="ghost" size="sm" onClick={() => { setReplyOpenId(null); setReplyText("") }}>
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button size="sm" className="gap-1.5" disabled={!replyText.trim() || replySending} onClick={() => sendReply(m.id)}>
                       <Send className="h-3.5 w-3.5" />
-                      {replySending ? "Sending…" : "Send reply"}
+                      {replySending ? t("sending") : t("sendReply")}
                     </Button>
                   </div>
                 </div>
@@ -496,12 +498,12 @@ export default function SocialMonitoringPage() {
 
       <Dialog open={showAddAccount} onOpenChange={setShowAddAccount}>
         <DialogHeader>
-          <DialogTitle>Monitor a handle</DialogTitle>
+          <DialogTitle>{t("dialogTitle")}</DialogTitle>
         </DialogHeader>
         <DialogContent>
           <div className="space-y-4">
             <div className="space-y-1">
-              <Label>Platform</Label>
+              <Label>{t("platform")}</Label>
               <Select value={newAccPlatform} onChange={e => setNewAccPlatform(e.target.value)}>
                 {PLATFORMS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </Select>
@@ -556,12 +558,12 @@ export default function SocialMonitoringPage() {
               return (
                 <>
                   <div className="space-y-1">
-                    <Label>Handle / page *</Label>
-                    <Input value={newAccHandle} onChange={e => setNewAccHandle(e.target.value)} placeholder="@brand or page name" />
+                    <Label>{t("handlePage")}</Label>
+                    <Input value={newAccHandle} onChange={e => setNewAccHandle(e.target.value)} placeholder={t("handlePlaceholder")} />
                   </div>
                   <div className="space-y-1">
-                    <Label>Extra keywords (comma-separated)</Label>
-                    <Input value={newAccKeywords} onChange={e => setNewAccKeywords(e.target.value)} placeholder="product name, campaign hashtag" />
+                    <Label>{t("extraKeywords")}</Label>
+                    <Input value={newAccKeywords} onChange={e => setNewAccKeywords(e.target.value)} placeholder={t("keywordsPlaceholder")} />
                   </div>
                 </>
               )
@@ -569,9 +571,9 @@ export default function SocialMonitoringPage() {
           </div>
         </DialogContent>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setShowAddAccount(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => setShowAddAccount(false)}>{t("cancel")}</Button>
           {!["facebook", "instagram", "tiktok", "youtube"].includes(newAccPlatform) && (
-            <Button onClick={addAccount} disabled={!newAccHandle.trim()}>Add</Button>
+            <Button onClick={addAccount} disabled={!newAccHandle.trim()}>{t("add")}</Button>
           )}
         </DialogFooter>
       </Dialog>
