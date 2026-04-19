@@ -14,6 +14,7 @@ import {
   UserPlus, CheckSquare,
 } from "lucide-react"
 import { SocialAnalyticsPanel } from "@/components/social/analytics-panel"
+import { SocialOnboardingChecklist } from "@/components/social/onboarding-checklist"
 
 interface Account {
   id: string
@@ -218,6 +219,11 @@ export default function SocialMonitoringPage() {
           </Button>
         </div>
       </div>
+
+      <SocialOnboardingChecklist
+        hasFacebook={accounts.some(a => a.platform === "facebook")}
+        hasInstagram={accounts.some(a => a.platform === "instagram")}
+      />
 
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
