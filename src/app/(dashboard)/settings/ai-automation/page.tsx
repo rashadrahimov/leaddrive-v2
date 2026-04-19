@@ -757,7 +757,12 @@ export default function AiAutomationPage() {
             <p className="text-sm text-muted-foreground py-4 text-center">{t("noPendingShadow")}</p>
           ) : (
             <div className="space-y-2">
-              {[...shadowActions].sort((a, b) => urgencyScore(b) - urgencyScore(a)).map(action => {
+              {[...shadowActions].sort((a, b) => {
+                const levelRank = (l: UrgencyLevel) => l === "critical" ? 3 : l === "high" ? 2 : 1
+                const lv = levelRank(urgencyLevel(b)) - levelRank(urgencyLevel(a))
+                if (lv !== 0) return lv
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              }).map(action => {
                 const info = getShadowInfo(action, t)
                 const urgency = urgencyLevel(action)
                 const urgencyBadge = urgency === "critical"
