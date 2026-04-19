@@ -439,13 +439,31 @@ export default function SocialMonitoringPage() {
                   </Button>
                 )}
                 <div className="flex items-center gap-1 ml-auto">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => updateMention(m.id, { sentiment: "positive" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 w-7 p-0 ${m.sentiment === "positive" ? "bg-green-100 ring-1 ring-green-500 dark:bg-green-900/30" : ""}`}
+                    onClick={() => updateMention(m.id, { sentiment: "positive" })}
+                    title="Mark positive"
+                  >
                     <ThumbsUp className="h-3 w-3 text-green-600" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => updateMention(m.id, { sentiment: "neutral" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 w-7 p-0 ${m.sentiment === "neutral" ? "bg-muted ring-1 ring-muted-foreground/40" : ""}`}
+                    onClick={() => updateMention(m.id, { sentiment: "neutral" })}
+                    title="Mark neutral"
+                  >
                     <Minus className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => updateMention(m.id, { sentiment: "negative" })}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-7 w-7 p-0 ${m.sentiment === "negative" ? "bg-red-100 ring-1 ring-red-500 dark:bg-red-900/30" : ""}`}
+                    onClick={() => updateMention(m.id, { sentiment: "negative" })}
+                    title="Mark negative"
+                  >
                     <ThumbsDown className="h-3 w-3 text-red-600" />
                   </Button>
                 </div>

@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
 
 const updateSchema = z.object({
   id: z.string().min(1),
-  status: z.enum(["new", "reviewed", "replied", "ignored", "converted_to_ticket"]).optional(),
+  status: z.enum(["new", "reviewed", "replied", "ignored", "converted_to_ticket", "converted_to_lead", "converted_to_task"]).optional(),
   sentiment: z.enum(["positive", "neutral", "negative"]).optional(),
 })
 
