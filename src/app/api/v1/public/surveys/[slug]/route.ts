@@ -154,6 +154,44 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     })()
   }
 
+  // Detractor alert — email every admin/manager/support so a low NPS score
+  // never goes unnoticed. Fire-and-forget; SMTP latency stays off the
+  // visitor's response path.
+  if (category === "detractor") {
+    ;(async () => {
+      try {
+        const recipients = await prisma.user.findMany({
+          where: { organizationId: survey.organizationId, role: { in: ["admin", "manager", "support", "superadmin"] } },
+          select: { email: true },
+        })
+        if (recipients.length === 0) return
+        const { sendEmail } = await import("@/lib/email")
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
+        const surveyLink = `${appUrl.replace(/\/$/, "")}/surveys/${survey.id}`
+        const subject = `🔴 Detractor response on "${survey.name}"`
+        const html = `
+<!doctype html><html><body style="font-family:system-ui,Segoe UI,Arial;margin:0;padding:24px;background:#f5f5f5;color:#111">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;border-left:4px solid #ef4444">
+    <h2 style="margin:0 0 8px;color:#ef4444">Detractor alert</h2>
+    <p style="color:#555;margin:0 0 16px">A respondent gave a low NPS score on <b>${survey.name}</b>.</p>
+    <table style="width:100%;font-size:13px;border-collapse:collapse">
+      <tr><td style="color:#888;padding:4px 0">Score</td><td style="text-align:right"><b>${parsed.data.score ?? "—"}</b></td></tr>
+      <tr><td style="color:#888;padding:4px 0">Email</td><td style="text-align:right">${parsed.data.email || "—"}</td></tr>
+      ${parsed.data.comment ? `<tr><td style="color:#888;padding:4px 0;vertical-align:top">Comment</td><td style="text-align:right;padding-left:8px">${parsed.data.comment.replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c] as string)}</td></tr>` : ""}
+    </table>
+    <p style="margin:20px 0 0"><a href="${surveyLink}" style="background:#0176D3;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:500">Open survey</a></p>
+  </div>
+</body></html>`
+        for (const u of recipients) {
+          if (!u.email) continue
+          await sendEmail({ to: u.email, subject, html, organizationId: survey.organizationId }).catch(() => {})
+        }
+      } catch (e) {
+        console.error("[surveys] detractor alert failed:", e)
+      }
+    })()
+  }
+
   await prisma.survey.update({
     where: { id: survey.id },
     data: { totalResponses: { increment: 1 } },
