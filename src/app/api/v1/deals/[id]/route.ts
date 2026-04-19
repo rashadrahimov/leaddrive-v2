@@ -278,6 +278,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }).catch(() => {})
     }
 
+    // Trigger surveys when the deal transitions into WON.
+    if (parsed.data.stage === "WON" && existing?.stage !== "WON" && updated?.contactId) {
+      const { triggerSurveysOnDealWon } = await import("@/lib/survey-triggers")
+      triggerSurveysOnDealWon(orgId, updated.contactId).catch(e =>
+        console.error("[deals] survey trigger failed:", e),
+      )
+    }
+
     // Trigger workflows for updates
     if (updated) {
       const triggerEvent = parsed.data.stage ? "stage_changed" : "updated"

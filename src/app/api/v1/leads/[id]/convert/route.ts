@@ -76,6 +76,14 @@ export async function POST(
       return { company: companyId ? { id: companyId } : null, contact, deal }
     })
 
+    // Fire surveys configured for the lead-converted trigger.
+    if (result.contact?.id) {
+      const { triggerSurveysOnLeadConverted } = await import("@/lib/survey-triggers")
+      triggerSurveysOnLeadConverted(orgId, result.contact.id).catch(e =>
+        console.error("[leads/convert] survey trigger failed:", e),
+      )
+    }
+
     return NextResponse.json({ success: true, data: result }, { status: 201 })
   } catch (e) {
     console.error(e)

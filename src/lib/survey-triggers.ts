@@ -168,3 +168,59 @@ export async function triggerSurveysOnTicketResolved(
     })
   }
 }
+
+/**
+ * Generic trigger runner used by deal-won / invoice-paid / lead-converted
+ * hooks. Skips contacts that already responded to the same survey for the
+ * same source entity (deduped via SurveyResponse.contactId match).
+ */
+async function runSurveyTrigger(
+  orgId: string,
+  triggerKey: "afterDealWon" | "afterInvoicePaid" | "afterLeadConverted",
+  contactId: string | null,
+): Promise<void> {
+  if (!contactId) return
+  const contact = await prisma.contact.findFirst({
+    where: { id: contactId, organizationId: orgId },
+    select: { email: true, phone: true, id: true },
+  })
+  if (!contact?.email && !contact?.phone) return
+
+  const surveys = await prisma.survey.findMany({
+    where: { organizationId: orgId, status: "active" },
+  })
+
+  for (const s of surveys) {
+    const triggers = (s.triggers as any) || {}
+    if (!triggers[triggerKey]) continue
+
+    // Don't re-survey the same contact for the same survey twice.
+    const already = await prisma.surveyResponse.findFirst({
+      where: { surveyId: s.id, contactId: contact.id },
+      select: { id: true },
+    })
+    if (already) continue
+
+    const channel: "email" | "sms" = (s.channels as string[]).includes("email") && contact.email ? "email" : "sms"
+    await sendSurveyInvite({
+      surveyId: s.id,
+      organizationId: orgId,
+      email: contact.email,
+      phone: contact.phone,
+      contactId: contact.id,
+      channel,
+    })
+  }
+}
+
+export async function triggerSurveysOnDealWon(orgId: string, contactId: string | null): Promise<void> {
+  return runSurveyTrigger(orgId, "afterDealWon", contactId)
+}
+
+export async function triggerSurveysOnInvoicePaid(orgId: string, contactId: string | null): Promise<void> {
+  return runSurveyTrigger(orgId, "afterInvoicePaid", contactId)
+}
+
+export async function triggerSurveysOnLeadConverted(orgId: string, contactId: string | null): Promise<void> {
+  return runSurveyTrigger(orgId, "afterLeadConverted", contactId)
+}
