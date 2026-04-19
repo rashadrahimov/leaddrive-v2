@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Download, TrendingUp, ThumbsUp, ThumbsDown, Minus, Users, Save } from "lucide-react"
@@ -46,6 +47,7 @@ interface Stats {
 }
 
 export default function SurveyDetailPage() {
+  const t = useTranslations("surveys")
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const { data: session } = useSession()
@@ -119,7 +121,7 @@ export default function SurveyDetailPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.push("/surveys")} className="gap-1.5">
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {t("back")}
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight">{survey.name}</h1>
@@ -129,7 +131,7 @@ export default function SurveyDetailPage() {
           </div>
         </div>
         <Button variant="outline" onClick={downloadCsv} className="gap-1.5">
-          <Download className="h-4 w-4" /> Export CSV
+          <Download className="h-4 w-4" /> {t("exportCsv")}
         </Button>
       </div>
 
@@ -140,7 +142,7 @@ export default function SurveyDetailPage() {
       {stats && stats.nps != null && (
         <div className="rounded-lg border bg-card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold">NPS score</h2>
+            <h2 className="text-sm font-semibold">{t("npsScore")}</h2>
             <span className={`text-4xl font-bold ${stats.nps >= 50 ? "text-green-600" : stats.nps >= 0 ? "text-amber-600" : "text-red-600"}`}>
               {stats.nps}
             </span>
@@ -167,11 +169,11 @@ export default function SurveyDetailPage() {
 
       <div className="rounded-lg border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">Questions</h2>
+          <h2 className="text-sm font-semibold">{t("distribution")}</h2>
           <div className="flex items-center gap-2">
-            {savedFlash && <span className="text-xs text-green-600">Saved</span>}
+            {savedFlash && <span className="text-xs text-green-600">{t("savedAt", { time: new Date().toLocaleTimeString() })}</span>}
             <Button size="sm" variant="outline" onClick={saveQuestions} disabled={savingQuestions} className="gap-1.5">
-              <Save className="h-3.5 w-3.5" /> {savingQuestions ? "Saving…" : "Save questions"}
+              <Save className="h-3.5 w-3.5" /> {savingQuestions ? t("saving") : t("saveTriggers")}
             </Button>
           </div>
         </div>
@@ -180,10 +182,10 @@ export default function SurveyDetailPage() {
 
       <div className="rounded-lg border bg-card">
         <div className="p-4 border-b">
-          <h2 className="text-sm font-semibold">Responses ({responses.length})</h2>
+          <h2 className="text-sm font-semibold">{t("recentResponses")} ({responses.length})</h2>
         </div>
         {responses.length === 0 ? (
-          <p className="p-6 text-sm text-center text-muted-foreground">No responses yet</p>
+          <p className="p-6 text-sm text-center text-muted-foreground">{t("noResponses")}</p>
         ) : (
           <div className="divide-y">
             {responses.map(r => (

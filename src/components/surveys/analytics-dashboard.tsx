@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import {
   LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar,
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
+  const t = useTranslations("surveys")
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [range, setRange] = useState(30)
   const [loading, setLoading] = useState(true)
@@ -48,9 +50,9 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
 
   const { summary, trend, channels, topWords } = data
   const sentimentPie = [
-    { name: "Promoters", value: summary.promoters, fill: "#10b981" },
-    { name: "Passives", value: summary.passives, fill: "#f59e0b" },
-    { name: "Detractors", value: summary.detractors, fill: "#ef4444" },
+    { name: t("promoters"), value: summary.promoters, fill: "#10b981" },
+    { name: t("passives"), value: summary.passives, fill: "#f59e0b" },
+    { name: t("detractors"), value: summary.detractors, fill: "#ef4444" },
   ].filter(d => d.value > 0)
 
   const npsColor = summary.nps === null ? "text-muted-foreground" : summary.nps >= 50 ? "text-emerald-500" : summary.nps >= 0 ? "text-amber-500" : "text-red-500"
@@ -58,7 +60,7 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Analytics</h3>
+        <h3 className="text-sm font-semibold">{t("analytics")}</h3>
         <div className="flex items-center gap-1 text-xs">
           {[7, 30, 90, 365].map(d => (
             <button
@@ -74,21 +76,21 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
 
       {/* Summary tiles */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Tile label="NPS" value={summary.nps !== null ? String(summary.nps) : "—"} className={npsColor} />
-        <Tile label="Avg score" value={summary.avgScore !== null ? String(summary.avgScore) : "—"} />
-        <Tile label="Responses" value={String(summary.totalResponses)} />
-        <Tile label="Sent" value={String(summary.totalSent)} />
-        <Tile label="Response rate" value={summary.responseRate !== null ? `${summary.responseRate}%` : "—"} />
+        <Tile label={t("nps")} value={summary.nps !== null ? String(summary.nps) : "—"} className={npsColor} />
+        <Tile label={t("avgScore")} value={summary.avgScore !== null ? String(summary.avgScore) : "—"} />
+        <Tile label={t("responses")} value={String(summary.totalResponses)} />
+        <Tile label={t("sent")} value={String(summary.totalSent)} />
+        <Tile label={t("responseRate")} value={summary.responseRate !== null ? `${summary.responseRate}%` : "—"} />
       </div>
 
       {summary.totalResponses === 0 ? (
         <div className="rounded-lg border bg-card p-8 text-center text-sm text-muted-foreground">
-          No responses in the last {range} days.
+          {t("noResponsesInRange", { days: range })}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Responses over time</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("responsesOverTime")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
@@ -96,14 +98,14 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} dot={false} name="All" />
-                <Line type="monotone" dataKey="detractors" stroke="#ef4444" strokeWidth={1.5} dot={false} name="Detractors" />
+                <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} dot={false} name={t("allLabel")} />
+                <Line type="monotone" dataKey="detractors" stroke="#ef4444" strokeWidth={1.5} dot={false} name={t("detractorsLine")} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">NPS distribution</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("npsDistribution")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie data={sentimentPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
@@ -116,22 +118,22 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">NPS trend</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("npsTrend")}</h4>
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={trend.filter(t => t.nps !== null)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
                 <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={d => d.slice(5)} />
                 <YAxis tick={{ fontSize: 10 }} domain={[-100, 100]} />
                 <Tooltip />
-                <Line type="monotone" dataKey="nps" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} name="NPS" />
+                <Line type="monotone" dataKey="nps" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} name={t("nps")} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           <div className="rounded-lg border bg-card p-4">
-            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Channels</h4>
+            <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("channels")}</h4>
             {channels.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No channel data yet.</p>
+              <p className="text-xs text-muted-foreground">{t("noChannelData")}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={channels} layout="vertical" margin={{ left: 40, right: 10 }}>
@@ -147,23 +149,23 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
 
           {data.commentSentiment && (data.commentSentiment.positive + data.commentSentiment.neutral + data.commentSentiment.negative + data.commentSentiment.unknown) > 0 && (
             <div className="rounded-lg border bg-card p-4 md:col-span-2">
-              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Comment sentiment (AI)</h4>
+              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("commentSentimentAI")}</h4>
               <div className="grid grid-cols-4 gap-3 text-sm">
                 <div className="text-center">
                   <p className="text-xl font-bold text-emerald-600">{data.commentSentiment.positive}</p>
-                  <p className="text-xs text-muted-foreground">Positive</p>
+                  <p className="text-xs text-muted-foreground">{t("positive")}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xl font-bold text-muted-foreground">{data.commentSentiment.neutral}</p>
-                  <p className="text-xs text-muted-foreground">Neutral</p>
+                  <p className="text-xs text-muted-foreground">{t("neutral")}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xl font-bold text-red-600">{data.commentSentiment.negative}</p>
-                  <p className="text-xs text-muted-foreground">Negative</p>
+                  <p className="text-xs text-muted-foreground">{t("negative")}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xl font-bold text-muted-foreground/60">{data.commentSentiment.unknown}</p>
-                  <p className="text-xs text-muted-foreground">Pending</p>
+                  <p className="text-xs text-muted-foreground">{t("pending")}</p>
                 </div>
               </div>
             </div>
@@ -171,7 +173,7 @@ export function SurveyAnalyticsDashboard({ surveyId, orgId }: Props) {
 
           {topWords.length > 0 && (
             <div className="rounded-lg border bg-card p-4 md:col-span-2">
-              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">Top words from comments</h4>
+              <h4 className="text-xs font-semibold mb-3 text-muted-foreground">{t("topWords")}</h4>
               <div className="flex flex-wrap gap-2">
                 {topWords.map(t => {
                   const size = Math.min(16, 10 + Math.log2(t.count) * 2)
