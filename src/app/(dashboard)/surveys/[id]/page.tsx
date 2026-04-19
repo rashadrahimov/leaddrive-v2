@@ -9,6 +9,7 @@ import { ArrowLeft, Download, TrendingUp, ThumbsUp, ThumbsDown, Minus, Users, Sa
 import { QuestionBuilder, type Question } from "@/components/surveys/question-builder"
 import { SurveyAnalyticsDashboard } from "@/components/surveys/analytics-dashboard"
 import { SurveyUnsubscribesPanel } from "@/components/surveys/unsubscribes-panel"
+import { SurveyTriggersPanel } from "@/components/surveys/triggers-panel"
 
 interface Survey {
   id: string
@@ -133,6 +134,7 @@ export default function SurveyDetailPage() {
       </div>
 
       <SurveyAnalyticsDashboard surveyId={survey.id} orgId={orgId} />
+      <SurveyTriggersPanel surveyId={survey.id} orgId={orgId} initialTriggers={survey.triggers || {}} />
       <SurveyUnsubscribesPanel surveyId={survey.id} orgId={orgId} />
 
       {stats && stats.nps != null && (
