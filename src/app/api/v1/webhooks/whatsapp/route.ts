@@ -234,6 +234,23 @@ async function processMessages(
 
       if (matchedContact) {
         contactId = matchedContact.id
+      } else {
+        // First WhatsApp message from this number — auto-create a Contact so
+        // downstream triggers (survey on ticket resolved, etc.) have a phone
+        // to route back to.
+        try {
+          const created = await prisma.contact.create({
+            data: {
+              organizationId: orgId,
+              fullName: senderName || `WhatsApp +${waId}`,
+              phone: `+${waId}`,
+              source: "whatsapp",
+            },
+          })
+          contactId = created.id
+        } catch (e) {
+          console.error("[WA] auto-create contact failed:", e)
+        }
       }
     }
 
