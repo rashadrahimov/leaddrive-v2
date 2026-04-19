@@ -110,8 +110,11 @@ export async function sendSurveyInvite({
     }).catch(() => null)
     if (suppressedSms) return { ok: false, error: "unsubscribed" }
 
-    // TCPA-compliant footer: tell recipient how to stop
-    const smsMessage = `${survey.name}\n${link}\n\nReply STOP to unsubscribe.`
+    // Some SMS providers strip newlines, which glues the URL to whatever
+    // comes after it (e.g. "...747Reply STOP"). Put the link at the very
+    // end and leave a period + space after the STOP text so the URL stays
+    // the last token and keeps its boundary.
+    const smsMessage = `${survey.name}. Reply STOP to unsubscribe. ${link}`
     const result = await sendSms({ to: phone, message: smsMessage, organizationId })
     if (!result.success) return { ok: false, error: result.error || "sms send failed" }
     await prisma.survey.update({
