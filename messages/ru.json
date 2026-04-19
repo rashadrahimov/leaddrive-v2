@@ -7787,6 +7787,10 @@
     "connectTikTok": "Подключить TikTok",
     "connectYoutube": "Подключить YouTube",
     "comingSoon": "(скоро)",
-    "sentimentLabel": "Тональность"
+    "sentimentLabel": "Тональность",
+    "editKeywords": "Изменить ключевые слова",
+    "addKeywords": "+ ключи",
+    "save": "Сохранить",
+    "keywordsHelp": "Через запятую. Если коммент или тегированный пост содержит одно из них — оно проставится в matchedTerm и покажется в аналитике 'Топ ключевых слов'."
   }
 }

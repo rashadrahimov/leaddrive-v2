@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { decryptToken } from "@/lib/secure-token"
 import { classifySentiment } from "@/lib/sentiment"
-import { ingestMention } from "@/lib/social/ingest-mention"
+import { ingestMention, findMatchedKeyword } from "@/lib/social/ingest-mention"
 import crypto from "crypto"
 
 const GRAPH = "https://graph.facebook.com/v21.0"
@@ -99,7 +99,7 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
           externalId: `c:${c.id}`,
           text: cText,
           sentiment: cSent,
-          matchedTerm: null,
+          matchedTerm: findMatchedKeyword(cText, account.keywords),
           engagement: c.like_count || 0,
           url: post.permalink_url || null,
           authorName: c.from?.name || null,
@@ -130,7 +130,7 @@ export async function pollFacebookAccount(accountId: string): Promise<{ ingested
           externalId: `t:${tp.id}`,
           text: tText,
           sentiment: tSent,
-          matchedTerm: null,
+          matchedTerm: findMatchedKeyword(tText, account.keywords),
           url: tp.permalink_url || null,
           authorName: tp.from?.name || null,
           authorHandle: tp.from?.id || null,
@@ -204,7 +204,7 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
           externalId: `c:${c.id}`,
           text: cText,
           sentiment: cSent,
-          matchedTerm: null,
+          matchedTerm: findMatchedKeyword(cText, account.keywords),
           engagement: c.like_count || 0,
           url: m.permalink || null,
           authorHandle: c.username || null,
@@ -234,7 +234,7 @@ export async function pollInstagramAccount(accountId: string): Promise<{ ingeste
           externalId: `t:${tm.id}`,
           text: tText,
           sentiment: tSent,
-          matchedTerm: null,
+          matchedTerm: findMatchedKeyword(tText, account.keywords),
           url: tm.permalink || null,
           authorHandle: tm.username || null,
           publishedAt: new Date(tm.timestamp),

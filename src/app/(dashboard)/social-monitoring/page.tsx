@@ -246,6 +246,30 @@ export default function SocialMonitoringPage() {
     }
   }
 
+  const [editKeywordsId, setEditKeywordsId] = useState<string | null>(null)
+  const [editKeywordsText, setEditKeywordsText] = useState("")
+  const [savingKeywords, setSavingKeywords] = useState(false)
+  const openKeywordsEditor = (a: Account) => {
+    setEditKeywordsId(a.id)
+    setEditKeywordsText((a.keywords || []).join(", "))
+  }
+  const saveKeywords = async () => {
+    if (!editKeywordsId) return
+    setSavingKeywords(true)
+    try {
+      const keywords = editKeywordsText.split(",").map(s => s.trim()).filter(Boolean)
+      await fetch(`/api/v1/social/accounts/${editKeywordsId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ keywords }),
+      })
+      setEditKeywordsId(null)
+      loadAccounts()
+    } finally {
+      setSavingKeywords(false)
+    }
+  }
+
   const sentimentIcon = (s: string | null) => {
     if (s === "positive") return <ThumbsUp className="h-3.5 w-3.5 text-green-600" />
     if (s === "negative") return <ThumbsDown className="h-3.5 w-3.5 text-red-600" />
@@ -304,10 +328,14 @@ export default function SocialMonitoringPage() {
             {accounts.map(a => (
               <div key={a.id} className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs">
                 <Badge variant="outline" className="uppercase text-[10px]">{a.platform}</Badge>
-                <span className="font-medium">{a.handle}</span>
-                {a.keywords.length > 0 && (
-                  <span className="text-muted-foreground">+ {a.keywords.length} kw</span>
-                )}
+                <span className="font-medium">{a.displayName || a.handle}</span>
+                <button
+                  onClick={() => openKeywordsEditor(a)}
+                  className="text-muted-foreground hover:text-foreground hover:underline"
+                  title={t("editKeywords")}
+                >
+                  {a.keywords.length > 0 ? `+ ${a.keywords.length} kw` : t("addKeywords")}
+                </button>
                 {["twitter", "facebook", "instagram"].includes(a.platform) && a.accessToken && (
                   <button onClick={() => pollAccount(a.id)} className="text-muted-foreground hover:text-foreground" title="Poll now">
                     <RefreshCw className="h-3 w-3" />
@@ -575,6 +603,30 @@ export default function SocialMonitoringPage() {
           {!["facebook", "instagram", "tiktok", "youtube"].includes(newAccPlatform) && (
             <Button onClick={addAccount} disabled={!newAccHandle.trim()}>{t("add")}</Button>
           )}
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog open={!!editKeywordsId} onOpenChange={open => { if (!open) setEditKeywordsId(null) }}>
+        <DialogHeader>
+          <DialogTitle>{t("editKeywords")}</DialogTitle>
+        </DialogHeader>
+        <DialogContent>
+          <div className="space-y-2">
+            <Label>{t("extraKeywords")}</Label>
+            <textarea
+              value={editKeywordsText}
+              onChange={e => setEditKeywordsText(e.target.value)}
+              rows={4}
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm font-mono"
+              placeholder={t("keywordsPlaceholder")}
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">{t("keywordsHelp")}</p>
+          </div>
+        </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setEditKeywordsId(null)}>{t("cancel")}</Button>
+          <Button onClick={saveKeywords} disabled={savingKeywords}>{savingKeywords ? t("sending") : t("save")}</Button>
         </DialogFooter>
       </Dialog>
     </div>

@@ -7787,6 +7787,10 @@
     "connectTikTok": "TikTok qoş",
     "connectYoutube": "YouTube qoş",
     "comingSoon": "(tezliklə)",
-    "sentimentLabel": "Ton"
+    "sentimentLabel": "Ton",
+    "editKeywords": "Açar sözləri redaktə et",
+    "addKeywords": "+ açar",
+    "save": "Yadda saxla",
+    "keywordsHelp": "Vergüllə. Şərh və ya tag olunmuş post bunlardan birini ehtiva edirsə, matchedTerm olaraq qeyd olunur və 'Top açar sözlər' analitikasında görünür."
   }
 }

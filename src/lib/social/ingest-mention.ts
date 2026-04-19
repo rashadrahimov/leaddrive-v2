@@ -26,6 +26,21 @@ export interface IngestInput {
   publishedAt?: Date | null
 }
 
+/**
+ * Case-insensitive substring match for any keyword in `text`. Returns the
+ * matched keyword (preserving its original casing) or null.
+ */
+export function findMatchedKeyword(text: string, keywords: string[] | null | undefined): string | null {
+  if (!text || !keywords || keywords.length === 0) return null
+  const lower = text.toLowerCase()
+  for (const kw of keywords) {
+    const trimmed = kw.trim()
+    if (!trimmed) continue
+    if (lower.includes(trimmed.toLowerCase())) return trimmed
+  }
+  return null
+}
+
 export async function ingestMention(input: IngestInput): Promise<boolean> {
   const existing = await prisma.socialMention.findUnique({
     where: {

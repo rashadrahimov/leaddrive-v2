@@ -7787,6 +7787,10 @@
     "connectTikTok": "Connect TikTok",
     "connectYoutube": "Connect YouTube",
     "comingSoon": "(soon)",
-    "sentimentLabel": "Sentiment"
+    "sentimentLabel": "Sentiment",
+    "editKeywords": "Edit keywords",
+    "addKeywords": "+ keywords",
+    "save": "Save",
+    "keywordsHelp": "Comma-separated. When a comment or tagged post contains any of these, it's tagged with the matched keyword and surfaces in 'Top matched keywords' analytics."
   }
 }
