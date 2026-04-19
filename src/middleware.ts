@@ -333,5 +333,5 @@ const authMiddleware = auth((req) => {
 export default authMiddleware
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|wallpapers/|leaflet\\.css).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|wallpapers/|leaflet\\.css|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf)).*)"],
 }
