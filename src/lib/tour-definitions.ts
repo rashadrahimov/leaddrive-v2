@@ -247,9 +247,15 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     { targetId: "settings-grid", titleKey: "gridTitle", descKey: "gridDesc" },
   ]},
   aiAutomation: { steps: [
+    { targetId: "ai-hero", titleKey: "heroTitle", descKey: "heroDesc" },
     { targetId: "ai-budget", titleKey: "budgetTitle", descKey: "budgetDesc" },
     { targetId: "ai-delivery", titleKey: "deliveryTitle", descKey: "deliveryDesc" },
     { targetId: "ai-toggles", titleKey: "togglesTitle", descKey: "togglesDesc" },
+  ]},
+  aiActions: { steps: [
+    { targetId: "ai-actions-header", titleKey: "headerTitle", descKey: "headerDesc" },
+    { targetId: "ai-actions-filters", titleKey: "filtersTitle", descKey: "filtersDesc" },
+    { targetId: "ai-actions-list", titleKey: "listTitle", descKey: "listDesc" },
   ]},
   workflows: { steps: [
     { targetId: "workflows-list", titleKey: "listTitle", descKey: "listDesc" },

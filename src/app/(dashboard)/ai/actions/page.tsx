@@ -11,6 +11,9 @@ import {
   Shield, CheckCircle2, XCircle, Loader2, RefreshCw, ChevronDown, Inbox, Search, X,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+import { DidYouKnow } from "@/components/did-you-know"
 
 interface ShadowAction {
   id: string
@@ -290,6 +293,7 @@ export default function AiActionsPage() {
   const t = useTranslations("aiSettings")
   const tPage = useTranslations("aiActions")
   const orgId = (session?.user as any)?.organizationId
+  useAutoTour("aiActions")
   const [shadowActions, setShadowActions] = useState<ShadowAction[]>([])
   const [shadowTotal, setShadowTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -433,13 +437,14 @@ export default function AiActionsPage() {
 
   return (
     <MotionPage>
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div data-tour-id="ai-actions-header" className="flex items-start justify-between mb-6 gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Inbox className="h-6 w-6" /> {tPage("title")}
             {shadowTotal > 0 && (
               <Badge variant="secondary" className="text-xs font-normal">{shadowTotal} {t("pending")}</Badge>
             )}
+            <TourReplayButton tourId="aiActions" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{tPage("subtitle")}</p>
         </div>
@@ -449,6 +454,8 @@ export default function AiActionsPage() {
           </Button>
         </div>
       </div>
+
+      <DidYouKnow page="ai-actions" />
 
       <Card>
         <CardHeader className="pb-3">
@@ -474,7 +481,7 @@ export default function AiActionsPage() {
         <CardContent>
           {/* Filter & sort bar */}
           {!loading && shadowActions.length > 0 && (
-            <div className="mb-4 space-y-2.5 pb-3 border-b border-border/60">
+            <div data-tour-id="ai-actions-filters" className="mb-4 space-y-2.5 pb-3 border-b border-border/60">
               {/* Type pills */}
               <div className="flex flex-wrap items-center gap-1.5">
                 {[
@@ -585,7 +592,7 @@ export default function AiActionsPage() {
           ) : filteredActions.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">{tPage("filterEmpty")}</p>
           ) : (
-            <div className="space-y-2">
+            <div data-tour-id="ai-actions-list" className="space-y-2">
               {filteredActions.map(action => {
                 const info = getShadowInfo(action, t)
                 const urgency = urgencyLevel(action)

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Save, Check, Handshake, Mail, MessageSquare, Ticket, Wallet, BarChart3, FolderKanban, MapPin, Settings, Zap, Upload, X } from "lucide-react"
+import { ArrowLeft, Loader2, Save, Check, Handshake, Mail, MessageSquare, Ticket, Wallet, BarChart3, FolderKanban, MapPin, Settings, Zap, Upload, X, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
 
@@ -103,6 +103,25 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
 const TOGGLEABLE_MODULES = [...new Set(
   SIDEBAR_SECTIONS.flatMap((s) => s.items.map((i) => i.moduleId)).filter((id) => id !== "core")
 )]
+
+// AI Automation features — pair of shadow (safe) + live (autonomous) per scenario
+const AI_AUTOMATION_FEATURES: { scenario: string; label: string; shadowKey: string; liveKey: string; note: string }[] = [
+  { scenario: "analytics_briefing",  label: "Daily Briefing",         shadowKey: "ai_daily_briefing",        liveKey: "ai_daily_briefing",        note: "Morning digest email (analytics only, no actions)" },
+  { scenario: "analytics_anomaly",   label: "Anomaly Detection",      shadowKey: "ai_anomaly_detection",     liveKey: "ai_anomaly_detection",     note: "Spots spikes + alerts (no actions)" },
+  { scenario: "analytics_lead",      label: "Lead Scoring",           shadowKey: "ai_lead_scoring",          liveKey: "ai_lead_scoring",          note: "Enhanced lead scoring" },
+  { scenario: "hot_lead",            label: "Hot Lead Escalation",    shadowKey: "ai_auto_hot_lead_shadow",  liveKey: "ai_auto_hot_lead",         note: "Score ≥80 → reassign senior" },
+  { scenario: "triage",              label: "Ticket Auto-Triage",     shadowKey: "ai_auto_triage_shadow",    liveKey: "ai_auto_triage",           note: "AI sets category/priority/tags" },
+  { scenario: "stage_advance",       label: "Deal Stage Advance",     shadowKey: "ai_auto_stage_advance_shadow", liveKey: "ai_auto_stage_advance", note: "Stuck deals → next stage" },
+  { scenario: "acknowledge",         label: "SLA Auto-Response",      shadowKey: "ai_auto_acknowledge_shadow", liveKey: "ai_auto_acknowledge",    note: "Auto-reply before SLA breach" },
+  { scenario: "followup",            label: "Stale Deal Follow-Up",   shadowKey: "ai_auto_followup_shadow",  liveKey: "ai_auto_followup",         note: "7+ days inactive → create task" },
+  { scenario: "payment_reminder",    label: "Payment Reminder",       shadowKey: "ai_auto_payment_reminder_shadow", liveKey: "ai_auto_payment_reminder", note: "Overdue invoice → journey" },
+  { scenario: "renewal",             label: "Contract Renewal",       shadowKey: "ai_auto_renewal_shadow",   liveKey: "ai_auto_renewal",          note: "30d before end → AI drafts proposal" },
+  { scenario: "sentiment",           label: "Negative Sentiment",     shadowKey: "ai_auto_sentiment_shadow", liveKey: "ai_auto_sentiment",        note: "Angry ticket → senior escalation" },
+  { scenario: "kb_close",            label: "KB Auto-Close",          shadowKey: "ai_auto_kb_close_shadow",  liveKey: "ai_auto_kb_close",         note: "Ticket matches KB → close with link" },
+  { scenario: "duplicate",           label: "Duplicate Merge",        shadowKey: "ai_auto_duplicate_shadow", liveKey: "ai_auto_duplicate",        note: "Same email/phone → suggest merge" },
+  { scenario: "credit_limit",        label: "Credit Limit Warning",   shadowKey: "ai_auto_credit_limit_shadow", liveKey: "ai_auto_credit_limit",  note: "Outstanding ≥80% of limit → AR task" },
+  { scenario: "meeting_recap",       label: "Meeting Recap",          shadowKey: "ai_auto_meeting_recap_shadow", liveKey: "ai_auto_meeting_recap", note: "Webhook transcript → AI recap + next steps" },
+]
 
 const GROUP_ORDER = ["CRM", "Marketing", "Communication", "Support", "Finance", "Analytics", "ERP", "Route & Field", "Settings"]
 
@@ -423,6 +442,85 @@ export default function TenantEditPage() {
                 )
               })}
             </div>
+          </Card>
+
+          {/* AI Automation — per-scenario shadow/live toggles */}
+          <Card className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-base font-semibold flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  AI Automation
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Review → Autopilot per scenario. Shadow = AI drafts + waits for approve. Live = AI acts on its own.
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {AI_AUTOMATION_FEATURES.filter(f => form.features.includes(f.shadowKey) || form.features.includes(f.liveKey)).length}
+                {" / "}
+                {AI_AUTOMATION_FEATURES.length}
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-lg border border-border/60">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium text-xs">Scenario</th>
+                    <th className="text-center px-2 py-2 font-medium text-xs text-amber-700 w-24">Review</th>
+                    <th className="text-center px-2 py-2 font-medium text-xs text-violet-700 w-24">Autopilot</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {AI_AUTOMATION_FEATURES.map((f) => {
+                    const shadowActive = form.features.includes(f.shadowKey)
+                    const liveActive = form.features.includes(f.liveKey)
+                    const hasShadowMode = f.shadowKey !== f.liveKey // analytics features share key
+                    return (
+                      <tr key={f.scenario} className="border-t border-border/40">
+                        <td className="px-3 py-2">
+                          <div className="font-medium">{f.label}</div>
+                          <div className="text-[11px] text-muted-foreground">{f.note}</div>
+                        </td>
+                        <td className="text-center px-2 py-2">
+                          {hasShadowMode ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleFeature(f.shadowKey)}
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                                shadowActive
+                                  ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                  : "bg-transparent text-muted-foreground border border-border hover:bg-muted"
+                              }`}
+                            >
+                              {shadowActive ? "on" : "off"}
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="text-center px-2 py-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleFeature(f.liveKey)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                              liveActive
+                                ? "bg-violet-100 text-violet-800 border border-violet-300"
+                                : "bg-transparent text-muted-foreground border border-border hover:bg-muted"
+                            }`}
+                          >
+                            {liveActive ? "on" : "off"}
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-3">
+              Tip: always enable the Review toggle first, let the tenant see the shadow queue for a few days, then switch to Autopilot.
+            </p>
           </Card>
         </div>
 

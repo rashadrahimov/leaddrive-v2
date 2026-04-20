@@ -145,6 +145,23 @@ const TIPS: Record<string, Tip[]> = {
     { id: "macro-categories", titleKey: "macroCatTitle", descKey: "macroCatDesc", ctaKey: "macroCatCta", href: "/settings/macros" },
     { id: "macro-order", titleKey: "macroOrderTitle", descKey: "macroOrderDesc", ctaKey: "macroOrderCta", href: "/settings/macros" },
   ],
+  "ai-actions": [
+    { id: "ai-actions-undo", titleKey: "aiActionsUndoTitle", descKey: "aiActionsUndoDesc", ctaKey: "aiActionsUndoCta", href: "/ai/actions" },
+    { id: "ai-actions-bulk", titleKey: "aiActionsBulkTitle", descKey: "aiActionsBulkDesc", ctaKey: "aiActionsBulkCta", href: "/ai/actions" },
+    { id: "ai-actions-filters", titleKey: "aiActionsFiltersTitle", descKey: "aiActionsFiltersDesc", ctaKey: "aiActionsFiltersCta", href: "/ai/actions" },
+    { id: "ai-actions-search", titleKey: "aiActionsSearchTitle", descKey: "aiActionsSearchDesc", ctaKey: "aiActionsSearchCta", href: "/ai/actions" },
+    { id: "ai-actions-shadow-live", titleKey: "aiActionsShadowLiveTitle", descKey: "aiActionsShadowLiveDesc", ctaKey: "aiActionsShadowLiveCta", href: "/settings/ai-automation" },
+    { id: "ai-actions-renewal", titleKey: "aiActionsRenewalTitle", descKey: "aiActionsRenewalDesc", ctaKey: "aiActionsRenewalCta", href: "/settings/ai-automation" },
+    { id: "ai-actions-credit", titleKey: "aiActionsCreditTitle", descKey: "aiActionsCreditDesc", ctaKey: "aiActionsCreditCta", href: "/companies" },
+    { id: "ai-actions-meeting", titleKey: "aiActionsMeetingTitle", descKey: "aiActionsMeetingDesc", ctaKey: "aiActionsMeetingCta", href: "/settings/ai-automation" },
+  ],
+  "ai-automation": [
+    { id: "ai-autom-hero", titleKey: "aiAutoHeroTitle", descKey: "aiAutoHeroDesc", ctaKey: "aiAutoHeroCta", href: "/settings/ai-automation" },
+    { id: "ai-autom-wave", titleKey: "aiAutoWaveTitle", descKey: "aiAutoWaveDesc", ctaKey: "aiAutoWaveCta", href: "/ai/actions" },
+    { id: "ai-autom-budget", titleKey: "aiAutoBudgetTitle", descKey: "aiAutoBudgetDesc", ctaKey: "aiAutoBudgetCta", href: "/settings/ai-automation" },
+    { id: "ai-autom-language", titleKey: "aiAutoLangTitle", descKey: "aiAutoLangDesc", ctaKey: "aiAutoLangCta", href: "/contacts" },
+    { id: "ai-autom-sentiment", titleKey: "aiAutoSentTitle", descKey: "aiAutoSentDesc", ctaKey: "aiAutoSentCta", href: "/settings/ai-automation" },
+  ],
 }
 
 function getDismissed(): Set<string> {
