@@ -152,6 +152,34 @@ export default function SmtpSettingsPage() {
         )}
       </div>
 
+      {/* Centralized email banner — LeadDrive ships with a managed outbound
+          service (Resend + leaddrivecrm.org). Per-tenant SMTP below is only
+          needed if the tenant wants their own domain on From. */}
+      <div className="rounded-lg border border-sky-200 dark:border-sky-900/50 bg-sky-50/50 dark:bg-sky-950/20 p-4">
+        <div className="flex gap-3">
+          <Mail className="h-5 w-5 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+          <div className="text-sm space-y-1">
+            <p className="font-medium text-sky-900 dark:text-sky-200">
+              LeadDrive Managed Email
+            </p>
+            <p className="text-sky-800/80 dark:text-sky-300/80">
+              Транзакционные письма (регистрация, сброс пароля, уведомления о
+              тикетах) отправляются централизованно от{" "}
+              <code className="px-1 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-xs">
+                no-reply@mail.leaddrivecrm.org
+              </code>{" "}
+              с именем вашей организации в заголовке From. Ответы клиентов
+              автоматически превращаются в комментарии к тикетам.
+            </p>
+            <p className="text-sky-800/80 dark:text-sky-300/80">
+              Настройки ниже — <strong>опциональный fallback</strong>: если
+              заполните, то письма пойдут с вашего домена. Большинству
+              организаций заполнять не нужно.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Quick presets */}
       <div className="border rounded-lg p-4 bg-card">
         <p className="text-sm font-medium text-muted-foreground mb-3">Quick setup:</p>

@@ -45,7 +45,10 @@ export const STAGE_COLORS: Record<string, string> = {
 
 // ── Contact Info ─────────────────────────────────────────
 export const COMPANY_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@leaddrivecrm.org"
-export const NOREPLY_EMAIL = process.env.NOREPLY_EMAIL || "noreply@leaddrivecrm.org"
+export const NOREPLY_EMAIL = process.env.EMAIL_FROM_ADDRESS || process.env.NOREPLY_EMAIL || "noreply@leaddrivecrm.org"
+export const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || NOREPLY_EMAIL
+export const EMAIL_FROM_NAME_FALLBACK = process.env.EMAIL_FROM_NAME_FALLBACK || "LeadDrive CRM"
+export const EMAIL_REPLY_DOMAIN = process.env.EMAIL_REPLY_DOMAIN || "leaddrivecrm.org"
 export const COMPANY_PHONE = ""
 export const COMPANY_PHONE_FORMATTED = ""
 

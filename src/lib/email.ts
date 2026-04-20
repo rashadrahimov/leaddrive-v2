@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer"
 import { prisma } from "@/lib/prisma"
 import { isPrivateHost } from "@/lib/url-validation"
-import { NOREPLY_EMAIL } from "@/lib/constants"
+import { NOREPLY_EMAIL, EMAIL_FROM_ADDRESS, EMAIL_FROM_NAME_FALLBACK } from "@/lib/constants"
 
 interface SmtpConfig {
   smtpHost: string
@@ -166,10 +166,30 @@ export async function sendEmail({
   attachments?: { filename: string; path: string }[]
 }) {
   const config = await getSmtpConfig(organizationId)
-  const fromEmail = config?.fromEmail || NOREPLY_EMAIL
 
-  // If SMTP is not configured, log and return error
-  if (!config) {
+  // When Resend is enabled globally (RESEND_API_KEY set), we use a single
+  // technical sender address `EMAIL_FROM_ADDRESS` for ALL tenants and just
+  // swap the friendly name to the organization's display name so recipients
+  // still see their brand. This removes the need for per-tenant SMTP setup.
+  let resendFromStr: string | null = null
+  if (process.env.RESEND_API_KEY && EMAIL_FROM_ADDRESS) {
+    let orgName = EMAIL_FROM_NAME_FALLBACK
+    if (organizationId) {
+      const org = await prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true },
+      })
+      orgName = org?.name || orgName
+    }
+    resendFromStr = `"${orgName}" <${EMAIL_FROM_ADDRESS}>`
+  }
+
+  const fromEmail = resendFromStr
+    ? EMAIL_FROM_ADDRESS
+    : config?.fromEmail || NOREPLY_EMAIL
+
+  // If neither Resend nor SMTP is configured, log and bail.
+  if (!config && !resendFromStr) {
     console.log(`[EMAIL] SMTP not configured | To: ${to} | Subject: ${subject}`)
 
     if (organizationId) {
@@ -196,8 +216,12 @@ export async function sendEmail({
   }
 
   try {
-    const transporter = createTransporter(config)
-    const fromStr = config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail
+    const transporter = config ? createTransporter(config) : null
+    const smtpFromStr = config
+      ? (config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail)
+      : null
+    // Resend path gets the centralized sender; SMTP path keeps per-tenant from.
+    const fromStr = resendFromStr || smtpFromStr || NOREPLY_EMAIL
     const textBody = text || htmlToPlainText(html)
 
     // Create log first to get ID for tracking pixel
@@ -208,7 +232,7 @@ export async function sendEmail({
           data: {
             organizationId,
             direction: "outbound",
-            fromEmail: config.fromEmail,
+            fromEmail,
             toEmail: to,
             subject,
             body: html,
@@ -242,7 +266,8 @@ export async function sendEmail({
     }
 
     // Prefer Resend when RESEND_API_KEY is set — transactional service with far
-    // better deliverability than Gmail SMTP. On any failure we drop back to SMTP.
+    // better deliverability than Gmail SMTP. On any failure we drop back to SMTP
+    // (if a per-tenant SMTP config is available).
     const resendResult = await sendViaResend({
       from: fromStr,
       to,
@@ -253,18 +278,23 @@ export async function sendEmail({
       headers,
     })
 
-    const info = resendResult
-      ? { messageId: resendResult.messageId }
-      : await transporter.sendMail({
-          from: fromStr,
-          to,
-          subject,
-          html: finalHtml,
-          text: textBody,
-          ...(replyTo ? { replyTo } : {}),
-          ...(headers ? { headers } : {}),
-          ...(attachments?.length ? { attachments } : {}),
-        })
+    let info: { messageId: string }
+    if (resendResult) {
+      info = { messageId: resendResult.messageId }
+    } else if (transporter) {
+      info = await transporter.sendMail({
+        from: fromStr,
+        to,
+        subject,
+        html: finalHtml,
+        text: textBody,
+        ...(replyTo ? { replyTo } : {}),
+        ...(headers ? { headers } : {}),
+        ...(attachments?.length ? { attachments } : {}),
+      })
+    } else {
+      throw new Error("Email delivery failed: Resend rejected and no SMTP fallback configured")
+    }
 
     // Update log with success
     if (logId) {
@@ -277,7 +307,7 @@ export async function sendEmail({
         data: {
           organizationId,
           direction: "outbound",
-          fromEmail: config.fromEmail,
+          fromEmail,
           toEmail: to,
           subject,
           body: html,
@@ -300,7 +330,7 @@ export async function sendEmail({
         data: {
           organizationId,
           direction: "outbound",
-          fromEmail: config.fromEmail,
+          fromEmail,
           toEmail: to,
           subject,
           body: html,

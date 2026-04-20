@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { randomBytes } from "crypto"
 import { sendEmail } from "@/lib/email"
+import { buildReplyTo } from "@/lib/email-reply-address"
 
 // POST /api/v1/public/portal-auth/register — send verification email
 export async function POST(req: NextRequest) {
@@ -77,11 +78,17 @@ export async function POST(req: NextRequest) {
   // Build a deliverability-friendly email: both text + html, Reply-To pointing at
   // a human address (taken from org settings if configured), List-Unsubscribe
   // header to signal transactional-not-bulk, neutral "access link" subject.
+  // Prefer a tracked reply-to (contact+{id}.{hmac}@leaddrivecrm.org) when
+  // RESEND_API_KEY is active — replies land in the inbound webhook and can
+  // create TicketComments automatically. Otherwise fall back to the org's
+  // human reply address saved in settings.
   const orgSettings = (await prisma.organization.findUnique({
     where: { id: contact.organizationId },
     select: { settings: true, name: true },
   }))?.settings as { smtp?: { fromEmail?: string; replyTo?: string } } | null
-  const replyTo = orgSettings?.smtp?.replyTo || orgSettings?.smtp?.fromEmail
+  const replyTo = process.env.RESEND_API_KEY
+    ? buildReplyTo({ kind: "contact", id: contact.id })
+    : orgSettings?.smtp?.replyTo || orgSettings?.smtp?.fromEmail
   const unsubscribeUrl = `${baseUrl}/portal/unsubscribe?email=${encodeURIComponent(email)}`
 
   const textBody = [
