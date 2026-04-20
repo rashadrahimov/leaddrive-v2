@@ -8,13 +8,13 @@ export const TENANT_PLANS = {
   professional: {
     maxUsers: 25,
     maxContacts: 10000,
-    features: ["whatsapp", "ai"],
+    features: ["whatsapp", "ai", "complaints_register"],
     addons: ["ai", "channels"],
   },
   enterprise: {
     maxUsers: -1, // unlimited
     maxContacts: -1,
-    features: ["whatsapp", "ai", "voip", "portal", "events"],
+    features: ["whatsapp", "ai", "voip", "portal", "events", "complaints_register"],
     addons: ["ai", "channels", "finance", "mtm", "voip"],
   },
 } as const

@@ -43,6 +43,7 @@ const SIDEBAR_SECTIONS: { group: string; items: { moduleId: string; label: strin
   ]},
   { group: "Support", items: [
     { moduleId: "tickets", label: "Tickets", href: "/tickets" },
+    { moduleId: "tickets", label: "Complaints Register", href: "/complaints" },
     { moduleId: "tickets", label: "Agent Desktop", href: "/support/agent-desktop" },
     { moduleId: "tickets", label: "Agent Calendar", href: "/support/calendar" },
     { moduleId: "voip", label: "VoIP Calls", href: "/support/voip" },
@@ -540,6 +541,32 @@ export default function TenantEditPage() {
             <p className="text-[11px] text-muted-foreground mt-3">
               Tip: always enable the Review toggle first, let the tenant see the shadow queue for a few days, then switch to Autopilot.
             </p>
+
+            <div className="mt-5 pt-5 border-t border-border/60 space-y-2">
+              <h4 className="text-sm font-semibold">Extra features</h4>
+              <p className="text-[11px] text-muted-foreground">
+                Optional modules that aren&apos;t tied to a plan tier. Available on top of the main module list.
+              </p>
+              <div className="flex items-center justify-between py-2 px-3 rounded-md border border-border/40 bg-muted/20">
+                <div>
+                  <div className="text-sm font-medium">Complaints Register</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Дополнительный раздел /complaints в группе Support (FMCG / consumer-goods use case).
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleFeature("complaints_register")}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                    form.features.includes("complaints_register")
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                      : "bg-transparent text-muted-foreground border border-border hover:bg-muted"
+                  }`}
+                >
+                  {form.features.includes("complaints_register") ? "on" : "off"}
+                </button>
+              </div>
+            </div>
 
             <div className="mt-5 pt-5 border-t border-border/60 grid grid-cols-2 gap-4">
               <div className="space-y-1.5">

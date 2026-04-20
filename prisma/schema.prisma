@@ -902,6 +902,7 @@ model Ticket {
   updatedAt         DateTime  @updatedAt
 
   comments       TicketComment[]
+  complaintMeta  ComplaintMeta?
 
   @@unique([organizationId, ticketNumber])
   @@index([organizationId, status])
@@ -939,6 +940,29 @@ model TicketComment {
   createdAt      DateTime @default(now())
 
   @@map("ticket_comments")
+}
+
+model ComplaintMeta {
+  id                     String   @id @default(cuid())
+  ticketId               String   @unique
+  ticket                 Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  organizationId         String
+  externalRegistryNumber Int?
+  complaintType          String   @default("complaint")
+  brand                  String?
+  productionArea         String?
+  productCategory        String?
+  complaintObject        String?
+  complaintObjectDetail  String?
+  responsibleDepartment  String?
+  riskLevel              String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([organizationId, brand])
+  @@index([organizationId, riskLevel])
+  @@index([organizationId, productCategory])
+  @@map("complaint_meta")
 }
 
 model TicketQueue {

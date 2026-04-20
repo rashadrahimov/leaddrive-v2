@@ -12,7 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
-  Trophy, Activity, FileBarChart, Bot, Sparkles, Inbox,
+  Trophy, Activity, FileBarChart, Bot, Sparkles, Inbox, MessageSquareWarning,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Logo } from "@/components/logo"
@@ -25,6 +25,7 @@ interface NavItem {
   icon: React.ElementType
   tKey: string
   group: string
+  feature?: string
 }
 
 const navItems: NavItem[] = [
@@ -52,6 +53,7 @@ const navItems: NavItem[] = [
   { module: "omnichannel", href: "/inbox/web-chat", icon: MessageCircle, tKey: "webChatInbox", group: "Communication" },
   { module: "ai", href: "/ai/actions", icon: Inbox, tKey: "aiActions", group: "Communication" },
   { module: "tickets", href: "/tickets", icon: Ticket, tKey: "tickets", group: "Support" },
+  { module: "tickets", feature: "complaints_register", href: "/complaints", icon: MessageSquareWarning, tKey: "complaints", group: "Support" },
   { module: "tickets", href: "/support/agent-desktop", icon: Headphones, tKey: "agentDesktop", group: "Support" },
   { module: "tickets", href: "/support/calendar", icon: CalendarDays, tKey: "agentCalendar", group: "Support" },
   { module: "voip", href: "/support/voip", icon: Phone, tKey: "voipCalls", group: "Support" },
@@ -232,7 +234,10 @@ export function Sidebar({ org }: SidebarProps) {
   // Filter sidebar items based on org modules/features/plan
   // Superadmin and enterprise plans see everything
   const showAll = org.role === "superadmin" || org.plan === "enterprise"
-  const accessibleItems = showAll ? navItems : navItems.filter((item) => hasModule(org, item.module))
+  const featureEnabled = (f?: string) => !f || org.modules?.[f] === true
+  const accessibleItems = showAll
+    ? navItems.filter((item) => featureEnabled(item.feature))
+    : navItems.filter((item) => hasModule(org, item.module) && featureEnabled(item.feature))
   const groups = [...new Set(accessibleItems.map((item) => item.group))]
 
   return (

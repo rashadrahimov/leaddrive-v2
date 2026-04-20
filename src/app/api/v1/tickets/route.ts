@@ -15,7 +15,7 @@ const createTicketSchema = z.object({
   subject: z.string().min(1).max(300),
   description: z.string().max(5000).optional(),
   priority: z.enum(["low", "medium", "high", "critical"]).optional(),
-  category: z.enum(["general", "technical", "billing", "feature_request"]).optional(),
+  category: z.enum(["general", "technical", "billing", "feature_request", "complaint"]).optional(),
   contactId: z.string().optional(),
   companyId: z.string().optional(),
   assignedTo: z.string().optional(),
