@@ -72,10 +72,77 @@ function createTransporter(config: SmtpConfig) {
   })
 }
 
+// Resend provider — transactional-email service with much better deliverability than
+// self-hosted Gmail SMTP. Activated automatically when RESEND_API_KEY is set in env.
+// Falls back to the SMTP path on any error.
+async function sendViaResend(params: {
+  from: string
+  to: string
+  subject: string
+  html: string
+  text?: string
+  replyTo?: string
+  headers?: Record<string, string>
+}): Promise<{ messageId: string } | null> {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return null
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: params.from,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        ...(params.text ? { text: params.text } : {}),
+        ...(params.replyTo ? { reply_to: params.replyTo } : {}),
+        ...(params.headers ? { headers: params.headers } : {}),
+      }),
+    })
+    if (!res.ok) {
+      const t = await res.text()
+      console.error("[email] Resend failed:", res.status, t)
+      return null
+    }
+    const json = await res.json()
+    return { messageId: json.id || "resend" }
+  } catch (e) {
+    console.error("[email] Resend exception:", e)
+    return null
+  }
+}
+
+// Plain-text fallback derived from HTML — reduces spam score: text/html multipart
+// messages that carry both versions are trusted more than HTML-only ones.
+function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
 export async function sendEmail({
   to,
   subject,
   html,
+  text,
+  replyTo,
+  headers,
   organizationId,
   campaignId,
   templateId,
@@ -87,6 +154,9 @@ export async function sendEmail({
   to: string
   subject: string
   html: string
+  text?: string
+  replyTo?: string
+  headers?: Record<string, string>
   organizationId?: string
   campaignId?: string
   templateId?: string
@@ -128,6 +198,7 @@ export async function sendEmail({
   try {
     const transporter = createTransporter(config)
     const fromStr = config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail
+    const textBody = text || htmlToPlainText(html)
 
     // Create log first to get ID for tracking pixel
     let logId: string | undefined
@@ -170,13 +241,30 @@ export async function sendEmail({
       })
     }
 
-    const info = await transporter.sendMail({
+    // Prefer Resend when RESEND_API_KEY is set — transactional service with far
+    // better deliverability than Gmail SMTP. On any failure we drop back to SMTP.
+    const resendResult = await sendViaResend({
       from: fromStr,
       to,
       subject,
       html: finalHtml,
-      ...(attachments?.length ? { attachments } : {}),
+      text: textBody,
+      replyTo,
+      headers,
     })
+
+    const info = resendResult
+      ? { messageId: resendResult.messageId }
+      : await transporter.sendMail({
+          from: fromStr,
+          to,
+          subject,
+          html: finalHtml,
+          text: textBody,
+          ...(replyTo ? { replyTo } : {}),
+          ...(headers ? { headers } : {}),
+          ...(attachments?.length ? { attachments } : {}),
+        })
 
     // Update log with success
     if (logId) {

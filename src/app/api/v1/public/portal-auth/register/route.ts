@@ -74,27 +74,50 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXTAUTH_URL || "https://app.leaddrivecrm.org"
   const verifyUrl = `${baseUrl}/portal/set-password?token=${token}`
 
-  // Send verification email
+  // Build a deliverability-friendly email: both text + html, Reply-To pointing at
+  // a human address (taken from org settings if configured), List-Unsubscribe
+  // header to signal transactional-not-bulk, neutral "access link" subject.
+  const orgSettings = (await prisma.organization.findUnique({
+    where: { id: contact.organizationId },
+    select: { settings: true, name: true },
+  }))?.settings as { smtp?: { fromEmail?: string; replyTo?: string } } | null
+  const replyTo = orgSettings?.smtp?.replyTo || orgSettings?.smtp?.fromEmail
+  const unsubscribeUrl = `${baseUrl}/portal/unsubscribe?email=${encodeURIComponent(email)}`
+
+  const textBody = [
+    `Здравствуйте, ${contact.fullName}!`,
+    ``,
+    `Ссылка для входа на клиентский портал ${contact.organization.name}:`,
+    verifyUrl,
+    ``,
+    `Ссылка действительна 24 часа. Если вы не запрашивали доступ, просто проигнорируйте это письмо.`,
+    ``,
+    `— ${contact.organization.name}`,
+  ].join("\n")
+
   const result = await sendEmail({
     to: email,
-    subject: "Подтверждение регистрации на портале",
+    subject: `${contact.organization.name} — ссылка для входа на портал`,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #1a1a1a;">Регистрация на портале</h2>
-        <p>Здравствуйте, <strong>${contact.fullName}</strong>!</p>
-        <p>Вы запросили регистрацию на клиентском портале <strong>${contact.organization.name}</strong>.</p>
-        <p>Для завершения регистрации перейдите по ссылке и создайте пароль:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${verifyUrl}" style="background-color: #2563eb; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">
-            Создать пароль
-          </a>
-        </div>
-        <p style="color: #666; font-size: 13px;">Ссылка действительна в течение 24 часов.</p>
-        <p style="color: #666; font-size: 13px;">Если вы не запрашивали регистрацию, проигнорируйте это письмо.</p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-        <p style="color: #999; font-size: 12px;">LeadDrive CRM — клиентский портал</p>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; color: #1f2937;">
+        <p style="font-size: 15px;">Здравствуйте, <strong>${contact.fullName}</strong>!</p>
+        <p style="font-size: 15px;">Ссылка для входа на клиентский портал <strong>${contact.organization.name}</strong>:</p>
+        <p style="margin: 24px 0;">
+          <a href="${verifyUrl}" style="color: #2563eb; text-decoration: underline; font-size: 15px;">${verifyUrl}</a>
+        </p>
+        <p style="color: #6b7280; font-size: 13px;">Ссылка действительна 24 часа.</p>
+        <p style="color: #6b7280; font-size: 13px;">Если вы не запрашивали доступ — просто проигнорируйте это письмо.</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
+        <p style="color: #9ca3af; font-size: 12px;">— ${contact.organization.name}</p>
       </div>
     `,
+    text: textBody,
+    replyTo,
+    headers: {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      "X-Entity-Ref-ID": token,
+    },
     organizationId: contact.organizationId,
     contactId: contact.id,
   })
