@@ -9,7 +9,7 @@ import {
   BarChart3, TrendingUp, Users, DollarSign, Target, Brain,
   Activity, Megaphone, Calendar, BarChart, Shield, Ticket,
   FileText, CheckCircle2, PieChart, Wallet, Clock, Handshake,
-  Eye, EyeOff, Loader2,
+  Eye, EyeOff, Loader2, Inbox, Sparkles,
 } from "lucide-react"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
@@ -21,12 +21,14 @@ const WIDGET_ICONS: Record<string, any> = {
   leadSources: PieChart, recentDeals: Handshake, aiLeadScoring: Brain,
   activityFeed: Activity, campaignStats: Megaphone, upcomingEvents: Calendar,
   weeklyMetrics: BarChart, recommendedActions: Brain, churnRisk: Shield,
+  aiActionsQueue: Inbox, aiValueMonth: Sparkles,
 }
 
 // Order matches dashboard layout
 const WIDGET_ORDER = [
   "risksBanner",
   "statCards",
+  "aiActionsQueue", "aiValueMonth",
   "dealPipeline", "revenueTrend", "leadSources",
   "recentDeals", "aiLeadScoring", "activityFeed",
   "campaignStats", "upcomingEvents", "weeklyMetrics",

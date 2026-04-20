@@ -16,6 +16,8 @@ import { RevenueTrend } from "@/components/dashboard/revenue-trend"
 import { LeadSourcesDonut } from "@/components/dashboard/lead-sources-donut"
 import { RecentDeals } from "@/components/dashboard/recent-deals"
 import { AiLeadScoring } from "@/components/dashboard/ai-lead-scoring"
+import { AiActionsWidget } from "@/components/dashboard/ai-actions-widget"
+import { AiValueWidget } from "@/components/dashboard/ai-value-widget"
 import { ActivityFeed } from "@/components/dashboard/activity-feed"
 import { CampaignStats } from "@/components/dashboard/campaign-stats"
 import { UpcomingEvents } from "@/components/dashboard/upcoming-events"
@@ -40,6 +42,7 @@ export default function DashboardPage() {
     risksBanner: true, statCards: true, dealPipeline: true, revenueTrend: true, leadSources: true,
     recentDeals: true, aiLeadScoring: true, activityFeed: true,
     campaignStats: true, upcomingEvents: true, weeklyMetrics: true,
+    aiActionsQueue: true, aiValueMonth: true,
     // Legacy
     revenueChart: true, forecast: true, clientHealth: true, taskSummary: true,
     ticketSummary: true, leadFunnel: true,
@@ -187,6 +190,14 @@ export default function DashboardPage() {
             />
           </MotionItem>
         </MotionList></div>
+      )}
+
+      {/* ═══ AI Widgets ═══ */}
+      {(widgets.aiActionsQueue || widgets.aiValueMonth) && (
+        <div className="grid md:grid-cols-2 gap-3">
+          {widgets.aiActionsQueue && <AiActionsWidget orgId={session?.user?.organizationId} />}
+          {widgets.aiValueMonth && <AiValueWidget orgId={session?.user?.organizationId} />}
+        </div>
       )}
 
       {/* ═══ Risks Banner ═══ */}

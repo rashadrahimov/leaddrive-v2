@@ -7,6 +7,9 @@ const DEFAULT_WIDGETS: Record<string, { enabled: boolean; roles: string[] }> = {
   // Row 0: Risks banner + KPI cards
   risksBanner: { enabled: true, roles: [...ALL_ROLES] },
   statCards: { enabled: true, roles: [...ALL_ROLES] },
+  // AI widgets (enabled by default for admins/managers only)
+  aiActionsQueue: { enabled: true, roles: ["admin", "manager"] },
+  aiValueMonth: { enabled: true, roles: ["admin", "manager"] },
   // Row 1: Pipeline + Revenue + Lead Sources
   dealPipeline: { enabled: true, roles: [...ALL_ROLES] },
   revenueTrend: { enabled: true, roles: [...ALL_ROLES] },
