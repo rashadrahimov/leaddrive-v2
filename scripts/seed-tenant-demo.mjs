@@ -3016,6 +3016,244 @@ async function main() {
     }
   } catch (e) { console.log(`AI Chat Sessions: ERROR — ${e.message}`) }
 
+  // ─── 86. Social Monitoring (SocialAccount + SocialMention) ───
+  try {
+    const existingSocAcc = await prisma.socialAccount.findFirst({ where: { organizationId: orgId } })
+    if (!existingSocAcc) {
+      const accounts = [
+        { platform: "twitter", handle: "@leaddrivecrm", displayName: "LeadDrive CRM", isActive: true, keywords: ["LeadDrive", "clinical suite", "pharma CRM"], lastPolledAt: new Date(now - 10 * 60000) },
+        { platform: "instagram", handle: "@leaddrive_official", displayName: "LeadDrive Inc.", isActive: true, keywords: ["leaddrive", "#pharmaCRM"], lastPolledAt: new Date(now - 25 * 60000) },
+        { platform: "facebook", handle: "LeadDrive.CRM", displayName: "LeadDrive CRM (FB Page)", isActive: true, keywords: ["LeadDrive", "Clinical Suite 3.0"], lastPolledAt: new Date(now - 40 * 60000) },
+        { platform: "telegram", handle: "@leaddrive_news", displayName: "LeadDrive News Channel", isActive: true, keywords: ["leaddrive"], lastPolledAt: new Date(now - 3 * 60 * 60000) },
+        { platform: "youtube", handle: "@LeadDriveCRM", displayName: "LeadDrive (YouTube)", isActive: false, keywords: ["leaddrive review", "pharma crm demo"] },
+      ]
+      const createdSocAccounts = []
+      for (const a of accounts) {
+        const created = await prisma.socialAccount.create({ data: { ...a, organizationId: orgId } })
+        createdSocAccounts.push(created)
+      }
+      console.log(`Social Accounts: ${accounts.length}`)
+
+      const mentions = [
+        { accountIdx: 0, platform: "twitter", externalId: "tw-mention-001", authorName: "Dr. Julia Rivera", authorHandle: "@juliarivera_md", authorAvatar: null, text: "Just migrated our trial data to @leaddrivecrm — the GxP audit trail is a lifesaver. 🙌 Best onboarding team we've worked with.", url: "https://twitter.com/juliarivera_md/status/001", sentiment: "positive", matchedTerm: "@leaddrivecrm", reach: 4200, engagement: 186, status: "replied", handledBy: user.id, handledAt: new Date(now - 2 * 60 * 60000), publishedAt: new Date(now - 4 * 60 * 60000) },
+        { accountIdx: 0, platform: "twitter", externalId: "tw-mention-002", authorName: "Mark Chen", authorHandle: "@markchen_pm", authorAvatar: null, text: "Looking at LeadDrive vs Veeva for our clinical ops. Anyone with real-world experience? Need GxP + FDA 21 CFR Part 11.", url: "https://twitter.com/markchen_pm/status/002", sentiment: "neutral", matchedTerm: "LeadDrive", reach: 1850, engagement: 42, status: "new", publishedAt: new Date(now - 8 * 60 * 60000) },
+        { accountIdx: 0, platform: "twitter", externalId: "tw-mention-003", authorName: "Anna K.", authorHandle: "@anna_pharma", authorAvatar: null, text: "Second week of using LeadDrive and login keeps failing on Safari. Support took 4 hours to respond. Not impressed.", url: "https://twitter.com/anna_pharma/status/003", sentiment: "negative", matchedTerm: "LeadDrive", reach: 720, engagement: 28, status: "converted_to_ticket", ticketId: null, handledBy: user.id, handledAt: new Date(now - 1 * 60 * 60000), publishedAt: new Date(now - 3 * 60 * 60000) },
+        { accountIdx: 1, platform: "instagram", externalId: "ig-mention-001", authorName: "bio_labs_inc", authorHandle: "@bio_labs_inc", authorAvatar: null, text: "Shoutout to @leaddrive_official for the smooth LIMS integration. Our lab staff love the new dashboard! #pharmaCRM", url: "https://instagram.com/p/XYZ001", sentiment: "positive", matchedTerm: "@leaddrive_official", reach: 12400, engagement: 890, status: "reviewed", handledBy: user.id, handledAt: new Date(now - 6 * 60 * 60000), publishedAt: new Date(now - 12 * 60 * 60000) },
+        { accountIdx: 1, platform: "instagram", externalId: "ig-mention-002", authorName: "pharma_insider", authorHandle: "@pharma_insider", authorAvatar: null, text: "Spotted at #BioConnect2026 — the LeadDrive booth was packed. Their AI-powered deal scoring demo drew a crowd.", url: "https://instagram.com/p/XYZ002", sentiment: "positive", matchedTerm: "LeadDrive", reach: 8900, engagement: 412, status: "new", publishedAt: new Date(now - DAY) },
+        { accountIdx: 2, platform: "facebook", externalId: "fb-mention-001", authorName: "Hans Weber", authorHandle: "hans.weber.99", authorAvatar: null, text: "Clinical Suite 3.0 looks promising but pricing is way too high for small biotech. Considering competitors.", url: "https://facebook.com/leaddrive.crm/posts/001", sentiment: "negative", matchedTerm: "Clinical Suite 3.0", reach: 450, engagement: 18, status: "converted_to_lead", leadId: null, handledBy: user.id, handledAt: new Date(now - 30 * 60000), publishedAt: new Date(now - 2 * 60 * 60000) },
+        { accountIdx: 2, platform: "facebook", externalId: "fb-mention-002", authorName: "Sofia Martinez", authorHandle: "sofia.m.pharma", authorAvatar: null, text: "Congrats to @LeadDrive.CRM on the Series B raise! Well-deserved after building such a polished product.", url: "https://facebook.com/leaddrive.crm/posts/002", sentiment: "positive", matchedTerm: "LeadDrive", reach: 2200, engagement: 140, status: "reviewed", handledBy: user.id, handledAt: new Date(now - 5 * 60 * 60000), publishedAt: new Date(now - 10 * 60 * 60000) },
+        { accountIdx: 3, platform: "telegram", externalId: "tg-mention-001", authorName: "Pharma Tech News", authorHandle: "@pharmatech_news", authorAvatar: null, text: "Новый релиз LeadDrive Clinical Suite 3.0 — встроенный AI-ассистент для отслеживания SLA и авто-эскалации тикетов. Смотреть демо 👉 bit.ly/xyz", url: "https://t.me/pharmatech_news/123", sentiment: "neutral", matchedTerm: "leaddrive", reach: 14500, engagement: 320, status: "ignored", publishedAt: new Date(now - 18 * 60 * 60000) },
+        { accountIdx: 3, platform: "telegram", externalId: "tg-mention-002", authorName: "Медицинский маркетинг", authorHandle: "@medmarketing_ru", authorAvatar: null, text: "Используем LeadDrive уже 3 месяца — сквозная аналитика от лида до оплаты действительно работает. Рекомендую.", url: "https://t.me/medmarketing_ru/456", sentiment: "positive", matchedTerm: "LeadDrive", reach: 6800, engagement: 215, status: "reviewed", handledBy: user.id, handledAt: new Date(now - 4 * 60 * 60000), publishedAt: new Date(now - 20 * 60 * 60000) },
+        { accountIdx: 0, platform: "twitter", externalId: "tw-mention-004", authorName: "Competitor Watch", authorHandle: "@crmwatch", authorAvatar: null, text: "CRM shootout: Salesforce Health Cloud vs Veeva vs LeadDrive. LeadDrive punches above its weight on price/features.", url: "https://twitter.com/crmwatch/status/004", sentiment: "positive", matchedTerm: "LeadDrive", reach: 3400, engagement: 98, status: "converted_to_task", taskId: null, handledBy: user.id, handledAt: new Date(now - 2 * DAY), publishedAt: new Date(now - 2.5 * DAY) },
+        { accountIdx: 1, platform: "instagram", externalId: "ig-mention-003", authorName: "startup_lens", authorHandle: "@startup_lens", authorAvatar: null, text: "Poland's pharma tech scene is heating up. Warsaw-based LeadDrive just hit $2M ARR. 🇵🇱🚀", url: "https://instagram.com/p/XYZ003", sentiment: "positive", matchedTerm: "LeadDrive", reach: 5600, engagement: 340, status: "new", publishedAt: new Date(now - 6 * 60 * 60000) },
+        { accountIdx: 2, platform: "facebook", externalId: "fb-mention-003", authorName: "Regulatory Rants", authorHandle: "reg.rants", authorAvatar: null, text: "Another pharma CRM claiming 21 CFR Part 11 compliance without showing actual FDA submissions. Prove it LeadDrive.", url: "https://facebook.com/groups/reg/posts/001", sentiment: "negative", matchedTerm: "LeadDrive", reach: 880, engagement: 56, status: "new", publishedAt: new Date(now - 14 * 60 * 60000) },
+      ]
+      for (const m of mentions) {
+        const { accountIdx, ...data } = m
+        await prisma.socialMention.create({ data: { ...data, organizationId: orgId, accountId: createdSocAccounts[accountIdx]?.id || null } })
+      }
+      console.log(`Social Mentions: ${mentions.length} (5 positive, 4 neutral, 3 negative)`)
+    } else {
+      console.log("Social Monitoring: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Social Monitoring: ERROR — ${e.message}`) }
+
+  // ─── 87. Surveys + SurveyResponse + SurveyUnsubscribe ───
+  try {
+    const existingSurvey = await prisma.survey.findFirst({ where: { organizationId: orgId } })
+    if (!existingSurvey) {
+      const surveysData = [
+        {
+          name: "Post-Resolution NPS",
+          description: "Sent automatically after every ticket is resolved. Measures overall satisfaction with support experience.",
+          type: "nps",
+          status: "active",
+          publicSlug: `nps-support-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          thankYouText: "Thanks for your feedback! It helps us improve.",
+          questions: [
+            { id: "q1", type: "nps", label: "How likely are you to recommend our support to a colleague?" },
+            { id: "q2", type: "text", label: "What's the main reason for your score?" },
+          ],
+          triggers: { afterTicketResolve: true, afterInvoicePaid: false },
+          channels: ["email"],
+          totalSent: 142,
+          totalResponses: 48,
+          responses: [
+            { score: 10, category: "promoter", comment: "Incredible response time. Resolved my SSO issue in under an hour — way beyond expectations.", commentSentiment: "positive", channel: "email", contactIdx: 0, daysAgo: 2 },
+            { score: 9, category: "promoter", comment: "Very helpful team. They walked me through the fix step by step.", commentSentiment: "positive", channel: "email", contactIdx: 1, daysAgo: 3 },
+            { score: 10, category: "promoter", comment: "Best support I've dealt with in pharma SaaS. Period.", commentSentiment: "positive", channel: "email", contactIdx: 4, daysAgo: 5 },
+            { score: 9, category: "promoter", comment: "Fast, knowledgeable. The GxP documentation they sent was exactly what I needed.", commentSentiment: "positive", channel: "email", contactIdx: 8, daysAgo: 6 },
+            { score: 8, category: "passive", comment: "Good but took two back-and-forths to get the right person.", commentSentiment: "neutral", channel: "email", contactIdx: 2, daysAgo: 4 },
+            { score: 7, category: "passive", comment: "Eventually resolved. Initial ticket got lost in their queue for a day.", commentSentiment: "neutral", channel: "email", contactIdx: 6, daysAgo: 7 },
+            { score: 8, category: "passive", comment: "Solved my issue. Docs could be clearer though.", commentSentiment: "neutral", channel: "email", contactIdx: 11, daysAgo: 8 },
+            { score: 4, category: "detractor", comment: "Waited 3 days for a reply to a critical issue. Unacceptable for enterprise SLA.", commentSentiment: "negative", channel: "email", contactIdx: 3, daysAgo: 5 },
+            { score: 3, category: "detractor", comment: "Support agent didn't understand GxP at all. Had to escalate 3 times.", commentSentiment: "negative", channel: "email", contactIdx: 7, daysAgo: 9 },
+            { score: 6, category: "passive", comment: null, commentSentiment: null, channel: "email", contactIdx: 5, daysAgo: 10 },
+            { score: 10, category: "promoter", comment: "Perfect.", commentSentiment: "positive", channel: "email", contactIdx: 10, daysAgo: 12 },
+            { score: 9, category: "promoter", comment: null, commentSentiment: null, channel: "email", contactIdx: 12, daysAgo: 14 },
+          ],
+        },
+        {
+          name: "Onboarding CSAT (first 30 days)",
+          description: "Sent 30 days after initial deployment to measure onboarding experience.",
+          type: "csat",
+          status: "active",
+          publicSlug: `csat-onboarding-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          thankYouText: "Thank you! We read every response.",
+          questions: [
+            { id: "q1", type: "rating", label: "How satisfied are you with the onboarding process?", options: { max: 5 } },
+            { id: "q2", type: "choice", label: "What was most valuable?", options: ["Kickoff workshop", "Data migration", "Training sessions", "Documentation", "Dedicated CSM"] },
+            { id: "q3", type: "text", label: "Anything we could have done better?" },
+          ],
+          triggers: {},
+          channels: ["email", "link"],
+          totalSent: 24,
+          totalResponses: 11,
+          responses: [
+            { score: 5, category: null, comment: "Dedicated CSM made all the difference.", commentSentiment: "positive", channel: "email", contactIdx: 0, daysAgo: 15, answers: { q1: 5, q2: "Dedicated CSM", q3: "Dedicated CSM made all the difference." } },
+            { score: 5, category: null, comment: "Smooth data migration. Zero downtime.", commentSentiment: "positive", channel: "email", contactIdx: 4, daysAgo: 18, answers: { q1: 5, q2: "Data migration", q3: "Smooth data migration. Zero downtime." } },
+            { score: 4, category: null, comment: "Training could use more pharma-specific examples.", commentSentiment: "neutral", channel: "link", contactIdx: 5, daysAgo: 12, answers: { q1: 4, q2: "Kickoff workshop", q3: "Training could use more pharma-specific examples." } },
+            { score: 5, category: null, comment: "Kickoff workshop was excellent.", commentSentiment: "positive", channel: "email", contactIdx: 8, daysAgo: 20, answers: { q1: 5, q2: "Kickoff workshop", q3: "Kickoff workshop was excellent." } },
+            { score: 3, category: null, comment: "Documentation is scattered. Hard to find things.", commentSentiment: "negative", channel: "email", contactIdx: 10, daysAgo: 22, answers: { q1: 3, q2: "Dedicated CSM", q3: "Documentation is scattered. Hard to find things." } },
+            { score: 4, category: null, comment: null, commentSentiment: null, channel: "email", contactIdx: 1, daysAgo: 25, answers: { q1: 4, q2: "Data migration" } },
+            { score: 5, category: null, comment: "Perfect experience.", commentSentiment: "positive", channel: "link", contactIdx: 2, daysAgo: 28, answers: { q1: 5, q2: "Dedicated CSM", q3: "Perfect experience." } },
+          ],
+        },
+        {
+          name: "Q1 2026 Customer Pulse",
+          description: "Short pulse survey — quarterly health check.",
+          type: "ces",
+          status: "paused",
+          publicSlug: `pulse-q1-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          thankYouText: "Appreciated!",
+          questions: [
+            { id: "q1", type: "rating", label: "How easy is LeadDrive to use day-to-day?", options: { max: 7 } },
+          ],
+          triggers: {},
+          channels: ["email"],
+          totalSent: 68,
+          totalResponses: 22,
+          responses: [
+            { score: 6, category: null, comment: "Mostly easy. Budget module has a learning curve.", commentSentiment: "neutral", channel: "email", contactIdx: 0, daysAgo: 45, answers: { q1: 6 } },
+            { score: 7, category: null, comment: "Best pharma CRM I've used.", commentSentiment: "positive", channel: "email", contactIdx: 4, daysAgo: 42, answers: { q1: 7 } },
+            { score: 5, category: null, comment: null, commentSentiment: null, channel: "email", contactIdx: 5, daysAgo: 40, answers: { q1: 5 } },
+          ],
+        },
+        {
+          name: "Closed-Won Deal Survey",
+          description: "Sent to champions after a deal closes — captures why they chose us.",
+          type: "custom",
+          status: "draft",
+          publicSlug: `closed-won-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          thankYouText: "Thank you for choosing LeadDrive!",
+          questions: [
+            { id: "q1", type: "choice", label: "What was the deciding factor?", options: ["Pharma-specific features", "Pricing", "Implementation speed", "Customer references", "AI capabilities"] },
+            { id: "q2", type: "text", label: "Who else did you evaluate?" },
+            { id: "q3", type: "text", label: "What nearly made you pick a competitor?" },
+          ],
+          triggers: {},
+          channels: ["email", "link"],
+          totalSent: 0,
+          totalResponses: 0,
+          responses: [],
+        },
+      ]
+      let totalResp = 0
+      for (const s of surveysData) {
+        const { responses, ...surveyData } = s
+        const survey = await prisma.survey.create({ data: { ...surveyData, organizationId: orgId } })
+        for (const r of responses) {
+          const { contactIdx, daysAgo, answers, ...respData } = r
+          await prisma.surveyResponse.create({
+            data: {
+              ...respData,
+              organizationId: orgId,
+              surveyId: survey.id,
+              contactId: createdContacts[contactIdx]?.id || null,
+              email: createdContacts[contactIdx]?.email || null,
+              answers: answers || (r.score != null ? { q1: r.score } : {}),
+              completedAt: new Date(now - daysAgo * DAY),
+              ipAddress: `185.45.12.${Math.floor(Math.random() * 200) + 50}`,
+            },
+          })
+          totalResp++
+        }
+      }
+      console.log(`Surveys: ${surveysData.length} (${totalResp} responses)`)
+
+      // Survey unsubscribes
+      const orgSurveys = await prisma.survey.findMany({ where: { organizationId: orgId }, take: 2 })
+      const unsubscribes = [
+        { surveyId: null, email: "optout@example.com", reason: "No longer a customer" },
+        { surveyId: orgSurveys[0]?.id || null, email: "t.clarke@medtechsol.com", reason: "Too many surveys" },
+        { surveyId: null, phone: "+44 20 7946 1100", reason: "Prefers not to be contacted" },
+      ]
+      for (const u of unsubscribes) {
+        await prisma.surveyUnsubscribe.create({ data: { ...u, organizationId: orgId } })
+      }
+      console.log(`Survey Unsubscribes: ${unsubscribes.length}`)
+    } else {
+      console.log("Surveys: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Surveys: ERROR — ${e.message}`) }
+
+  // ─── 88. Complaints Register (Ticket + ComplaintMeta) ───
+  try {
+    const existingCM = await prisma.complaintMeta.findFirst({ where: { organizationId: orgId } })
+    if (!existingCM) {
+      const complaintsData = [
+        { ticketNumber: "CMP-2026-0001", subject: "Упаковка повреждена при доставке", description: "Получил партию Vitamin D 1000IU — внешняя термоусадка порвана, три блистера с трещинами. Фото прилагается. Партия: LOT-VD-2601-A.", priority: "high", status: "in_progress", source: "email", contactIdx: 7, companyIdx: 7, meta: { externalRegistryNumber: 1001, complaintType: "complaint", brand: "PharmaCare", productionArea: "Warsaw Plant 1", productCategory: "Vitamins", complaintObject: "packaging", complaintObjectDetail: "External shrink-wrap torn, 3 blisters cracked", responsibleDepartment: "Quality Control", riskLevel: "medium" }, daysAgo: 2 },
+        { ticketNumber: "CMP-2026-0002", subject: "Неверная концентрация активного вещества", description: "Лабораторный анализ нашей партии Omega-3 показал 720mg EPA вместо заявленных 900mg. Расхождение 20%. Требуется срочное расследование и отзыв партии.", priority: "critical", status: "escalated", source: "phone", contactIdx: 2, companyIdx: 2, meta: { externalRegistryNumber: 1002, complaintType: "complaint", brand: "PharmaCare", productionArea: "Berlin Plant 2", productCategory: "Supplements", complaintObject: "composition", complaintObjectDetail: "EPA content 20% below label claim (720mg vs 900mg)", responsibleDepartment: "Quality Assurance", riskLevel: "high" }, daysAgo: 5 },
+        { ticketNumber: "CMP-2026-0003", subject: "Истёкший срок годности в поставке", description: "Из 100 упаковок Multivitamin — 12 с истёкшим сроком (06/2025, поставлено 04/2026). Возврат и замена.", priority: "high", status: "resolved", source: "portal", contactIdx: 11, companyIdx: 11, meta: { externalRegistryNumber: 1003, complaintType: "complaint", brand: "PharmaCare", productionArea: "Warsaw Plant 1", productCategory: "Vitamins", complaintObject: "expiry", complaintObjectDetail: "12 of 100 units expired 10 months prior to delivery", responsibleDepartment: "Logistics", riskLevel: "high" }, daysAgo: 15 },
+        { ticketNumber: "CMP-2026-0004", subject: "Побочная реакция (non-serious)", description: "Пациент сообщил о лёгкой сыпи через 2 дня приёма Probiotic Plus. Без госпитализации. Заполнен CIOMS-форма, отправлено в pharmacovigilance.", priority: "high", status: "in_progress", source: "email", contactIdx: 8, companyIdx: 8, meta: { externalRegistryNumber: 1004, complaintType: "adverse_event", brand: "PharmaCare", productionArea: "Berlin Plant 2", productCategory: "Probiotics", complaintObject: "adverse_reaction", complaintObjectDetail: "Mild skin rash, non-serious, CIOMS form filed", responsibleDepartment: "Pharmacovigilance", riskLevel: "high" }, daysAgo: 3 },
+        { ticketNumber: "CMP-2026-0005", subject: "Маркировка на упаковке плохо читается", description: "На 200+ упаковках Vitamin C смазана печать серии и даты. Оптовый клиент не может принять товар.", priority: "medium", status: "resolved", source: "whatsapp", contactIdx: 6, companyIdx: 6, meta: { externalRegistryNumber: 1005, complaintType: "complaint", brand: "PharmaCare", productionArea: "Warsaw Plant 1", productCategory: "Vitamins", complaintObject: "labeling", complaintObjectDetail: "Batch number and expiry date smudged on 200+ units", responsibleDepartment: "Production", riskLevel: "medium" }, daysAgo: 20 },
+        { ticketNumber: "CMP-2026-0006", subject: "Посторонний запах в капсулах", description: "Открыл новую упаковку — заметный химический запах. Предыдущие партии этого же продукта запаха не имели. LOT-MV-2602-C.", priority: "medium", status: "open", source: "facebook", contactIdx: 5, companyIdx: 5, meta: { externalRegistryNumber: 1006, complaintType: "complaint", brand: "PharmaCare", productionArea: "Berlin Plant 2", productCategory: "Supplements", complaintObject: "odor", complaintObjectDetail: "Unusual chemical odor, LOT-MV-2602-C", responsibleDepartment: "Quality Control", riskLevel: "medium" }, daysAgo: 1 },
+        { ticketNumber: "CMP-2026-0007", subject: "Недостаток капсул в упаковке", description: "В упаковке заявлено 60 капсул, по факту — 54. Клиент просит замену или возврат.", priority: "low", status: "closed", source: "portal", contactIdx: 4, companyIdx: 4, meta: { externalRegistryNumber: 1007, complaintType: "complaint", brand: "PharmaCare", productionArea: "Warsaw Plant 1", productCategory: "Supplements", complaintObject: "quantity", complaintObjectDetail: "54 capsules in pack labeled 60", responsibleDepartment: "Production", riskLevel: "low" }, daysAgo: 30 },
+        { ticketNumber: "CMP-2026-0008", subject: "Контрафакт — подозрение", description: "Клиент прислал фото: упаковка по внешнему виду отличается от оригинала (шрифт, голограмма, серийный номер). Запущена проверка serialization-системы.", priority: "critical", status: "escalated", source: "email", contactIdx: 0, companyIdx: 0, meta: { externalRegistryNumber: 1008, complaintType: "counterfeit_suspicion", brand: "PharmaCare", productionArea: null, productCategory: "Vitamins", complaintObject: "authenticity", complaintObjectDetail: "Suspected counterfeit — packaging differs from genuine (font, hologram, serial)", responsibleDepartment: "Security & Compliance", riskLevel: "high" }, daysAgo: 4 },
+      ]
+
+      const slaHoursComplaintMap = { critical: 1, high: 2, medium: 4, low: 8 }
+      for (const c of complaintsData) {
+        const existing = await prisma.ticket.findFirst({ where: { organizationId: orgId, ticketNumber: c.ticketNumber } })
+        if (existing) continue
+        const createdAt = new Date(now - c.daysAgo * DAY)
+        const slaHours = slaHoursComplaintMap[c.priority] || 4
+        const resolvedAt = ["resolved", "closed"].includes(c.status) ? new Date(createdAt.getTime() + slaHours * 3 * 60 * 60 * 1000) : null
+        const ticket = await prisma.ticket.create({
+          data: {
+            organizationId: orgId,
+            ticketNumber: c.ticketNumber,
+            subject: c.subject,
+            description: c.description,
+            priority: c.priority,
+            status: c.status,
+            category: "complaint",
+            source: c.source,
+            contactId: createdContacts[c.contactIdx]?.id,
+            companyId: createdCompanies[c.companyIdx]?.id,
+            assignedTo: user.id,
+            createdBy: user.id,
+            createdAt,
+            slaFirstResponseDueAt: new Date(createdAt.getTime() + slaHours * 60 * 60 * 1000),
+            slaDueAt: new Date(createdAt.getTime() + slaHours * 4 * 60 * 60 * 1000),
+            slaPolicyName: `${c.priority.charAt(0).toUpperCase() + c.priority.slice(1)} Priority SLA`,
+            firstResponseAt: new Date(createdAt.getTime() + Math.min(slaHours * 0.5, 2) * 60 * 60 * 1000),
+            resolvedAt,
+            closedAt: c.status === "closed" ? resolvedAt : null,
+            tags: ["complaint", c.meta.brand.toLowerCase()],
+            escalationLevel: c.status === "escalated" ? 2 : 0,
+          },
+        })
+        await prisma.complaintMeta.create({
+          data: { ...c.meta, ticketId: ticket.id, organizationId: orgId },
+        })
+      }
+      console.log(`Complaints: ${complaintsData.length} (with ComplaintMeta, risk levels, brand/category)`)
+    } else {
+      console.log("Complaints: (existing, skipped)")
+    }
+  } catch (e) { console.log(`Complaints: ERROR — ${e.message}`) }
+
   // ─── Summary ───
   console.log("\n" + "═".repeat(50))
   console.log("Demo data seeded successfully!")
@@ -3067,8 +3305,11 @@ async function main() {
   console.log(`  + Webhooks, Custom Domains, Contract Files`)
   console.log(`  + Accounting Imports, Plan Requests`)
   console.log(`  + API Keys, AI Chat Sessions & Messages`)
-  console.log(`\n  Total: 85 sections, 126 of 132 Prisma models covered`)
-  console.log(`  (6 runtime-only models excluded: Account, AgentHandoff, AiPendingAction, MtmAgentLocation, PageView)`)
+  console.log(`  + Social Monitoring (Accounts + Mentions with sentiments)`)
+  console.log(`  + Surveys (NPS/CSAT/CES with responses) + Unsubscribes`)
+  console.log(`  + Complaints Register (Tickets + ComplaintMeta)`)
+  console.log(`\n  Total: 88 sections, all major business modules covered`)
+  console.log(`  (Runtime-only models excluded: Account, AgentHandoff, AiPendingAction, MtmAgentLocation, PageView, PushSubscription)`)
 }
 
 main()
