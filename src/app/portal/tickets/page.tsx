@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { Plus, Search, ChevronRight } from "lucide-react"
+import { Plus, Search, ChevronRight, MessageSquareWarning } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface Ticket {
@@ -46,6 +46,19 @@ export default function PortalTicketsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
+  // Complaints Register (optional feature, per-tenant)
+  const [complaintsEnabled, setComplaintsEnabled] = useState(false)
+  const [brandOptions, setBrandOptions] = useState<string[]>([])
+  const [productOptions, setProductOptions] = useState<string[]>([])
+  const [asComplaint, setAsComplaint] = useState(false)
+  const [complaintMeta, setComplaintMeta] = useState({
+    complaintType: "complaint" as "complaint" | "suggestion",
+    brand: "",
+    productCategory: "",
+    complaintObject: "",
+    complaintObjectDetail: "",
+  })
+
   const fetchTickets = async () => {
     try {
       const res = await fetch("/api/v1/public/portal-tickets")
@@ -55,6 +68,20 @@ export default function PortalTicketsPage() {
   }
 
   useEffect(() => { fetchTickets() }, [])
+
+  // Load tenant config once — decides whether to show the "complaint" toggle.
+  useEffect(() => {
+    fetch("/api/v1/public/portal-config")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.success) {
+          setComplaintsEnabled(!!j.data.features?.complaints_register)
+          setBrandOptions(j.data.brands || [])
+          setProductOptions(j.data.productCategories || [])
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // Poll for updates every 20 seconds
   useEffect(() => {
@@ -70,12 +97,30 @@ export default function PortalTicketsPage() {
       const res = await fetch("/api/v1/public/portal-tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subject, description, category }),
+        body: JSON.stringify({
+          subject,
+          description,
+          category,
+          ...(asComplaint && complaintsEnabled
+            ? {
+                isComplaint: true,
+                complaintMeta: {
+                  complaintType: complaintMeta.complaintType,
+                  brand: complaintMeta.brand || null,
+                  productCategory: complaintMeta.productCategory || null,
+                  complaintObject: complaintMeta.complaintObject || null,
+                  complaintObjectDetail: complaintMeta.complaintObjectDetail || null,
+                },
+              }
+            : {}),
+        }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || "Failed to create")
       setSubject("")
       setDescription("")
+      setAsComplaint(false)
+      setComplaintMeta({ complaintType: "complaint", brand: "", productCategory: "", complaintObject: "", complaintObjectDetail: "" })
       setShowForm(false)
       fetchTickets()
     } catch (err: any) {
@@ -122,13 +167,87 @@ export default function PortalTicketsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">Category</label>
-                <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1">
+                <Select value={category} onChange={e => setCategory(e.target.value)} className="mt-1" disabled={asComplaint}>
                   <option value="general">{t("categoryGeneral")}</option>
                   <option value="technical">{t("categoryTechnical")}</option>
                   <option value="billing">{t("categoryBilling")}</option>
                   <option value="feature_request">{t("categoryFeature")}</option>
                 </Select>
               </div>
+              {complaintsEnabled && (
+                <label className="flex items-start gap-2 text-sm cursor-pointer p-2 -mx-2 rounded hover:bg-muted/40">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={asComplaint}
+                    onChange={(e) => setAsComplaint(e.target.checked)}
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <MessageSquareWarning className="h-3.5 w-3.5 text-amber-600" />
+                      This is a complaint about a product
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      Helps us route it to the right team (quality, sales, logistics…).
+                    </span>
+                  </span>
+                </label>
+              )}
+              {complaintsEnabled && asComplaint && (
+                <div className="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-900/10 p-3 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium">Type</label>
+                      <Select
+                        value={complaintMeta.complaintType}
+                        onChange={(e) => setComplaintMeta((m) => ({ ...m, complaintType: e.target.value as "complaint" | "suggestion" }))}
+                        className="mt-1"
+                      >
+                        <option value="complaint">Complaint</option>
+                        <option value="suggestion">Suggestion</option>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Brand</label>
+                      <Input
+                        list="portal-complaint-brands"
+                        value={complaintMeta.brand}
+                        onChange={(e) => setComplaintMeta((m) => ({ ...m, brand: e.target.value }))}
+                        className="mt-1"
+                        autoComplete="off"
+                      />
+                      <datalist id="portal-complaint-brands">
+                        {brandOptions.map((b) => <option key={b} value={b} />)}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Product</label>
+                      <Input
+                        list="portal-complaint-products"
+                        value={complaintMeta.productCategory}
+                        onChange={(e) => setComplaintMeta((m) => ({ ...m, productCategory: e.target.value }))}
+                        className="mt-1"
+                        autoComplete="off"
+                      />
+                      <datalist id="portal-complaint-products">
+                        {productOptions.map((p) => <option key={p} value={p} />)}
+                      </datalist>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Issue</label>
+                      <Input
+                        value={complaintMeta.complaintObject}
+                        onChange={(e) => setComplaintMeta((m) => ({ ...m, complaintObject: e.target.value }))}
+                        placeholder="quality, delivery, price…"
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Risk level and the handling department will be filled in by the team.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="text-sm font-medium">Description</label>
                 <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("provideDetails")} rows={4} className="mt-1" />
