@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "@/components/ui/dialog"
+import { MessageSquareWarning } from "lucide-react"
 
 interface TicketFormProps {
   open: boolean
@@ -36,6 +37,17 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
     contactId: initialData?.contactId || "",
     companyId: initialData?.companyId || "",
     assignedTo: initialData?.assignedTo || "",
+  })
+  const [asComplaint, setAsComplaint] = useState(false)
+  const [complaintMeta, setComplaintMeta] = useState({
+    complaintType: "complaint" as "complaint" | "suggestion",
+    brand: "",
+    productionArea: "",
+    productCategory: "",
+    complaintObject: "",
+    complaintObjectDetail: "",
+    responsibleDepartment: "",
+    riskLevel: "medium" as "low" | "medium" | "high",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -87,6 +99,17 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
       })
       setError("")
       aiCategorizedRef.current = false
+      setAsComplaint(initialData?.category === "complaint")
+      setComplaintMeta({
+        complaintType: "complaint",
+        brand: "",
+        productionArea: "",
+        productCategory: "",
+        complaintObject: "",
+        complaintObjectDetail: "",
+        responsibleDepartment: "",
+        riskLevel: "medium",
+      })
       loadOptions()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,12 +157,37 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
       if (form.companyId) payload.companyId = form.companyId
       if (form.assignedTo) payload.assignedTo = form.assignedTo
 
+      if (!isEdit && asComplaint) payload.category = "complaint"
+
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
         body: JSON.stringify(payload),
       })
       if (!res.ok) throw new Error((await res.json()).error || "Failed")
+
+      // If user toggled "This is a complaint" on creation, attach ComplaintMeta via the convert endpoint.
+      if (!isEdit && asComplaint) {
+        const created = await res.json()
+        const newId = created?.data?.id
+        if (newId) {
+          await fetch(`/api/v1/tickets/${newId}/convert-to-complaint`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
+            body: JSON.stringify({
+              complaintType: complaintMeta.complaintType,
+              brand: complaintMeta.brand || null,
+              productionArea: complaintMeta.productionArea || null,
+              productCategory: complaintMeta.productCategory || null,
+              complaintObject: complaintMeta.complaintObject || null,
+              complaintObjectDetail: complaintMeta.complaintObjectDetail || null,
+              responsibleDepartment: complaintMeta.responsibleDepartment || null,
+              riskLevel: complaintMeta.riskLevel,
+            }),
+          }).catch(() => {})
+        }
+      }
+
       onSaved()
       onOpenChange(false)
     } catch (err: any) { setError(err.message) } finally { setSaving(false) }
@@ -157,8 +205,77 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
             <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} onBlur={tryAiCategorize} required />{aiCategorizing && <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{ta("aiClassifying")}</p>}</div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></Select></div>
-              <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option></Select></div>
+              <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)} disabled={asComplaint}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option>{asComplaint && <option value="complaint">Complaint</option>}</Select></div>
             </div>
+            {!isEdit && (
+              <label className="flex items-start gap-2 text-sm cursor-pointer p-2 -mx-2 rounded hover:bg-muted/40">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={asComplaint}
+                  onChange={(e) => setAsComplaint(e.target.checked)}
+                />
+                <span>
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <MessageSquareWarning className="h-3.5 w-3.5 text-amber-600" />
+                    Это жалоба / предложение клиента
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Появится в реестре жалоб с полями бренда, продукта и уровня риска.
+                  </span>
+                </span>
+              </label>
+            )}
+            {!isEdit && asComplaint && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/40 dark:bg-amber-900/10 p-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Тип</Label>
+                    <Select
+                      value={complaintMeta.complaintType}
+                      onChange={(e) => setComplaintMeta((m) => ({ ...m, complaintType: e.target.value as "complaint" | "suggestion" }))}
+                    >
+                      <option value="complaint">Жалоба</option>
+                      <option value="suggestion">Предложение</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Уровень риска</Label>
+                    <Select
+                      value={complaintMeta.riskLevel}
+                      onChange={(e) => setComplaintMeta((m) => ({ ...m, riskLevel: e.target.value as "low" | "medium" | "high" }))}
+                    >
+                      <option value="low">Низкий</option>
+                      <option value="medium">Средний</option>
+                      <option value="high">Высокий</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Бренд</Label>
+                    <Input value={complaintMeta.brand} onChange={(e) => setComplaintMeta((m) => ({ ...m, brand: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Категория продукта</Label>
+                    <Input value={complaintMeta.productCategory} onChange={(e) => setComplaintMeta((m) => ({ ...m, productCategory: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Объект жалобы</Label>
+                    <Input value={complaintMeta.complaintObject} onChange={(e) => setComplaintMeta((m) => ({ ...m, complaintObject: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>Ответственный отдел</Label>
+                    <Input
+                      value={complaintMeta.responsibleDepartment}
+                      onChange={(e) => setComplaintMeta((m) => ({ ...m, responsibleDepartment: e.target.value }))}
+                      placeholder="Keyfiyyət nəzarət şöbəsi…"
+                    />
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Область производства и второй объект можно дозаполнить позже в карточке жалобы.
+                </p>
+              </div>
+            )}
             {isEdit && (
               <div><Label>{tc("status")}</Label><Select value={form.status} onChange={e => u("status", e.target.value)}><option value="new">New</option><option value="in_progress">In Progress</option><option value="waiting">Waiting</option><option value="resolved">Resolved</option><option value="closed">Closed</option></Select></div>
             )}

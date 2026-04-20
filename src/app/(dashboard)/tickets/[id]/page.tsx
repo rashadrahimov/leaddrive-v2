@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select } from "@/components/ui/select"
-import { ArrowLeft, ArrowRight, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen, ChevronLeft, ChevronRight, Keyboard, Timer, Play } from "lucide-react"
+import { ArrowLeft, ArrowRight, Clock, Send, Lock, Star, Loader2, Bot, FileText, Zap, UserCheck, RefreshCw, AlertTriangle, UserPlus, BookOpen, ChevronLeft, ChevronRight, Keyboard, Timer, Play, MessageSquareWarning } from "lucide-react"
 import { InfoHint } from "@/components/info-hint"
 import { useAutoTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { useTicketShortcuts, TICKET_SHORTCUTS } from "@/hooks/use-ticket-shortcuts"
+import { ConvertToComplaintDialog } from "@/components/convert-to-complaint-dialog"
 
 interface TicketData {
   id: string
@@ -161,6 +162,7 @@ export default function TicketDetailPage() {
   const handleTimerValueRef = useRef(0)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showMacrosMenu, setShowMacrosMenu] = useState(false)
+  const [convertOpen, setConvertOpen] = useState(false)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const orgId = session?.user?.organizationId
   const headers = orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>
@@ -534,6 +536,23 @@ export default function TicketDetailPage() {
                 <UserPlus className="h-3.5 w-3.5 mr-1.5" /> {t("assignToMe")}
               </Button>
             </>
+          )}
+          {ticket.category !== "complaint" && (
+            <Button
+              size="sm" variant="outline"
+              className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+              onClick={() => setConvertOpen(true)}
+              title="Перевести этот тикет в реестр жалоб"
+            >
+              <MessageSquareWarning className="h-3.5 w-3.5 mr-1.5" /> В жалобы
+            </Button>
+          )}
+          {ticket.category === "complaint" && (
+            <Link href={`/complaints/${ticketId}`}>
+              <Button size="sm" variant="outline" className="border-amber-300 text-amber-700">
+                <MessageSquareWarning className="h-3.5 w-3.5 mr-1.5" /> В реестре жалоб
+              </Button>
+            </Link>
           )}
           {/* Macros dropdown — click toggle */}
           {macros.filter((m: any) => m.isActive).length > 0 && (
@@ -1186,6 +1205,14 @@ export default function TicketDetailPage() {
           )}
         </div>
       </div>
+
+      <ConvertToComplaintDialog
+        open={convertOpen}
+        onOpenChange={setConvertOpen}
+        ticketId={ticketId}
+        orgId={orgId ? String(orgId) : undefined}
+        onConverted={(id) => router.push(`/complaints/${id}`)}
+      />
     </div>
   )
 }
