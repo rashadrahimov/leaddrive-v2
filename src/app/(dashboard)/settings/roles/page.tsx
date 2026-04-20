@@ -24,10 +24,22 @@ interface RoleConfig {
   isSystem: boolean
 }
 
-const MODULES = [
-  "companies", "contacts", "deals", "leads", "tasks", "tickets",
-  "contracts", "offers", "campaigns", "reports", "ai", "settings",
+// Grouped module list — each module maps to a permission key in permissions.ts
+// Keep aligned with MODULES constant in src/lib/permissions.ts
+const MODULE_GROUPS: { label: string; modules: string[] }[] = [
+  { label: "crm",       modules: ["companies", "contacts", "deals", "leads", "tasks"] },
+  { label: "sales",     modules: ["contracts", "offers", "pricing"] },
+  { label: "marketing", modules: ["campaigns", "journeys", "segments", "events"] },
+  { label: "comm",      modules: ["inbox", "voip"] },
+  { label: "support",   modules: ["tickets", "kb"] },
+  { label: "finance",   modules: ["invoices", "budgeting", "profitability"] },
+  { label: "erp",       modules: ["projects"] },
+  { label: "ai",        modules: ["ai"] },
+  { label: "analytics", modules: ["reports"] },
+  { label: "admin",     modules: ["settings", "users", "audit"] },
 ]
+
+const MODULES: string[] = MODULE_GROUPS.flatMap(g => g.modules)
 
 const ACCESS_CYCLE: AccessLevel[] = ["full", "edit", "view", "none"]
 
