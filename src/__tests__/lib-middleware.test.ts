@@ -273,4 +273,57 @@ describe("middleware", async () => {
     const keyArg = vi.mocked(checkRateLimit).mock.calls[0]?.[0]
     expect(keyArg).toBe("webhook:calendar:6.6.6.6")
   })
+
+  // ─── 429 structured logging ──────────────────────────────
+
+  it("logs a [rate-limit-429] warning when auth POST rate-limit fires", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    vi.mocked(checkRateLimit).mockReturnValue(false)
+    const req = makeReq({
+      pathname: "/login",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "7.7.7.7" },
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(429)
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[rate-limit-429] category=auth key=auth:7.7.7.7 path=/login",
+    )
+    warnSpy.mockRestore()
+  })
+
+  it("logs a [rate-limit-429] warning when webhook rate-limit fires", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    vi.mocked(checkRateLimit).mockReturnValue(false)
+    const req = makeReq({
+      pathname: "/api/v1/webhooks/telegram",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "8.8.8.8" },
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(429)
+    expect(warnSpy).toHaveBeenCalledWith(
+      "[rate-limit-429] category=webhook key=webhook:telegram:8.8.8.8 path=/api/v1/webhooks/telegram",
+    )
+    warnSpy.mockRestore()
+  })
+
+  it("does not log anything when rate-limit passes", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    vi.mocked(checkRateLimit).mockReturnValue(true)
+    const req = makeReq({
+      pathname: "/login",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "9.9.9.9" },
+    })
+    await authMiddleware(req)
+    const rlLogs = warnSpy.mock.calls.filter(
+      (c) => typeof c[0] === "string" && c[0].includes("[rate-limit-429]"),
+    )
+    expect(rlLogs).toHaveLength(0)
+    warnSpy.mockRestore()
+  })
 })

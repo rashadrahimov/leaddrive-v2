@@ -108,6 +108,15 @@ function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFr
   return response
 }
 
+// Structured one-line warning every time a 429 is returned. Format is grep-
+// friendly so operators can tail PM2 logs and spot abuse patterns per
+// category/key/path. The `key` field is already safe to log — keys are
+// either IP-derived (public/auth/webhook) or SHA-256 truncated hashes
+// (apikey) — never raw secrets.
+function log429(category: string, key: string, pathname: string) {
+  console.warn(`[rate-limit-429] category=${category} key=${key} path=${pathname}`)
+}
+
 const authMiddleware = auth(async (req) => {
   const { pathname } = req.nextUrl
   const nonce = crypto.randomUUID()
@@ -177,6 +186,7 @@ const authMiddleware = auth(async (req) => {
       || "unknown"
     const key = `auth:${ip}`
     if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
+      log429("auth", key, pathname)
       return withCspHeaders(
         NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
         nonce,
@@ -219,6 +229,7 @@ const authMiddleware = auth(async (req) => {
     if (pathname.includes("/portal-chat")) {
       const key = `chat:${ip}`
       if (!checkRateLimit(key, RATE_LIMIT_CONFIG.ai)) {
+        log429("chat", key, pathname)
         return withCspHeaders(
           NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
           nonce,
@@ -228,6 +239,7 @@ const authMiddleware = auth(async (req) => {
       // General public endpoint limit (leads, events, demo-request, etc.)
       const key = `public:${ip}`
       if (!checkRateLimit(key, RATE_LIMIT_CONFIG.public)) {
+        log429("public-post", key, pathname)
         return withCspHeaders(
           NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 }),
           nonce,
@@ -243,6 +255,7 @@ const authMiddleware = auth(async (req) => {
       || "unknown"
     const key = `pub-get:${ip}`
     if (!checkRateLimit(key, RATE_LIMIT_CONFIG.api)) {
+      log429("public-get", key, pathname)
       return withCspHeaders(
         NextResponse.json({ error: "Too many requests" }, { status: 429 }),
         nonce,
@@ -280,7 +293,9 @@ const authMiddleware = auth(async (req) => {
     } else if (pathname.startsWith("/api/v1/calendar/feed/")) {
       namespace = "calendar"
     }
-    if (!checkRateLimit(`webhook:${namespace}:${ip}`, RATE_LIMIT_CONFIG.webhook)) {
+    const webhookKey = `webhook:${namespace}:${ip}`
+    if (!checkRateLimit(webhookKey, RATE_LIMIT_CONFIG.webhook)) {
+      log429("webhook", webhookKey, pathname)
       return withCspHeaders(
         NextResponse.json(
           { error: "Webhook rate limit exceeded. Max 600 req/min per source IP." },
@@ -302,7 +317,9 @@ const authMiddleware = auth(async (req) => {
   if (pathname.startsWith("/api/") && req.headers.get("authorization")?.startsWith("Bearer ld_")) {
     const apiKey = req.headers.get("authorization")!.slice("Bearer ".length)
     const keyHash = await hashForRateLimit(apiKey)
-    if (!checkRateLimit(`apikey:${keyHash}`, RATE_LIMIT_CONFIG.apiKey)) {
+    const apiKeyLimitKey = `apikey:${keyHash}`
+    if (!checkRateLimit(apiKeyLimitKey, RATE_LIMIT_CONFIG.apiKey)) {
+      log429("apikey", apiKeyLimitKey, pathname)
       return withCspHeaders(
         NextResponse.json(
           { error: "API key rate limit exceeded. Max 300 req/min." },
