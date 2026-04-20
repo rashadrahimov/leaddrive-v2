@@ -24,6 +24,39 @@ const PLATFORM_THRESHOLDS: Record<string, { reach: number; engagement: number }>
   tiktok:    { reach: 20000, engagement: 500 },
 }
 
+export interface ScoreInput {
+  platform: string
+  reach: number
+  engagement: number
+  sentiment: string | null
+}
+
+export interface ScoreResult {
+  passes: boolean
+  reachRatio: number
+  engagementRatio: number
+  sentimentMultiplier: number
+  score: number
+  reasons: string[]
+}
+
+export function scoreMention(input: ScoreInput): ScoreResult {
+  const thresholds = PLATFORM_THRESHOLDS[input.platform] || { reach: 5000, engagement: 100 }
+  const reach = input.reach || 0
+  const engagement = input.engagement || 0
+  const reachRatio = thresholds.reach > 0 ? reach / thresholds.reach : 0
+  const engagementRatio = thresholds.engagement > 0 ? engagement / thresholds.engagement : 0
+  const passesReach = reachRatio >= 1
+  const passesEngagement = engagementRatio >= 1
+  const passes = passesReach || passesEngagement
+  const sentimentMultiplier = input.sentiment === "negative" ? 2 : input.sentiment === "neutral" ? 1 : 0.7
+  const score = (reachRatio + engagementRatio) * sentimentMultiplier
+  const reasons: string[] = []
+  if (passesReach) reasons.push(`reach ${reach.toLocaleString()} (${Math.round(reachRatio * 100)}% of threshold)`)
+  if (passesEngagement) reasons.push(`engagement ${engagement.toLocaleString()} (${Math.round(engagementRatio * 100)}% of threshold)`)
+  return { passes, reachRatio, engagementRatio, sentimentMultiplier, score, reasons }
+}
+
 export async function findViralMentions(orgId: string, now: Date): Promise<ViralCandidate[]> {
   const recent = new Date(now.getTime() - 24 * 3600000)
 
@@ -44,21 +77,8 @@ export async function findViralMentions(orgId: string, now: Date): Promise<Viral
 
   const candidates: ViralCandidate[] = []
   for (const m of mentions) {
-    const thresholds = PLATFORM_THRESHOLDS[m.platform] || { reach: 5000, engagement: 100 }
-    const reach = m.reach || 0
-    const engagement = m.engagement || 0
-    const reachRatio = thresholds.reach > 0 ? reach / thresholds.reach : 0
-    const engagementRatio = thresholds.engagement > 0 ? engagement / thresholds.engagement : 0
-    const passesReach = reachRatio >= 1
-    const passesEngagement = engagementRatio >= 1
-    if (!passesReach && !passesEngagement) continue
-
-    const reasons: string[] = []
-    if (passesReach) reasons.push(`reach ${reach.toLocaleString()} (${Math.round(reachRatio * 100)}% of threshold)`)
-    if (passesEngagement) reasons.push(`engagement ${engagement.toLocaleString()} (${Math.round(engagementRatio * 100)}% of threshold)`)
-    // Negative sentiment gets a viral-risk boost in score
-    const sentimentMultiplier = m.sentiment === "negative" ? 2 : m.sentiment === "neutral" ? 1 : 0.7
-    const score = (reachRatio + engagementRatio) * sentimentMultiplier
+    const result = scoreMention({ platform: m.platform, reach: m.reach || 0, engagement: m.engagement || 0, sentiment: m.sentiment })
+    if (!result.passes) continue
 
     candidates.push({
       mentionId: m.id,
@@ -67,10 +87,10 @@ export async function findViralMentions(orgId: string, now: Date): Promise<Viral
       authorHandle: m.authorHandle,
       excerpt: m.text.slice(0, 200),
       sentiment: m.sentiment,
-      reach,
-      engagement,
-      reason: reasons.join(" + ") + (m.sentiment === "negative" ? " · NEGATIVE → high churn risk" : ""),
-      score,
+      reach: m.reach || 0,
+      engagement: m.engagement || 0,
+      reason: result.reasons.join(" + ") + (m.sentiment === "negative" ? " · NEGATIVE → high churn risk" : ""),
+      score: result.score,
     })
   }
   return candidates.sort((a, b) => b.score - a.score).slice(0, 10)

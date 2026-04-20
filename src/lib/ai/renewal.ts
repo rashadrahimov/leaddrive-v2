@@ -162,13 +162,13 @@ Output STRICT JSON only (no markdown, no code fences):
   return draft
 }
 
-function wrapBrandedHtml(innerHtml: string, orgName: string, lang: string): string {
-  const footerNote = lang === "ru"
-    ? `Это письмо отправлено от ${orgName}. Ответьте напрямую, чтобы связаться.`
-    : lang === "az"
-    ? `Bu məktub ${orgName} tərəfindən göndərilmişdir. Cavab vermək üçün birbaşa cavablayın.`
-    : `This email was sent by ${orgName}. Reply directly to respond.`
+export function wrapBrandedHtml(innerHtml: string, orgName: string, lang: string): string {
   const escapedOrgName = orgName.replace(/[<>&]/g, c => c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&amp;")
+  const footerNote = lang === "ru"
+    ? `Это письмо отправлено от ${escapedOrgName}. Ответьте напрямую, чтобы связаться.`
+    : lang === "az"
+    ? `Bu məktub ${escapedOrgName} tərəfindən göndərilmişdir. Cavab vermək üçün birbaşa cavablayın.`
+    : `This email was sent by ${escapedOrgName}. Reply directly to respond.`
   return `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:32px 24px;color:#1a1a1a;background:#ffffff;line-height:1.5;">
   <div style="border-bottom:2px solid #0a0a0a;padding-bottom:16px;margin-bottom:28px;">
     <h2 style="margin:0;color:#0a0a0a;font-size:22px;font-weight:700;letter-spacing:-0.02em;">${escapedOrgName}</h2>
@@ -182,13 +182,13 @@ ${innerHtml}
 </div>`
 }
 
-function defaultSubject(companyName: string, lang: string): string {
+export function defaultSubject(companyName: string, lang: string): string {
   if (lang === "ru") return `${companyName} — Предложение о продлении договора`
   if (lang === "az") return `${companyName} — Müqavilənin yenilənməsi təklifi`
   return `${companyName} — Contract Renewal Proposal`
 }
 
-function defaultEmailBody(contactName: string, endDate: string, value: number, currency: string, orgName: string, lang: string) {
+export function defaultEmailBody(contactName: string, endDate: string, value: number, currency: string, orgName: string, lang: string) {
   if (lang === "ru") {
     return `<p>Здравствуйте, ${contactName}!</p>
 <p>Ваш текущий договор с ${orgName} заканчивается ${endDate}. Мы предлагаем продление на новый срок по цене ${value} ${currency}.</p>
