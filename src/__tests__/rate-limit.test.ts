@@ -90,6 +90,36 @@ describe("hashForRateLimit", () => {
   })
 })
 
+describe("RATE_LIMIT_CONFIG.webhook", () => {
+  it("has the expected threshold of 600 per minute", () => {
+    expect(RATE_LIMIT_CONFIG.webhook.maxRequests).toBe(600)
+    expect(RATE_LIMIT_CONFIG.webhook.windowMs).toBe(60000)
+  })
+
+  it("tracks two different webhook namespaces independently", () => {
+    const a = "webhook:telegram:1.2.3.4"
+    const b = "webhook:facebook:1.2.3.4"
+    resetRateLimit(a)
+    resetRateLimit(b)
+    expect(checkRateLimit(a, RATE_LIMIT_CONFIG.webhook)).toBe(true)
+    expect(checkRateLimit(b, RATE_LIMIT_CONFIG.webhook)).toBe(true)
+    expect(getRateLimitRemaining(a, RATE_LIMIT_CONFIG.webhook)).toBe(599)
+    expect(getRateLimitRemaining(b, RATE_LIMIT_CONFIG.webhook)).toBe(599)
+    resetRateLimit(a)
+    resetRateLimit(b)
+  })
+
+  it("blocks the 601st request from the same source within the window", () => {
+    const key = "webhook:flood:5.6.7.8"
+    resetRateLimit(key)
+    for (let i = 0; i < 600; i++) {
+      expect(checkRateLimit(key, RATE_LIMIT_CONFIG.webhook)).toBe(true)
+    }
+    expect(checkRateLimit(key, RATE_LIMIT_CONFIG.webhook)).toBe(false)
+    resetRateLimit(key)
+  })
+})
+
 describe("RATE_LIMIT_CONFIG.apiKey", () => {
   it("has the expected threshold of 300 per minute", () => {
     expect(RATE_LIMIT_CONFIG.apiKey.maxRequests).toBe(300)

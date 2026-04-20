@@ -255,6 +255,42 @@ const authMiddleware = auth(async (req) => {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
+  // Rate-limit webhook source endpoints by client IP. Runs BEFORE signature
+  // verification in the handlers — caps HMAC-verification CPU burn and naive
+  // single-source flooding. Legitimate upstreams (Meta, Telegram, WhatsApp)
+  // arrive from distributed IP ranges, so per-IP bucketing rarely affects
+  // real traffic. The namespace per provider prevents one source's flood
+  // from starving another.
+  // Excludes /api/v1/webhooks/manage/* (authenticated user CRUD, not a webhook).
+  const isWebhookManage =
+    pathname === "/api/v1/webhooks/manage" || pathname.startsWith("/api/v1/webhooks/manage/")
+  const isWebhookSource =
+    (pathname.startsWith("/api/v1/webhooks/") && !isWebhookManage) ||
+    pathname.startsWith("/api/v1/calls/webhook") ||
+    pathname.startsWith("/api/v1/calendar/feed/")
+  if (isWebhookSource) {
+    const ip = req.headers.get("x-real-ip")?.trim()
+      || req.headers.get("x-forwarded-for")?.split(",").pop()?.trim()
+      || "unknown"
+    let namespace = "other"
+    if (pathname.startsWith("/api/v1/webhooks/")) {
+      namespace = pathname.split("/")[4] || "other"
+    } else if (pathname.startsWith("/api/v1/calls/webhook")) {
+      namespace = "calls"
+    } else if (pathname.startsWith("/api/v1/calendar/feed/")) {
+      namespace = "calendar"
+    }
+    if (!checkRateLimit(`webhook:${namespace}:${ip}`, RATE_LIMIT_CONFIG.webhook)) {
+      return withCspHeaders(
+        NextResponse.json(
+          { error: "Webhook rate limit exceeded. Max 600 req/min per source IP." },
+          { status: 429 },
+        ),
+        nonce,
+      )
+    }
+  }
+
   // Allow public API (web-to-lead, calendar feed, journey processor, webhooks)
   if (pathname.startsWith("/api/v1/public/") || pathname.startsWith("/api/v1/calendar/feed/") || pathname.startsWith("/api/v1/webhooks/") || pathname === "/api/v1/journeys/process" || pathname.startsWith("/api/v1/calls/webhook") || pathname.startsWith("/api/v1/calls/twiml") || pathname.startsWith("/api/cron/") || pathname.startsWith("/api/v1/social/cron/")) {
     return withCspHeaders(NextResponse.next(), nonce)

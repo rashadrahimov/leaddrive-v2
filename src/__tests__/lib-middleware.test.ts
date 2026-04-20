@@ -3,10 +3,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 // Mock rate-limit before importing middleware
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: vi.fn(() => true),
+  hashForRateLimit: vi.fn(async (v: string) => `hash_${v.slice(0, 8)}`),
   RATE_LIMIT_CONFIG: {
     api: { maxRequests: 100, windowMs: 60000 },
     ai: { maxRequests: 20, windowMs: 60000 },
     public: { maxRequests: 10, windowMs: 60000 },
+    apiKey: { maxRequests: 300, windowMs: 60000 },
+    webhook: { maxRequests: 600, windowMs: 60000 },
   },
 }))
 
@@ -190,5 +193,84 @@ describe("middleware", async () => {
     const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/dashboard")
+  })
+
+  // ─── Webhook rate-limiting ───────────────────────────────
+
+  it("allows webhook POST when rate limit is under threshold", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(true)
+    const req = makeReq({
+      pathname: "/api/v1/webhooks/telegram",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "1.2.3.4" },
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(200)
+  })
+
+  it("returns 429 when webhook rate limit is exceeded", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(false)
+    const req = makeReq({
+      pathname: "/api/v1/webhooks/telegram",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "9.9.9.9" },
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(429)
+  })
+
+  it("keys webhook rate-limit by namespace and IP", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(true)
+    const req = makeReq({
+      pathname: "/api/v1/webhooks/whatsapp",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "1.2.3.4" },
+    })
+    await authMiddleware(req)
+    // First arg is the composed rate-limit key
+    const keyArg = vi.mocked(checkRateLimit).mock.calls[0]?.[0]
+    expect(keyArg).toBe("webhook:whatsapp:1.2.3.4")
+  })
+
+  it("does not apply webhook rate-limit to /api/v1/webhooks/manage (user CRUD)", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(false) // would 429 if applied
+    const session = { user: { id: "u1", organizationId: "org-1", role: "admin" } }
+    const req = makeReq({
+      pathname: "/api/v1/webhooks/manage",
+      method: "GET",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    // Reaches authenticated branch, not the webhook 429
+    expect(res.status).not.toBe(429)
+  })
+
+  it("rate-limits /api/v1/calls/webhook with namespace 'calls'", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(true)
+    const req = makeReq({
+      pathname: "/api/v1/calls/webhook",
+      method: "POST",
+      auth: null,
+      headers: { "x-real-ip": "5.5.5.5" },
+    })
+    await authMiddleware(req)
+    const keyArg = vi.mocked(checkRateLimit).mock.calls[0]?.[0]
+    expect(keyArg).toBe("webhook:calls:5.5.5.5")
+  })
+
+  it("rate-limits /api/v1/calendar/feed with namespace 'calendar'", async () => {
+    vi.mocked(checkRateLimit).mockReturnValue(true)
+    const req = makeReq({
+      pathname: "/api/v1/calendar/feed/abc123",
+      method: "GET",
+      auth: null,
+      headers: { "x-real-ip": "6.6.6.6" },
+    })
+    await authMiddleware(req)
+    const keyArg = vi.mocked(checkRateLimit).mock.calls[0]?.[0]
+    expect(keyArg).toBe("webhook:calendar:6.6.6.6")
   })
 })

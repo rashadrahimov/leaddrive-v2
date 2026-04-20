@@ -8,6 +8,7 @@ export const RATE_LIMIT_CONFIG = {
   ai: { maxRequests: 20, windowMs: 60000 } as RateLimitConfig,
   public: { maxRequests: 10, windowMs: 60000 } as RateLimitConfig,
   apiKey: { maxRequests: 300, windowMs: 60000 } as RateLimitConfig,
+  webhook: { maxRequests: 600, windowMs: 60000 } as RateLimitConfig,
 }
 
 /**
