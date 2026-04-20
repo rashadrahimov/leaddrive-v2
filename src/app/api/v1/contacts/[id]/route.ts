@@ -21,6 +21,7 @@ const updateContactSchema = z.object({
   tags: z.array(z.string()).optional(),
   isActive: z.boolean().optional(),
   portalAccessEnabled: z.boolean().optional(),
+  preferredLanguage: z.enum(["ru", "en", "az"]).nullable().optional(),
 })
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

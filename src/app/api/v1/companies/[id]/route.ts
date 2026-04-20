@@ -22,6 +22,8 @@ const updateCompanySchema = z.object({
   userCount: z.number().optional(),
   annualRevenue: z.number().optional(),
   slaPolicyId: z.string().nullable().optional(),
+  creditLimit: z.number().nullable().optional(),
+  creditCurrency: z.string().max(10).nullable().optional(),
 })
 
 export async function GET(

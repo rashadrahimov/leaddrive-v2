@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
   const url = new URL(req.url)
   const status = url.searchParams.get("status") || "pending" // pending, approved, rejected
   const featureName = url.searchParams.get("feature") || undefined
+  const q = (url.searchParams.get("q") || "").trim()
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"))
   const limit = Math.min(50, parseInt(url.searchParams.get("limit") || "20"))
 
@@ -29,6 +30,26 @@ export async function GET(req: NextRequest) {
 
   if (featureName) {
     where.featureName = featureName
+  }
+
+  // Server-side full-text search across payload JSON fields that commonly hold identifiers
+  if (q) {
+    const needle = q.toLowerCase()
+    where.OR = [
+      { payload: { path: ["companyName"], string_contains: needle } },
+      { payload: { path: ["contractNumber"], string_contains: needle } },
+      { payload: { path: ["invoiceNumber"], string_contains: needle } },
+      { payload: { path: ["ticketNumber"], string_contains: needle } },
+      { payload: { path: ["leadName"], string_contains: needle } },
+      { payload: { path: ["dealName"], string_contains: needle } },
+      { payload: { path: ["title"], string_contains: needle } },
+      { payload: { path: ["subject"], string_contains: needle } },
+      { payload: { path: ["contactEmail"], string_contains: needle } },
+      { payload: { path: ["primaryLabel"], string_contains: needle } },
+      { payload: { path: ["duplicateLabel"], string_contains: needle } },
+      { payload: { path: ["meetingTitle"], string_contains: needle } },
+      { entityId: { contains: needle, mode: "insensitive" } },
+    ]
   }
 
   const [actions, total] = await Promise.all([

@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/prisma"
 
-function normalize(s: string | null | undefined): string {
+export function normalize(s: string | null | undefined): string {
   return (s || "").toLowerCase().trim().replace(/\s+/g, " ")
 }
 
-function levenshtein(a: string, b: string): number {
+export function levenshtein(a: string, b: string): number {
   if (a === b) return 0
   if (!a.length) return b.length
   if (!b.length) return a.length
@@ -22,7 +22,7 @@ function levenshtein(a: string, b: string): number {
   return dp[b.length]
 }
 
-function similarityRatio(a: string, b: string): number {
+export function similarityRatio(a: string, b: string): number {
   const an = normalize(a), bn = normalize(b)
   if (!an || !bn) return 0
   const maxLen = Math.max(an.length, bn.length)
@@ -30,7 +30,7 @@ function similarityRatio(a: string, b: string): number {
   return 1 - levenshtein(an, bn) / maxLen
 }
 
-function phoneDigits(phone: string | null | undefined): string {
+export function phoneDigits(phone: string | null | undefined): string {
   return (phone || "").replace(/\D/g, "")
 }
 

@@ -21,6 +21,8 @@ interface CompanyFormData {
   status: string
   description: string
   slaPolicyId: string | null
+  creditLimit: string
+  creditCurrency: string
 }
 
 interface SlaPolicyOption {
@@ -54,6 +56,8 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
     status: initialData?.status || "prospect",
     description: initialData?.description || "",
     slaPolicyId: (initialData as any)?.slaPolicyId || null,
+    creditLimit: (initialData as any)?.creditLimit != null ? String((initialData as any).creditLimit) : "",
+    creditCurrency: (initialData as any)?.creditCurrency || "",
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
@@ -73,6 +77,8 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
         status: initialData?.status || "prospect",
         description: initialData?.description || "",
         slaPolicyId: (initialData as any)?.slaPolicyId || null,
+        creditLimit: (initialData as any)?.creditLimit != null ? String((initialData as any).creditLimit) : "",
+        creditCurrency: (initialData as any)?.creditCurrency || "",
       })
       setError("")
       // Fetch SLA policies
@@ -94,13 +100,19 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
 
     try {
       const url = isEdit ? `/api/v1/companies/${initialData!.id}` : "/api/v1/companies"
+      const payload: any = { ...form }
+      payload.creditLimit = form.creditLimit.trim() === "" ? null : Number(form.creditLimit)
+      payload.creditCurrency = form.creditCurrency.trim() === "" ? null : form.creditCurrency.trim().toUpperCase()
+      if (payload.creditLimit !== null && (isNaN(payload.creditLimit) || payload.creditLimit < 0)) {
+        throw new Error(tc("invalidNumber") || "Invalid credit limit")
+      }
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>),
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
@@ -183,6 +195,31 @@ export function CompanyForm({ open, onOpenChange, onSaved, initialData, orgId }:
                   </option>
                 ))}
               </Select>
+            </div>
+            <div className="grid grid-cols-[2fr_1fr] gap-3">
+              <div>
+                <Label htmlFor="creditLimit">{tc("creditLimit") || "Credit limit"}</Label>
+                <Input
+                  id="creditLimit" type="number" step="100" min="0"
+                  value={form.creditLimit}
+                  onChange={(e) => update("creditLimit", e.target.value)}
+                  placeholder={tc("creditLimitPlaceholder") || "10000"}
+                />
+              </div>
+              <div>
+                <Label htmlFor="creditCurrency">{tc("currency") || "Currency"}</Label>
+                <Select
+                  value={form.creditCurrency}
+                  onChange={(e) => update("creditCurrency", e.target.value)}
+                >
+                  <option value="">—</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="AZN">AZN</option>
+                  <option value="RUB">RUB</option>
+                  <option value="GBP">GBP</option>
+                </Select>
+              </div>
             </div>
             <div>
               <Label htmlFor="description">{tc("description")}</Label>

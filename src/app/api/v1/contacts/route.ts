@@ -21,6 +21,7 @@ const createContactSchema = z.object({
   brand: z.string().max(100).optional(),
   category: z.string().max(50).optional(),
   tags: z.array(z.string()).optional(),
+  preferredLanguage: z.enum(["ru", "en", "az"]).nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {

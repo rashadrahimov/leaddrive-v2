@@ -30,6 +30,7 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
     brand: initialData?.brand || "",
     category: initialData?.category || "",
     portalAccessEnabled: initialData?.portalAccessEnabled || false,
+    preferredLanguage: initialData?.preferredLanguage || "",
   })
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
   const [saving, setSaving] = useState(false)
@@ -47,6 +48,7 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
         brand: initialData?.brand || "",
         category: initialData?.category || "",
         portalAccessEnabled: initialData?.portalAccessEnabled || false,
+        preferredLanguage: initialData?.preferredLanguage || "",
       })
       setError("")
     }
@@ -71,7 +73,11 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": orgId } : {} as Record<string, string>) },
-        body: JSON.stringify({ ...form, companyId: form.companyId || undefined }),
+        body: JSON.stringify({
+          ...form,
+          companyId: form.companyId || undefined,
+          preferredLanguage: form.preferredLanguage || null,
+        }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("errorUpdateFailed"))
@@ -138,6 +144,18 @@ export function ContactForm({ open, onOpenChange, onSaved, initialData, orgId }:
                   <option value="inactive">Inactive</option>
                 </Select>
               </div>
+            </div>
+            <div>
+              <Label htmlFor="preferredLanguage">{tc("preferredLanguage") || "Preferred language"}</Label>
+              <Select
+                value={form.preferredLanguage}
+                onChange={e => setForm(f => ({ ...f, preferredLanguage: e.target.value }))}
+              >
+                <option value="">{tc("useOrgDefault") || "Use org default"}</option>
+                <option value="ru">Русский</option>
+                <option value="en">English</option>
+                <option value="az">Azərbaycan</option>
+              </Select>
             </div>
             <div className="flex items-center gap-2 pt-2 border-t">
               <input

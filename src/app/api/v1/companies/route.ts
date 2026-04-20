@@ -18,6 +18,8 @@ const createCompanySchema = z.object({
   description: z.string().max(5000).optional(),
   status: z.enum(["active", "inactive", "prospect"]).optional(),
   slaPolicyId: z.string().nullable().optional(),
+  creditLimit: z.number().nullable().optional(),
+  creditCurrency: z.string().max(10).nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {

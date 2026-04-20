@@ -302,10 +302,12 @@ export default function AiActionsPage() {
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (orgId) headers["x-organization-id"] = orgId
 
-  const fetchData = async () => {
+  const fetchData = async (searchQuery?: string) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/v1/ai-shadow-actions?status=pending&limit=50", { headers }).then(r => r.json()).catch(() => null)
+      const qParam = (searchQuery ?? search).trim()
+      const qs = `?status=pending&limit=50${qParam ? `&q=${encodeURIComponent(qParam)}` : ""}`
+      const res = await fetch(`/api/v1/ai-shadow-actions${qs}`, { headers }).then(r => r.json()).catch(() => null)
       if (res?.data) {
         setShadowActions(res.data)
         setShadowTotal(res.pagination?.total || 0)
@@ -314,7 +316,14 @@ export default function AiActionsPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [orgId])
+  useEffect(() => { fetchData("") }, [orgId])
+
+  // Debounced server-side search
+  useEffect(() => {
+    const id = setTimeout(() => { fetchData(search) }, 400)
+    return () => clearTimeout(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   const filteredActions = useMemo(() => {
     let list = shadowActions
@@ -435,7 +444,7 @@ export default function AiActionsPage() {
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{tPage("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={fetchData}>
+          <Button variant="outline" size="sm" onClick={() => fetchData()}>
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {t("refresh")}
           </Button>
         </div>
