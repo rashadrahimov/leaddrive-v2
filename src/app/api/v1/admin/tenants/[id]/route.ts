@@ -54,6 +54,7 @@ export async function GET(
       features: tenant.features,
       branding: tenant.branding,
       addons: tenant.addons,
+      settings: tenant.settings,
       provisionedAt: tenant.provisionedAt,
       provisionedBy: tenant.provisionedBy,
       createdAt: tenant.createdAt,
@@ -105,6 +106,12 @@ export async function PUT(
   if (body.isActive !== undefined) updateData.isActive = body.isActive
   if (body.serverType !== undefined) updateData.serverType = body.serverType
   if (body.serverIp !== undefined) updateData.serverIp = body.serverIp
+
+  // Settings are merged (not overwritten) to preserve unrelated keys
+  if (body.settings !== undefined && typeof body.settings === "object") {
+    const existingSettings = (existing.settings as Record<string, any>) || {}
+    updateData.settings = { ...existingSettings, ...body.settings }
+  }
 
   const updated = await prisma.organization.update({
     where: { id },

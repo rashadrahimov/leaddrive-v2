@@ -177,6 +177,8 @@ export default function TenantEditPage() {
     primaryColor: "#6C63FF",
     logo: "",
     features: [] as string[],
+    orgLanguage: "",
+    aiDailyBudgetUsd: "",
   })
 
   useEffect(() => {
@@ -188,6 +190,7 @@ export default function TenantEditPage() {
           setTenant(t)
           const branding = typeof t.branding === "string" ? JSON.parse(t.branding || "{}") : (t.branding || {})
           const featuresRaw = typeof t.features === "string" ? JSON.parse(t.features || "[]") : (t.features || [])
+          const settings = typeof t.settings === "string" ? JSON.parse(t.settings || "{}") : (t.settings || {})
           setForm({
             name: t.name,
             slug: t.slug,
@@ -197,6 +200,8 @@ export default function TenantEditPage() {
             primaryColor: branding.primaryColor || "#6C63FF",
             logo: branding.logo || "",
             features: Array.isArray(featuresRaw) ? featuresRaw : [],
+            orgLanguage: settings.language || settings.locale || "",
+            aiDailyBudgetUsd: settings.aiDailyBudgetUsd != null ? String(settings.aiDailyBudgetUsd) : "",
           })
         }
       })
@@ -247,6 +252,17 @@ export default function TenantEditPage() {
     setError("")
     setSaved(false)
     try {
+      const settingsPatch: Record<string, any> = {}
+      if (form.orgLanguage) settingsPatch.language = form.orgLanguage
+      else settingsPatch.language = null
+      const budgetNum = form.aiDailyBudgetUsd.trim() === "" ? null : Number(form.aiDailyBudgetUsd)
+      if (budgetNum !== null && (!isFinite(budgetNum) || budgetNum < 0)) {
+        setError("Invalid AI daily budget")
+        setSaving(false)
+        return
+      }
+      settingsPatch.aiDailyBudgetUsd = budgetNum
+
       const res = await fetch(`/api/v1/admin/tenants/${tenantId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -258,6 +274,7 @@ export default function TenantEditPage() {
           maxContacts: form.maxContacts,
           branding: { primaryColor: form.primaryColor, logo: form.logo || undefined },
           features: form.features,
+          settings: settingsPatch,
         }),
       })
       const data = await res.json()
@@ -523,6 +540,36 @@ export default function TenantEditPage() {
             <p className="text-[11px] text-muted-foreground mt-3">
               Tip: always enable the Review toggle first, let the tenant see the shadow queue for a few days, then switch to Autopilot.
             </p>
+
+            <div className="mt-5 pt-5 border-t border-border/60 grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>AI daily budget (USD)</Label>
+                <Input
+                  type="number" step="0.5" min="0"
+                  value={form.aiDailyBudgetUsd}
+                  placeholder="5.00"
+                  onChange={(e) => setForm({ ...form, aiDailyBudgetUsd: e.target.value })}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Cap on Claude/GPT spend per day for this tenant. Empty = system default ($5).
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Default language for AI emails</Label>
+                <Select
+                  value={form.orgLanguage}
+                  onChange={(e) => setForm({ ...form, orgLanguage: e.target.value })}
+                >
+                  <option value="">Auto (ru)</option>
+                  <option value="ru">Русский</option>
+                  <option value="en">English</option>
+                  <option value="az">Azərbaycan</option>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  Fallback language for renewal / meeting-recap / social-reply when the contact has no preferredLanguage.
+                </p>
+              </div>
+            </div>
           </Card>
         </div>
 
