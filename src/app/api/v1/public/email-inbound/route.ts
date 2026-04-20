@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma, logAudit } from "@/lib/prisma"
 import { extractReplyToFromToHeader, parseReplyTo } from "@/lib/email-reply-address"
 import { executeWorkflows } from "@/lib/workflow-engine"
+import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
 
 // Shape posted by the Cloudflare Email Worker after it parses the raw MIME.
 const inboundSchema = z.object({
@@ -33,6 +34,20 @@ export async function POST(req: NextRequest) {
   const providedSecret = req.headers.get("x-cf-inbound-secret")
   if (!providedSecret || providedSecret !== expectedSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  // Rate-limit by source IP — prevents abuse if the secret ever leaks (the
+  // worker key rotating or a credentials test accidentally logging the value).
+  // 600 req/min is ~10/sec — comfortably above CF Email Routing's real
+  // throughput for this tenant, but stops anyone from using the endpoint as
+  // a free comment-spawner.
+  const ip =
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "unknown"
+  if (!checkRateLimit(`email-inbound:${ip}`, RATE_LIMIT_CONFIG.webhook)) {
+    return NextResponse.json({ error: "Too Many Requests" }, { status: 429 })
   }
 
   let body: unknown

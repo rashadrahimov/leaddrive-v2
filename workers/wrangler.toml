@@ -1,17 +1,14 @@
 name = "ld-email-inbound"
 main = "email-inbound.js"
 compatibility_date = "2025-01-01"
-compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Email Routing is bound automatically when the worker is attached
-# to a catch-all address in the dashboard. No `routes` entry needed here.
-
-# Set secrets via CLI:
+# No external deps — the worker ships an inline MIME parser so a clean
+# `wrangler deploy` works without `npm install`.
+#
+# Secrets (put via CLI, NEVER commit):
 #   wrangler secret put CF_INBOUND_SECRET
-# and vars via dashboard or `wrangler.toml`:
-#   [vars]
-#   API_URL = "https://app.leaddrivecrm.org"
-#   FALLBACK_INBOX = "support@leaddrivecrm.org"
+#
+# Public vars (OK to keep here):
 [vars]
 API_URL = "https://app.leaddrivecrm.org"
-FALLBACK_INBOX = "support@leaddrivecrm.org"
+FALLBACK_INBOX = "rashadrahimov@gmail.com"

@@ -128,6 +128,7 @@ export default function WorkflowsPage() {
     status_changed: t("triggerStatusChanged"),
     stage_changed: t("triggerStageChanged"),
     assigned: t("triggerAssigned"),
+    replied: "Ответ клиента (email)",
   }
 
   const actionLabels: Record<string, string> = {

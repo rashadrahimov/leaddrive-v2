@@ -133,6 +133,7 @@ export function WorkflowForm({ open, onOpenChange, onSaved, initialData, orgId }
     { value: "status_changed", label: t("triggerStatusChanged") },
     { value: "stage_changed", label: t("triggerStageChanged") },
     { value: "assigned", label: t("triggerAssigned") },
+    { value: "replied", label: "Ответ клиента (email)" },
   ]
 
   const conditionFields = [
