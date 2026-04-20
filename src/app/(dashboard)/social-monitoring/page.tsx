@@ -16,6 +16,11 @@ import {
 } from "lucide-react"
 import { SocialAnalyticsPanel } from "@/components/social/analytics-panel"
 import { SocialOnboardingChecklist } from "@/components/social/onboarding-checklist"
+import { useAutoTour } from "@/components/tour/tour-provider"
+import { TourReplayButton } from "@/components/tour/tour-replay-button"
+import { DidYouKnow } from "@/components/did-you-know"
+import Link from "next/link"
+import { Sparkles } from "lucide-react"
 
 interface Account {
   id: string
@@ -70,6 +75,7 @@ export default function SocialMonitoringPage() {
   const orgId = session?.user?.organizationId
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
   const t = useTranslations("socialMonitoring")
+  useAutoTour("socialMonitoring")
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [mentions, setMentions] = useState<Mention[]>([])
@@ -282,10 +288,16 @@ export default function SocialMonitoringPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Radio className="h-6 w-6 text-orange-500" /> {t("title")}
+            <TourReplayButton tourId="socialMonitoring" />
           </h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild className="gap-1.5">
+            <Link href="/settings/ai-automation">
+              <Sparkles className="h-4 w-4 text-violet-500" /> AI
+            </Link>
+          </Button>
           <Button variant="outline" onClick={pollAll} disabled={pollingAll || accounts.length === 0} className="gap-1.5">
             <RefreshCw className={`h-4 w-4 ${pollingAll ? "animate-spin" : ""}`} />
             {pollingAll ? t("polling") : t("refreshAll")}
@@ -306,6 +318,25 @@ export default function SocialMonitoringPage() {
         hasInstagram={accounts.some(a => a.platform === "instagram")}
       />
 
+      <DidYouKnow page="social-monitoring" />
+
+      <Link
+        data-tour-id="social-ai"
+        href="/settings/ai-automation"
+        className="flex items-center justify-between rounded-lg border border-violet-200 dark:border-violet-900/60 bg-gradient-to-br from-violet-50/60 to-pink-50/40 dark:from-violet-950/20 dark:to-pink-950/10 px-4 py-3 hover:border-violet-300 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-violet-600" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">{t("aiAutopilotTitle") || "AI automation for SMM"}</p>
+            <p className="text-xs text-muted-foreground">{t("aiAutopilotDesc") || "2 scenarios: AI-drafted replies + viral alerts → /ai/actions"}</p>
+          </div>
+        </div>
+        <span className="text-xs text-muted-foreground group-hover:text-foreground">→</span>
+      </Link>
+
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <StatCard icon={TrendingUp} label={t("totalMentions")} value={stats.total} color="primary" />
@@ -319,7 +350,7 @@ export default function SocialMonitoringPage() {
       <SocialAnalyticsPanel orgId={orgId} />
 
 
-      <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div data-tour-id="social-accounts" className="rounded-lg border bg-card p-4 space-y-3">
         <h3 className="text-sm font-semibold flex items-center gap-2"><Radio className="h-4 w-4" /> {t("monitoredHandles")}</h3>
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noHandlesYet")}</p>
@@ -378,7 +409,7 @@ export default function SocialMonitoringPage() {
           <p className="text-sm text-muted-foreground mt-1">Connect a polling pipeline or POST to <code className="bg-muted px-1 rounded">/api/v1/social/ingest</code></p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div data-tour-id="social-feed" className="space-y-3">
           {mentions.map(m => (
             <div key={m.id} className="rounded-lg border bg-card p-4 space-y-2">
               <div className="flex items-start gap-3">

@@ -8,6 +8,8 @@ import { findTicketsForSentimentCheck, classifyTicketSentiment, writeSentimentSh
 import { findTicketsForKbMatching, matchTicketToKb, writeKbMatchShadowAction } from "@/lib/ai/kb-match"
 import { findDuplicateContacts, filterNewDuplicateCandidates, writeDuplicateContactShadowAction } from "@/lib/ai/duplicates"
 import { findCreditLimitWarnings, filterNewCreditWarnings, writeCreditLimitShadowAction } from "@/lib/ai/credit"
+import { findMentionsForReply, draftSocialReply, writeSocialReplyShadowAction } from "@/lib/ai/social-reply"
+import { findViralMentions, filterNewViralCandidates, writeViralShadowAction } from "@/lib/ai/social-viral"
 
 /**
  * AI Auto-Actions Cron Endpoint
@@ -110,6 +112,20 @@ export async function POST(req: NextRequest) {
         results.autoCreditLimit = (results.autoCreditLimit || 0) + await runCreditLimit(org.id, now, false)
       } else if (await isAiFeatureEnabled(org.id, "ai_auto_credit_limit_shadow")) {
         results.shadowActions += await runCreditLimit(org.id, now, true)
+      }
+
+      // Social Monitoring: AI-drafted reply to negative/neutral mentions
+      if (await isAiFeatureEnabled(org.id, "ai_auto_social_reply")) {
+        results.autoSocialReply = (results.autoSocialReply || 0) + await runSocialReply(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_social_reply_shadow")) {
+        results.shadowActions += await runSocialReply(org.id, now, true)
+      }
+
+      // Social Monitoring: Viral/spike alerts
+      if (await isAiFeatureEnabled(org.id, "ai_auto_social_viral")) {
+        results.autoSocialViral = (results.autoSocialViral || 0) + await runSocialViral(org.id, now, false)
+      } else if (await isAiFeatureEnabled(org.id, "ai_auto_social_viral_shadow")) {
+        results.shadowActions += await runSocialViral(org.id, now, true)
       }
     }
 
@@ -719,6 +735,52 @@ async function runDuplicateMerge(orgId: string, now: Date, shadow: boolean): Pro
   return count
 }
 
+// ── Social: AI-drafted reply to mentions ──
+
+async function runSocialReply(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const mentions = await findMentionsForReply(orgId, now)
+  if (mentions.length === 0) return 0
+
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { name: true, settings: true },
+  })
+  const orgLang = ((org?.settings as Record<string, any>) || {}).language || "en"
+  const orgName = org?.name || ""
+
+  let count = 0
+  for (const mention of mentions) {
+    try {
+      const draft = await draftSocialReply(mention, orgName, orgLang)
+      if (!draft) continue
+      await writeSocialReplyShadowAction(orgId, mention, draft, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`Social reply failed for mention ${mention.id}:`, e)
+    }
+  }
+  return count
+}
+
+// ── Social: Viral/spike alerts ──
+
+async function runSocialViral(orgId: string, now: Date, shadow: boolean): Promise<number> {
+  const raw = await findViralMentions(orgId, now)
+  const candidates = await filterNewViralCandidates(orgId, raw, now)
+  if (candidates.length === 0) return 0
+
+  let count = 0
+  for (const c of candidates) {
+    try {
+      await writeViralShadowAction(orgId, c, now, shadow)
+      count++
+    } catch (e) {
+      console.error(`Viral alert failed for mention ${c.mentionId}:`, e)
+    }
+  }
+  return count
+}
+
 // ── Credit Limit Warning ──
 
 async function runCreditLimit(orgId: string, now: Date, shadow: boolean): Promise<number> {
@@ -866,6 +928,99 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
             where: { id: action.entityId, organizationId: action.organizationId },
             data: { status: "resolved", resolvedAt: now, firstResponseAt: now },
           })
+          break
+        }
+
+        case "post_social_reply": {
+          // Safe MVP: don't auto-post to social. Create a task with the AI draft
+          // + mark mention as reviewed. Community manager copies the text and
+          // clicks the platform's Reply in /social-monitoring.
+          const seniors = await prisma.user.findMany({
+            where: { organizationId: action.organizationId, role: { in: ["admin", "manager", "sales"] }, isActive: true },
+            select: { id: true },
+            take: 1,
+          })
+          const ownerId = seniors[0]?.id
+          if (ownerId) {
+            const existingTask = await prisma.task.findFirst({
+              where: {
+                organizationId: action.organizationId,
+                relatedType: "social_mention",
+                relatedId: action.entityId,
+                createdAt: { gte: new Date(now.getTime() - 7 * 86400000) },
+              },
+            })
+            if (!existingTask) {
+              const handleLabel = payload.authorHandle ? `@${payload.authorHandle}` : (payload.authorName || "author")
+              await prisma.task.create({
+                data: {
+                  organizationId: action.organizationId,
+                  title: `Reply to ${handleLabel} on ${payload.platform}`,
+                  description: `Tone: ${payload.tone || "informative"}\n\nDraft:\n${payload.replyText || ""}\n\nOriginal: "${payload.mentionExcerpt || ""}"\n\nReasoning: ${payload.reasoning || ""}`,
+                  assignedTo: ownerId,
+                  dueDate: new Date(now.getTime() + 1 * 86400000),
+                  priority: payload.mentionSentiment === "negative" ? "high" : "medium",
+                  status: "pending",
+                  relatedType: "social_mention",
+                  relatedId: action.entityId,
+                  createdBy: null,
+                },
+              })
+            }
+            await prisma.socialMention.updateMany({
+              where: { id: action.entityId, organizationId: action.organizationId },
+              data: { status: "reviewed", handledBy: ownerId, handledAt: now },
+            })
+          }
+          break
+        }
+
+        case "viral_alert": {
+          const seniors = await prisma.user.findMany({
+            where: { organizationId: action.organizationId, role: { in: ["admin", "manager"] }, isActive: true },
+            select: { id: true },
+            take: 3,
+          })
+          const ownerId = seniors[0]?.id
+          if (ownerId) {
+            const handleLabel = payload.authorHandle ? `@${payload.authorHandle}` : (payload.authorName || "author")
+            const existingTask = await prisma.task.findFirst({
+              where: {
+                organizationId: action.organizationId,
+                relatedType: "social_mention",
+                relatedId: action.entityId,
+                title: { contains: "viral" },
+                createdAt: { gte: new Date(now.getTime() - 7 * 86400000) },
+              },
+            })
+            if (!existingTask) {
+              await prisma.task.create({
+                data: {
+                  organizationId: action.organizationId,
+                  title: `🚨 Viral mention from ${handleLabel} on ${payload.platform}`,
+                  description: `${payload.reason || ""}\n\nExcerpt: "${payload.excerpt || ""}"\n\nReach: ${payload.reach || 0} · Engagement: ${payload.engagement || 0}`,
+                  assignedTo: ownerId,
+                  dueDate: new Date(now.getTime() + 12 * 3600000),
+                  priority: payload.sentiment === "negative" ? "urgent" : "high",
+                  status: "pending",
+                  relatedType: "social_mention",
+                  relatedId: action.entityId,
+                  createdBy: null,
+                },
+              })
+            }
+            for (const u of seniors) {
+              await createNotification({
+                organizationId: action.organizationId,
+                userId: u.id,
+                type: payload.sentiment === "negative" ? "warning" : "info",
+                title: `🚨 Viral: ${handleLabel} on ${payload.platform}`,
+                message: payload.reason || "",
+                entityType: "social_mention",
+                entityId: action.entityId,
+              })
+            }
+          }
           break
         }
 

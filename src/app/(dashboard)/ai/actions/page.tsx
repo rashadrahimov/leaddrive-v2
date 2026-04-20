@@ -97,6 +97,16 @@ function urgencyLevel(action: ShadowAction): UrgencyLevel {
     if (age < 6) return "high"
     return "normal"
   }
+  if (feature === "social_reply") {
+    if (p.mentionSentiment === "negative") return "high"
+    return "normal"
+  }
+  if (feature === "social_viral") {
+    const score = p.viralScore || 0
+    if (p.sentiment === "negative" && score >= 2) return "critical"
+    if (score >= 2) return "high"
+    return "normal"
+  }
   const days = p.daysSinceActivity || 0
   if (days >= 30) return "critical"
   if (days >= 14) return "high"
@@ -123,6 +133,8 @@ function urgencyScore(action: ShadowAction): number {
   else if (feature === "duplicate") secondary = (p.similarityScore || 0) * 400
   else if (feature === "credit_limit") secondary = (p.percentUsed || 0) * 500 + (p.outstandingAmount || 0) * 0.0001
   else if (feature === "meeting_recap") secondary = p.meetingDate ? Math.max(0, 48 - (Date.now() - new Date(p.meetingDate).getTime()) / 3600000) : 0
+  else if (feature === "social_reply") secondary = p.mentionSentiment === "negative" ? 200 : 50
+  else if (feature === "social_viral") secondary = (p.viralScore || 0) * 100 + (p.sentiment === "negative" ? 200 : 0)
   else secondary = p.daysSinceActivity || 0
   return base + secondary
 }
@@ -140,6 +152,8 @@ function getShadowDetail(action: ShadowAction, t: (key: string, vars?: any) => s
   if (feature === "duplicate") return t("shadowDuplicateDetail")
   if (feature === "credit_limit") return t("shadowCreditLimitDetail")
   if (feature === "meeting_recap") return t("shadowMeetingRecapDetail")
+  if (feature === "social_reply") return t("shadowSocialReplyDetail")
+  if (feature === "social_viral") return t("shadowSocialViralDetail")
   return t("shadowFollowupDetail")
 }
 
@@ -265,6 +279,28 @@ function getShadowInfo(action: ShadowAction, t: (key: string, vars?: any) => str
       entityLabel: p.dealId ? t("shadowDealEntity") : t("shadowContactEntity"),
       title: (p.meetingTitle || t("shadowMeetingRecapLabel")).slice(0, 140),
       reason: t("shadowMeetingRecapReason", { steps: stepCount, email: p.customerEmail || "—" }),
+    }
+  }
+  if (feature === "social_reply") {
+    const handle = p.authorHandle ? `@${p.authorHandle}` : (p.authorName || "—")
+    return {
+      label: t("shadowSocialReplyLabel"),
+      badgeBg: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+      borderColor: "border-l-sky-500",
+      entityLabel: t("shadowMentionEntity"),
+      title: `${p.platform || "social"} · ${handle}`,
+      reason: t("shadowSocialReplyReason", { tone: p.tone || "—", sentiment: p.mentionSentiment || "—" }),
+    }
+  }
+  if (feature === "social_viral") {
+    const handle = p.authorHandle ? `@${p.authorHandle}` : (p.authorName || "—")
+    return {
+      label: t("shadowSocialViralLabel"),
+      badgeBg: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400",
+      borderColor: "border-l-pink-500",
+      entityLabel: t("shadowMentionEntity"),
+      title: `${p.platform || "social"} · ${handle} · reach ${(p.reach || 0).toLocaleString()}`,
+      reason: (p.reason || "—").slice(0, 200),
     }
   }
   return {
@@ -493,6 +529,8 @@ export default function AiActionsPage() {
                   { key: "kb_close", labelKey: "shadowKbCloseLabel", ns: "settings" as const },
                   { key: "stage_advance", labelKey: "shadowStageAdvanceLabel", ns: "settings" as const },
                   { key: "meeting_recap", labelKey: "shadowMeetingRecapLabel", ns: "settings" as const },
+                  { key: "social_viral", labelKey: "shadowSocialViralLabel", ns: "settings" as const },
+                  { key: "social_reply", labelKey: "shadowSocialReplyLabel", ns: "settings" as const },
                   { key: "renewal", labelKey: "shadowRenewalLabel", ns: "settings" as const },
                   { key: "duplicate", labelKey: "shadowDuplicateLabel", ns: "settings" as const },
                   { key: "payment_reminder", labelKey: "shadowPaymentLabel", ns: "settings" as const },

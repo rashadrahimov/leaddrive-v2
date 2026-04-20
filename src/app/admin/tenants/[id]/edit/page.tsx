@@ -121,6 +121,8 @@ const AI_AUTOMATION_FEATURES: { scenario: string; label: string; shadowKey: stri
   { scenario: "duplicate",           label: "Duplicate Merge",        shadowKey: "ai_auto_duplicate_shadow", liveKey: "ai_auto_duplicate",        note: "Same email/phone → suggest merge" },
   { scenario: "credit_limit",        label: "Credit Limit Warning",   shadowKey: "ai_auto_credit_limit_shadow", liveKey: "ai_auto_credit_limit",  note: "Outstanding ≥80% of limit → AR task" },
   { scenario: "meeting_recap",       label: "Meeting Recap",          shadowKey: "ai_auto_meeting_recap_shadow", liveKey: "ai_auto_meeting_recap", note: "Webhook transcript → AI recap + next steps" },
+  { scenario: "social_reply",        label: "Social AI Reply",        shadowKey: "ai_auto_social_reply_shadow", liveKey: "ai_auto_social_reply", note: "AI drafts reply to negative/neutral mentions" },
+  { scenario: "social_viral",        label: "Social Viral Alert",     shadowKey: "ai_auto_social_viral_shadow", liveKey: "ai_auto_social_viral", note: "High-reach mentions → senior alert" },
 ]
 
 const GROUP_ORDER = ["CRM", "Marketing", "Communication", "Support", "Finance", "Analytics", "ERP", "Route & Field", "Settings"]

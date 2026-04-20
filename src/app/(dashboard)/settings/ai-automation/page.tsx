@@ -12,13 +12,13 @@ import {
   Bot, Sparkles, Shield, Eye, CheckCircle2, XCircle,
   Clock, Loader2, RefreshCw, ToggleLeft, ToggleRight,
   Mail, Send, MessageSquare, ChevronDown, ChevronRight, HelpCircle, Inbox, Flame, Tags, TrendingUp,
-  AlertTriangle, BookOpen, GitMerge, CreditCard, Video,
+  AlertTriangle, BookOpen, GitMerge, CreditCard, Video, Megaphone, MessagesSquare,
 } from "lucide-react"
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
-type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit" | "meetingRecap"
+type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit" | "meetingRecap" | "socialReply" | "socialViral"
 type Mode = "shadow" | "live"
 
 interface AiFeature {
@@ -59,6 +59,10 @@ const AI_FEATURE_KEYS: { key: string; labelKey: string; descKey: string; categor
   { key: "ai_auto_credit_limit", labelKey: "autoCreditLimitLive", descKey: "autoCreditLimitLiveDesc", category: "autopilot", scenario: "creditLimit", mode: "live" },
   { key: "ai_auto_meeting_recap_shadow", labelKey: "autoMeetingRecapShadow", descKey: "autoMeetingRecapShadowDesc", category: "autopilot", scenario: "meetingRecap", mode: "shadow" },
   { key: "ai_auto_meeting_recap", labelKey: "autoMeetingRecapLive", descKey: "autoMeetingRecapLiveDesc", category: "autopilot", scenario: "meetingRecap", mode: "live" },
+  { key: "ai_auto_social_reply_shadow", labelKey: "autoSocialReplyShadow", descKey: "autoSocialReplyShadowDesc", category: "autopilot", scenario: "socialReply", mode: "shadow" },
+  { key: "ai_auto_social_reply", labelKey: "autoSocialReplyLive", descKey: "autoSocialReplyLiveDesc", category: "autopilot", scenario: "socialReply", mode: "live" },
+  { key: "ai_auto_social_viral_shadow", labelKey: "autoSocialViralShadow", descKey: "autoSocialViralShadowDesc", category: "autopilot", scenario: "socialViral", mode: "shadow" },
+  { key: "ai_auto_social_viral", labelKey: "autoSocialViralLive", descKey: "autoSocialViralLiveDesc", category: "autopilot", scenario: "socialViral", mode: "live" },
 ]
 
 const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; accent: string }[] = [
@@ -69,6 +73,8 @@ const SCENARIOS: { key: Scenario; titleKey: string; descKey: string; icon: any; 
   { key: "kbClose", titleKey: "scenarioKbCloseTitle", descKey: "scenarioKbCloseDesc", icon: BookOpen, accent: "text-cyan-500" },
   { key: "stageAdvance", titleKey: "scenarioStageAdvanceTitle", descKey: "scenarioStageAdvanceDesc", icon: TrendingUp, accent: "text-purple-500" },
   { key: "meetingRecap", titleKey: "scenarioMeetingRecapTitle", descKey: "scenarioMeetingRecapDesc", icon: Video, accent: "text-teal-500" },
+  { key: "socialViral", titleKey: "scenarioSocialViralTitle", descKey: "scenarioSocialViralDesc", icon: Megaphone, accent: "text-pink-500" },
+  { key: "socialReply", titleKey: "scenarioSocialReplyTitle", descKey: "scenarioSocialReplyDesc", icon: MessagesSquare, accent: "text-sky-500" },
   { key: "renewal", titleKey: "scenarioRenewalTitle", descKey: "scenarioRenewalDesc", icon: RefreshCw, accent: "text-emerald-500" },
   { key: "duplicate", titleKey: "scenarioDuplicateTitle", descKey: "scenarioDuplicateDesc", icon: GitMerge, accent: "text-slate-500" },
   { key: "acknowledge", titleKey: "scenarioAckTitle", descKey: "scenarioAckDesc", icon: Clock, accent: "text-amber-500" },

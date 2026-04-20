@@ -145,6 +145,12 @@ const TIPS: Record<string, Tip[]> = {
     { id: "macro-categories", titleKey: "macroCatTitle", descKey: "macroCatDesc", ctaKey: "macroCatCta", href: "/settings/macros" },
     { id: "macro-order", titleKey: "macroOrderTitle", descKey: "macroOrderDesc", ctaKey: "macroOrderCta", href: "/settings/macros" },
   ],
+  "social-monitoring": [
+    { id: "smm-ai-reply", titleKey: "smmAiReplyTitle", descKey: "smmAiReplyDesc", ctaKey: "smmAiReplyCta", href: "/settings/ai-automation" },
+    { id: "smm-viral-alert", titleKey: "smmViralTitle", descKey: "smmViralDesc", ctaKey: "smmViralCta", href: "/settings/ai-automation" },
+    { id: "smm-sentiment-queue", titleKey: "smmSentimentTitle", descKey: "smmSentimentDesc", ctaKey: "smmSentimentCta", href: "/ai/actions" },
+    { id: "smm-keywords", titleKey: "smmKeywordsTitle", descKey: "smmKeywordsDesc", ctaKey: "smmKeywordsCta", href: "/social-monitoring" },
+  ],
   "ai-actions": [
     { id: "ai-actions-undo", titleKey: "aiActionsUndoTitle", descKey: "aiActionsUndoDesc", ctaKey: "aiActionsUndoCta", href: "/ai/actions" },
     { id: "ai-actions-bulk", titleKey: "aiActionsBulkTitle", descKey: "aiActionsBulkDesc", ctaKey: "aiActionsBulkCta", href: "/ai/actions" },

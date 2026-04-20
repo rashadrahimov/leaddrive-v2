@@ -257,6 +257,11 @@ export const TOUR_DEFINITIONS: Record<string, TourDef> = {
     { targetId: "ai-actions-filters", titleKey: "filtersTitle", descKey: "filtersDesc" },
     { targetId: "ai-actions-list", titleKey: "listTitle", descKey: "listDesc" },
   ]},
+  socialMonitoring: { steps: [
+    { targetId: "social-accounts", titleKey: "accountsTitle", descKey: "accountsDesc" },
+    { targetId: "social-feed", titleKey: "feedTitle", descKey: "feedDesc" },
+    { targetId: "social-ai", titleKey: "aiTitle", descKey: "aiDesc" },
+  ]},
   workflows: { steps: [
     { targetId: "workflows-list", titleKey: "listTitle", descKey: "listDesc" },
     { targetId: "workflows-new", titleKey: "newTitle", descKey: "newDesc" },
