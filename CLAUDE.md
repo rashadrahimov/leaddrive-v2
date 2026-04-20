@@ -2,6 +2,7 @@
 
 > Architecture, stack, dev commands → `docs/ARCHITECTURE.md`
 > Deploy procedure, server details, build notes → `docs/DEPLOYMENT.md`
+> Rate-limit coverage map + known gaps → `docs/rate-limit-policy.md`
 
 ## User Preferences
 
