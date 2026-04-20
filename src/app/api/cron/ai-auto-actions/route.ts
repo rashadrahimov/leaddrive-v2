@@ -304,7 +304,7 @@ async function runAutoFollowUp(orgId: string, now: Date, shadow: boolean): Promi
           status: "pending",
           relatedType: "deal",
           relatedId: deal.id,
-          createdBy: "system",
+          createdBy: null,
         },
       })
 
@@ -777,7 +777,7 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
                 status: "pending",
                 relatedType: action.entityType,
                 relatedId: action.entityId,
-                createdBy: "system",
+                createdBy: null,
               },
             })
           }
@@ -899,7 +899,7 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
                   status: "pending",
                   relatedType: "company",
                   relatedId: action.entityId,
-                  createdBy: "system",
+                  createdBy: null,
                 },
               })
             }
@@ -1016,7 +1016,7 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
                     status: "pending",
                     relatedType: payload.dealId ? "deal" : "contact",
                     relatedId: payload.dealId || payload.contactId || "",
-                    createdBy: "system",
+                    createdBy: null,
                   },
                 })
               }
