@@ -1259,8 +1259,8 @@ async function executeApprovedShadowActions(now: Date): Promise<number> {
 // ── Purge stale shadow actions ──
 
 async function purgeStaleShadowActions(now: Date): Promise<number> {
-  const pendingCutoff = new Date(now.getTime() - 30 * 86400000)
-  const rejectedCutoff = new Date(now.getTime() - 14 * 86400000)
+  const pendingCutoff = new Date(now.getTime() - 7 * 86400000)
+  const rejectedCutoff = new Date(now.getTime() - 7 * 86400000)
 
   const [pendingPurge, rejectedPurge] = await Promise.all([
     prisma.aiShadowAction.deleteMany({
