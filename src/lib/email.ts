@@ -167,12 +167,18 @@ export async function sendEmail({
 }) {
   const config = await getSmtpConfig(organizationId)
 
-  // When Resend is enabled globally (RESEND_API_KEY set), we use a single
-  // technical sender address `EMAIL_FROM_ADDRESS` for ALL tenants and just
-  // swap the friendly name to the organization's display name so recipients
-  // still see their brand. This removes the need for per-tenant SMTP setup.
+  // When Resend is enabled globally (BOTH RESEND_API_KEY and EMAIL_FROM_ADDRESS
+  // are explicitly set in env — not the constants' fallback values), we use a
+  // single technical sender address for ALL tenants and just swap the friendly
+  // name to the organization's display name so recipients still see their
+  // brand. This removes the need for per-tenant SMTP setup.
+  //
+  // Both env vars MUST be explicitly set: without EMAIL_FROM_ADDRESS we'd try
+  // to send from the constants default which won't be a verified Resend domain
+  // → every email would 400 from the Resend API.
   let resendFromStr: string | null = null
-  if (process.env.RESEND_API_KEY && EMAIL_FROM_ADDRESS) {
+  const explicitFrom = process.env.EMAIL_FROM_ADDRESS
+  if (process.env.RESEND_API_KEY && explicitFrom) {
     let orgName = EMAIL_FROM_NAME_FALLBACK
     if (organizationId) {
       const org = await prisma.organization.findUnique({
@@ -181,7 +187,7 @@ export async function sendEmail({
       })
       orgName = org?.name || orgName
     }
-    resendFromStr = `"${orgName}" <${EMAIL_FROM_ADDRESS}>`
+    resendFromStr = `"${orgName}" <${explicitFrom}>`
   }
 
   const fromEmail = resendFromStr
