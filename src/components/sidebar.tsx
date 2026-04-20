@@ -213,7 +213,11 @@ export function Sidebar({ org }: SidebarProps) {
 
     const pollAi = async () => {
       try {
-        const res = await fetch("/api/v1/ai-shadow-actions?status=pending&limit=1")
+        const since = typeof window !== "undefined" ? localStorage.getItem("aiActionsLastSeen") : null
+        const url = since
+          ? `/api/v1/ai-shadow-actions?status=pending&limit=1&since=${encodeURIComponent(since)}`
+          : "/api/v1/ai-shadow-actions?status=pending&limit=1"
+        const res = await fetch(url)
         if (!res.ok) return
         const data = await res.json()
         if (!cancelled && data?.pagination) setAiPendingCount(data.pagination.total || 0)

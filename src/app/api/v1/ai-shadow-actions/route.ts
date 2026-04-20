@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
   const status = url.searchParams.get("status") || "pending" // pending, approved, rejected
   const featureName = url.searchParams.get("feature") || undefined
   const q = (url.searchParams.get("q") || "").trim()
+  const sinceParam = url.searchParams.get("since") // ISO date → only return items newer than this
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"))
   const limit = Math.min(50, parseInt(url.searchParams.get("limit") || "20"))
 
@@ -30,6 +31,13 @@ export async function GET(req: NextRequest) {
 
   if (featureName) {
     where.featureName = featureName
+  }
+
+  if (sinceParam) {
+    const since = new Date(sinceParam)
+    if (!isNaN(since.getTime())) {
+      where.createdAt = { gt: since }
+    }
   }
 
   // Server-side full-text search across payload JSON fields that commonly hold identifiers

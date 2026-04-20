@@ -356,7 +356,13 @@ export default function AiActionsPage() {
     setLoading(false)
   }
 
-  useEffect(() => { fetchData("") }, [orgId])
+  useEffect(() => {
+    fetchData("")
+    // Mark the page as "seen" — clears the sidebar badge count
+    if (typeof window !== "undefined") {
+      localStorage.setItem("aiActionsLastSeen", new Date().toISOString())
+    }
+  }, [orgId])
 
   // Debounced server-side search
   useEffect(() => {
