@@ -60,7 +60,7 @@ function makeReq(opts: {
   return req
 }
 
-describe("middleware", () => {
+describe("middleware", async () => {
   beforeEach(() => {
     vi.clearAllMocks()
     // Default: rate limit allows
@@ -72,50 +72,50 @@ describe("middleware", () => {
 
   // ─── Auth redirect ────────────────────────────────────────
 
-  it("redirects unauthenticated users from /dashboard to /login", () => {
+  it("redirects unauthenticated users from /dashboard to /login", async () => {
     const req = makeReq({ pathname: "/dashboard", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/login")
     expect(res.headers.get("location")).toContain("callbackUrl=%2Fdashboard")
   })
 
-  it("redirects unauthenticated root '/' to /login", () => {
+  it("redirects unauthenticated root '/' to /login", async () => {
     const req = makeReq({ pathname: "/", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/login")
   })
 
   // ─── Public paths ─────────────────────────────────────────
 
-  it("allows /login without authentication", () => {
+  it("allows /login without authentication", async () => {
     const req = makeReq({ pathname: "/login", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     // Should pass through (200), not redirect
     expect(res.status).toBe(200)
   })
 
-  it("allows /portal paths without authentication", () => {
+  it("allows /portal paths without authentication", async () => {
     const req = makeReq({ pathname: "/portal/tickets", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(200)
   })
 
-  it("allows /api/health without authentication", () => {
+  it("allows /api/health without authentication", async () => {
     const req = makeReq({ pathname: "/api/health", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(200)
   })
 
   // ─── Header injection ─────────────────────────────────────
 
-  it("injects x-organization-id, x-user-id, x-user-role for authenticated users", () => {
+  it("injects x-organization-id, x-user-id, x-user-role for authenticated users", async () => {
     const session = {
       user: { id: "u1", organizationId: "org-42", role: "admin" },
     }
     const req = makeReq({ pathname: "/dashboard", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(200)
     // Headers are set on the request headers forwarded via NextResponse.next({ headers })
     expect(res.headers.get("x-organization-id")).toBe("org-42")
@@ -123,71 +123,71 @@ describe("middleware", () => {
     expect(res.headers.get("x-user-role")).toBe("admin")
   })
 
-  it("injects x-nonce header", () => {
+  it("injects x-nonce header", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "viewer" } }
     const req = makeReq({ pathname: "/dashboard", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.headers.get("x-nonce")).toBeTruthy()
   })
 
   // ─── Rate limiting ────────────────────────────────────────
 
-  it("returns 429 when auth rate limit is exceeded on POST /login", () => {
+  it("returns 429 when auth rate limit is exceeded on POST /login", async () => {
     vi.mocked(checkRateLimit).mockReturnValue(false)
     const req = makeReq({ pathname: "/login", method: "POST", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(429)
   })
 
-  it("does not rate-limit GET requests on auth paths", () => {
+  it("does not rate-limit GET requests on auth paths", async () => {
     vi.mocked(checkRateLimit).mockReturnValue(false)
     const req = makeReq({ pathname: "/login", method: "GET", auth: null })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     // GET on /login is a public path, should pass through (200)
     expect(res.status).toBe(200)
   })
 
   // ─── 2FA enforcement ──────────────────────────────────────
 
-  it("redirects to /login/verify-2fa when needs2fa is set", () => {
+  it("redirects to /login/verify-2fa when needs2fa is set", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "admin", needs2fa: true } }
     const req = makeReq({ pathname: "/dashboard", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/login/verify-2fa")
   })
 
-  it("redirects to /login/setup-2fa when needsSetup2fa is set", () => {
+  it("redirects to /login/setup-2fa when needsSetup2fa is set", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "admin", needsSetup2fa: true } }
     const req = makeReq({ pathname: "/dashboard", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/login/setup-2fa")
   })
 
   // ─── Admin-only settings ──────────────────────────────────
 
-  it("redirects non-admin from /settings/roles to root", () => {
+  it("redirects non-admin from /settings/roles to root", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "viewer" } }
     const req = makeReq({ pathname: "/settings/roles", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toMatch(/\/$/)
   })
 
-  it("allows admin to access /settings/security", () => {
+  it("allows admin to access /settings/security", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "admin" } }
     const req = makeReq({ pathname: "/settings/security", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(200)
   })
 
   // ─── Authenticated root redirect ─────────────────────────
 
-  it("redirects authenticated '/' to /dashboard", () => {
+  it("redirects authenticated '/' to /dashboard", async () => {
     const session = { user: { id: "u1", organizationId: "org-1", role: "admin" } }
     const req = makeReq({ pathname: "/", auth: session })
-    const res = authMiddleware(req)
+    const res = await authMiddleware(req)
     expect(res.status).toBe(307)
     expect(res.headers.get("location")).toContain("/dashboard")
   })

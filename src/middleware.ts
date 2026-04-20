@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 // Plan gating disabled — import kept for reference
 // import { canAccessModule } from "@/lib/plan-config"
-import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
+import { checkRateLimit, RATE_LIMIT_CONFIG, hashForRateLimit } from "@/lib/rate-limit"
 
 const publicPaths = ["/login", "/forgot-password", "/reset-password", "/api/auth", "/api/v1/auth/sms-otp", "/api/v1/settings/auth-methods", "/api/v1/public", "/portal", "/home", "/pricing", "/plans", "/features", "/demo", "/about", "/contact", "/blog", "/legal", "/landing", "/marketing", "/p", "/_custom-domain", "/embed", "/s", "/widget.js"]
 
@@ -108,7 +108,7 @@ function withCspHeaders(response: NextResponse, nonce: string, allowSameOriginFr
   return response
 }
 
-const authMiddleware = auth((req) => {
+const authMiddleware = auth(async (req) => {
   const { pathname } = req.nextUrl
   const nonce = crypto.randomUUID()
   const host = req.headers.get("host")?.replace(/:\d+$/, "") || ""
@@ -260,8 +260,21 @@ const authMiddleware = auth((req) => {
     return withCspHeaders(NextResponse.next(), nonce)
   }
 
-  // Allow API key authenticated requests (Bearer ld_...) — auth checked in api-auth.ts
+  // API-key authenticated requests (Bearer ld_...) — rate-limit by hashed key BEFORE
+  // bypassing session auth. Auth itself is verified in src/lib/api-auth.ts. A leaked
+  // key would otherwise allow unbounded flooding until manual revocation.
   if (pathname.startsWith("/api/") && req.headers.get("authorization")?.startsWith("Bearer ld_")) {
+    const apiKey = req.headers.get("authorization")!.slice("Bearer ".length)
+    const keyHash = await hashForRateLimit(apiKey)
+    if (!checkRateLimit(`apikey:${keyHash}`, RATE_LIMIT_CONFIG.apiKey)) {
+      return withCspHeaders(
+        NextResponse.json(
+          { error: "API key rate limit exceeded. Max 300 req/min." },
+          { status: 429 },
+        ),
+        nonce,
+      )
+    }
     return withCspHeaders(NextResponse.next(), nonce)
   }
 

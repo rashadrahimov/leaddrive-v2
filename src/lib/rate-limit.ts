@@ -7,6 +7,21 @@ export const RATE_LIMIT_CONFIG = {
   api: { maxRequests: 100, windowMs: 60000 } as RateLimitConfig,
   ai: { maxRequests: 20, windowMs: 60000 } as RateLimitConfig,
   public: { maxRequests: 10, windowMs: 60000 } as RateLimitConfig,
+  apiKey: { maxRequests: 300, windowMs: 60000 } as RateLimitConfig,
+}
+
+/**
+ * Hash a sensitive value (API key, token, etc.) for use as a rate-limit key.
+ * SHA-256 truncated to 16 hex chars — distinct enough at scale, avoids storing
+ * raw secrets in memory or leaking them via logs.
+ * Uses Web Crypto (Edge-compatible).
+ */
+export async function hashForRateLimit(value: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(buf))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16)
 }
 
 // Sliding window rate limiter — stores timestamps of recent requests per key.
