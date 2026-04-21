@@ -17,33 +17,91 @@ import { createHmac, timingSafeEqual } from "crypto"
  */
 
 // GET — Meta webhook verification (hub.challenge)
+// ═════════════════════════════════════════════════════════════════════════
+// Per-tenant webhook routing.
+//
+// Each tenant configures their own Meta app and points the app's webhook
+// callback URL to /api/v1/webhooks/whatsapp?t={tenant-slug}. That slug lets
+// us resolve the tenant before we even look at the payload, so each tenant
+// uses its own verifyToken / appSecret stored in ChannelConfig.
+//
+// Backward compat for the LeadDrive tenant (currently the only one whose
+// Meta app still points at the un-suffixed URL): if `?t=` is missing we
+// fall back to the env WHATSAPP_VERIFY_TOKEN / WHATSAPP_APP_SECRET. This
+// fallback is logged as DEPRECATED and will be removed once LeadDrive's
+// Meta callback is updated to `?t=leaddrive`.
+// ═════════════════════════════════════════════════════════════════════════
+
+async function resolveTenantWhatsAppConfig(
+  slug: string | null,
+): Promise<{ organizationId: string; verifyToken: string | null; appSecret: string | null; channelConfigId: string } | null> {
+  if (!slug) return null
+  const org = await prisma.organization.findUnique({ where: { slug }, select: { id: true } })
+  if (!org) return null
+  const cfg = await prisma.channelConfig.findFirst({
+    where: { organizationId: org.id, channelType: "whatsapp", isActive: true },
+    select: { id: true, verifyToken: true, appSecret: true },
+  })
+  if (!cfg) return null
+  return {
+    organizationId: org.id,
+    channelConfigId: cfg.id,
+    verifyToken: cfg.verifyToken,
+    appSecret: cfg.appSecret,
+  }
+}
+
 export async function GET(req: NextRequest) {
   const mode = req.nextUrl.searchParams.get("hub.mode")
   const token = req.nextUrl.searchParams.get("hub.verify_token")
   const challenge = req.nextUrl.searchParams.get("hub.challenge")
+  const tenantSlug = req.nextUrl.searchParams.get("t")
 
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN
-  if (!verifyToken) {
-    console.error("[WA Webhook] WHATSAPP_VERIFY_TOKEN not set")
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 })
+  // Per-tenant verification
+  if (tenantSlug) {
+    const cfg = await resolveTenantWhatsAppConfig(tenantSlug)
+    if (!cfg) {
+      console.log(`[WA Webhook] GET: unknown tenant slug "${tenantSlug}"`)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+    if (mode === "subscribe" && cfg.verifyToken && token === cfg.verifyToken) {
+      console.log(`[WA Webhook] GET: verified for tenant "${tenantSlug}"`)
+      return new NextResponse(challenge, { status: 200 })
+    }
+    console.log(`[WA Webhook] GET: verify token mismatch for tenant "${tenantSlug}"`)
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  if (mode === "subscribe" && token === verifyToken) {
-    console.log("[WA Webhook] Verification successful")
+  // DEPRECATED: env fallback for LeadDrive's un-suffixed webhook URL.
+  // Remove after LeadDrive's Meta app points to ?t=leaddrive.
+  const envVerifyToken = process.env.WHATSAPP_VERIFY_TOKEN
+  if (!envVerifyToken) {
+    console.error("[WA Webhook] GET: no ?t= tenant slug and no env WHATSAPP_VERIFY_TOKEN — reject")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+  if (mode === "subscribe" && token === envVerifyToken) {
+    console.warn("[WA Webhook] GET: verified via DEPRECATED env token. Update Meta app to use ?t=leaddrive.")
     return new NextResponse(challenge, { status: 200 })
   }
-
-  console.log("[WA Webhook] Verification failed — token mismatch")
+  console.log("[WA Webhook] GET: verification failed")
   return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 }
 
-// Verify Meta webhook signature (X-Hub-Signature-256)
-function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null): boolean {
-  const appSecret = process.env.WHATSAPP_APP_SECRET
-  if (!appSecret) return true // Skip verification if no secret configured (backward compat)
+/**
+ * Verify Meta's X-Hub-Signature-256 using the tenant's appSecret. If no
+ * tenant context is available yet (POST without `?t=`), fall back to env
+ * WHATSAPP_APP_SECRET for the legacy LeadDrive path.
+ */
+function verifyWhatsAppSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+  appSecret: string | null,
+): boolean {
+  const secret = appSecret || process.env.WHATSAPP_APP_SECRET
+  if (!secret) return true // Skip verification if no secret configured (backward compat)
   if (!signatureHeader) return false
 
-  const expectedSig = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex")
+  const expectedSig = "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex")
   try {
     return timingSafeEqual(Buffer.from(expectedSig), Buffer.from(signatureHeader))
   } catch {
@@ -53,12 +111,18 @@ function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null
 
 // POST — Incoming messages from WhatsApp Cloud API
 export async function POST(req: NextRequest) {
+  const tenantSlug = req.nextUrl.searchParams.get("t")
+
   try {
-    // SECURITY: Verify webhook signature from Meta
     const rawBody = await req.text()
     const signature = req.headers.get("x-hub-signature-256")
-    if (!verifyWhatsAppSignature(rawBody, signature)) {
-      console.error("[WA Webhook] Invalid signature — rejecting request")
+
+    // Resolve tenant context up front so we can use its appSecret for signature
+    // verification AND scope the message processing. Without `?t=` we fall back
+    // to the env appSecret (legacy LeadDrive path).
+    const tenantCtx = await resolveTenantWhatsAppConfig(tenantSlug)
+    if (!verifyWhatsAppSignature(rawBody, signature, tenantCtx?.appSecret || null)) {
+      console.error(`[WA Webhook] POST: invalid signature (tenant=${tenantSlug || "(env)"})`)
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
 
@@ -91,29 +155,48 @@ export async function POST(req: NextRequest) {
     const phoneNumberId = metadata?.phone_number_id
     const contacts = value.contacts // [{ profile: { name }, wa_id }]
 
-    // Find channel config by phone number ID
-    const channelConfig = await prisma.channelConfig.findFirst({
-      where: {
-        channelType: "whatsapp",
-        phoneNumber: phoneNumberId,
-        isActive: true,
-      },
-    })
+    // ─── Tenant routing ──────────────────────────────────────────
+    // 1. If `?t=` is set and resolved, prefer that tenant's ChannelConfig —
+    //    the signature already matched its appSecret so this is authenticated.
+    //    We still verify phoneNumberId belongs to this tenant as a defence-
+    //    in-depth check against a misconfigured Meta app.
+    // 2. Without `?t=`, look up by phoneNumberId / phoneNumber (legacy column
+    //    for un-migrated rows). No more "first active config" fallback — the
+    //    previous behaviour routed cross-tenant inbound into random orgs.
+    let channelConfig: { id: string; organizationId: string } | null = null
 
-    if (!channelConfig) {
-      // Fallback: try to find any active whatsapp config
-      const fallbackConfig = await prisma.channelConfig.findFirst({
-        where: { channelType: "whatsapp", isActive: true },
+    if (tenantCtx) {
+      const row = await prisma.channelConfig.findFirst({
+        where: {
+          id: tenantCtx.channelConfigId,
+          OR: [
+            { phoneNumberId: String(phoneNumberId || "") },
+            { phoneNumber: String(phoneNumberId || "") },
+          ],
+        },
       })
-
-      if (!fallbackConfig) {
-        console.log(`[WA Webhook] No active WhatsApp config for phone_number_id: ${sanitizeLog(String(phoneNumberId))}`)
-
+      if (row) channelConfig = { id: row.id, organizationId: row.organizationId }
+      else {
+        console.warn(`[WA Webhook] POST: tenant=${tenantSlug} but phone_number_id=${sanitizeLog(String(phoneNumberId))} doesn't match its ChannelConfig. Ignoring.`)
         return NextResponse.json({ ok: true })
       }
+    } else {
+      // Legacy path: look up purely by phoneNumberId.
+      const row = await prisma.channelConfig.findFirst({
+        where: {
+          channelType: "whatsapp",
+          isActive: true,
+          OR: [
+            { phoneNumberId: String(phoneNumberId || "") },
+            { phoneNumber: String(phoneNumberId || "") },
+          ],
+        },
+      })
+      if (row) channelConfig = { id: row.id, organizationId: row.organizationId }
+    }
 
-      // Use fallback
-      await processMessages(messages, contacts, fallbackConfig)
+    if (!channelConfig) {
+      console.log(`[WA Webhook] POST: no matching ChannelConfig for phone_number_id=${sanitizeLog(String(phoneNumberId))} (tenant=${tenantSlug || "none"}) — ignoring to avoid cross-tenant leak`)
       return NextResponse.json({ ok: true })
     }
 

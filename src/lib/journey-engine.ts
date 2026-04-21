@@ -211,52 +211,53 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
       }
 
       case "send_whatsapp": {
+        // Journey "send_whatsapp" step. The step's config.templateName wins;
+        // otherwise we fall back to the org's default
+        // ChannelConfig.settings.whatsappJourneyDefaultTemplate. If neither is
+        // set → skip with a log entry instead of sending the old hardcoded
+        // Azerbaijani invoice_payment_reminder to whomever happens to be the
+        // enrollment target.
+        if (!recipientPhone) {
+          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp skipped (no phone)` }
+          break
+        }
         const waChannel = await prisma.channelConfig.findFirst({
           where: { organizationId: orgId, channelType: "whatsapp", isActive: true },
         })
-        if (waChannel?.apiKey && waChannel?.phoneNumber && recipientPhone) {
-          try {
-            // Use approved template with positional parameters (v20.0 named vars)
-            const waRes = await fetch(`https://graph.facebook.com/v21.0/${waChannel.phoneNumber}/messages`, {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${waChannel.apiKey}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                messaging_product: "whatsapp",
-                to: recipientPhone,
-                type: "template",
-                template: {
-                  name: "invoice_payment_reminder",
-                  language: { code: "az" },
-                  components: [
-                    {
-                      type: "body",
-                      parameters: [
-                        { type: "text", parameter_name: "customer_name", text: recipientName || recipientPhone },
-                        { type: "text", parameter_name: "invoice_number", text: invoiceNumber || "-" },
-                        { type: "text", parameter_name: "amount", text: invoiceAmount || "-" },
-                        { type: "text", parameter_name: "balance_due", text: invoiceBalanceDue || "-" },
-                        { type: "text", parameter_name: "due_date", text: invoiceDueDate || "-" },
-                      ],
-                    },
-                  ],
-                },
-              }),
-            })
-            const waData = await waRes.json()
-            if (waData.messages?.[0]?.id) {
-              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp sent to ${recipientPhone}: ${waData.messages[0].id}` }
-            } else {
-              result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp API: ${JSON.stringify(waData).slice(0, 200)}` }
-            }
-          } catch (waErr: any) {
-            result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp error: ${waErr.message}` }
+        const configTemplate = (config as any).templateName as string | undefined
+        const settingsTemplate = (waChannel?.settings as any)?.whatsappJourneyDefaultTemplate as string | undefined
+        const templateName = configTemplate || settingsTemplate
+        if (!templateName) {
+          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp skipped (no template configured; set step.config.templateName or ChannelConfig.settings.whatsappJourneyDefaultTemplate)` }
+          break
+        }
+        try {
+          const { sendWhatsAppTemplate } = await import("@/lib/whatsapp")
+          const waRes = await sendWhatsAppTemplate({
+            to: recipientPhone,
+            templateName,
+            languageCode: (config as any).languageCode,
+            variables: {
+              "1": recipientName || recipientPhone,
+              "2": invoiceNumber || "-",
+              "3": invoiceAmount || "-",
+              "4": invoiceBalanceDue || "-",
+              "5": invoiceDueDate || "-",
+              customer_name: recipientName || recipientPhone,
+              invoice_number: invoiceNumber || "-",
+              amount: invoiceAmount || "-",
+              balance_due: invoiceBalanceDue || "-",
+              due_date: invoiceDueDate || "-",
+            },
+            organizationId: orgId,
+          })
+          if (waRes.success) {
+            result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp sent to ${recipientPhone}: ${waRes.messageId}` }
+          } else {
+            result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp error: ${waRes.error}` }
           }
-        } else {
-          console.log(`[Journey WhatsApp] Missing config or phone. To: ${recipientPhone}`)
-          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp logged (no config) → ${recipientPhone || "(no phone)"}` }
+        } catch (waErr: any) {
+          result = { stepId: currentStep.id, stepType: "send_whatsapp", status: "completed", message: `WhatsApp error: ${waErr.message}` }
         }
         break
       }
