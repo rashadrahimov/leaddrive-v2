@@ -178,6 +178,59 @@ const authMiddleware = auth(async (req) => {
     }
   }
 
+  // Cross-tenant binding: the session cookie is shared across
+  // *.leaddrivecrm.org (COOKIE_DOMAIN=.leaddrivecrm.org), so a user logged
+  // into tenant X could land on tenant Y's subdomain and operate with X's
+  // session, seeing their own org's data under Y's URL. Enforce that the
+  // session's organizationSlug matches the subdomain slug. Runs BEFORE the
+  // publicPaths bypass because that bypass uses a loose `startsWith` match
+  // (e.g. `/contacts` matches `/contact`) and would otherwise skip the
+  // check on authenticated tenant pages.
+  //
+  // Exceptions:
+  //   - Superadmin bypasses (can inspect any tenant from the admin UI).
+  //   - Auth-related paths (login, OAuth callback, SMS-OTP etc.) must
+  //     remain reachable so the user can re-authenticate after being
+  //     kicked out. Without this the logout→/login redirect would loop.
+  //   - Unauthenticated requests (no req.auth) fall through to the
+  //     standard unauth redirect below; no cookie to clear.
+  const AUTH_BYPASS_FOR_XTENANT = [
+    "/login",
+    "/api/auth",
+    "/api/v1/auth",
+    "/api/health",
+    "/_next",
+  ]
+  const isXTenantAuthBypass = AUTH_BYPASS_FOR_XTENANT.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  )
+  if (tenantSlug && req.auth && !isXTenantAuthBypass) {
+    const xtSession = req.auth as any
+    const xtRole = xtSession?.user?.role
+    const xtSessionSlug = xtSession?.user?.organizationSlug as string | undefined
+    if (xtRole !== "superadmin" && xtSessionSlug !== tenantSlug) {
+      const proto = req.headers.get("x-forwarded-proto") || "https"
+      const loginUrl = new URL("/login", `${proto}://${host}`)
+      loginUrl.searchParams.set("error", "cross-tenant")
+      const response = NextResponse.redirect(loginUrl)
+      const cookieName = process.env.NODE_ENV === "production"
+        ? "__Secure-authjs.session-token"
+        : "authjs.session-token"
+      response.cookies.set(cookieName, "", {
+        expires: new Date(0),
+        path: "/",
+        domain: process.env.COOKIE_DOMAIN || undefined,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        httpOnly: true,
+      })
+      console.warn(
+        `[cross-tenant-block] session-slug=${xtSessionSlug || "(none)"} host-slug=${tenantSlug} path=${pathname} user=${xtSession?.user?.id || "?"}`,
+      )
+      return withCspHeaders(response, nonce)
+    }
+  }
+
   // Rate limit auth-related endpoints
   if (RATE_LIMITED_PATHS.some((p) => pathname.startsWith(p)) && req.method === "POST") {
     // Prefer x-real-ip (set by Nginx), fallback to last x-forwarded-for entry (closest proxy)

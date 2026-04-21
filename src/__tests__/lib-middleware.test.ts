@@ -326,4 +326,145 @@ describe("middleware", async () => {
     expect(rlLogs).toHaveLength(0)
     warnSpy.mockRestore()
   })
+
+  // ─── Cross-tenant binding ─────────────────────────────────
+  //
+  // Session cookie is shared across *.leaddrivecrm.org (COOKIE_DOMAIN).
+  // Middleware must not let a user whose session is for tenant X operate
+  // on tenant Y's subdomain — redirect to /login?error=cross-tenant and
+  // clear the shared cookie.
+
+  it("redirects to /login?error=cross-tenant when session org differs from subdomain slug", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const session = {
+      user: {
+        id: "u1",
+        organizationId: "org-leaddrive",
+        organizationSlug: "leaddrive",
+        role: "admin",
+      },
+    }
+    const req = makeReq({
+      pathname: "/dashboard",
+      host: "afigroup.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(307)
+    const location = res.headers.get("location") || ""
+    expect(location).toContain("/login")
+    expect(location).toContain("error=cross-tenant")
+    // Redirect should stay on the tenant subdomain (host), not bounce to app.
+    expect(location).toContain("afigroup.leaddrivecrm.org")
+    // Session cookie must be cleared so the user lands on /login fresh.
+    const setCookie = res.headers.get("set-cookie") || ""
+    expect(setCookie).toMatch(/authjs\.session-token=;/)
+    // Structured warn for ops visibility.
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[cross-tenant-block\] session-slug=leaddrive host-slug=afigroup/),
+    )
+    warnSpy.mockRestore()
+  })
+
+  it("allows access when session org slug matches subdomain slug", async () => {
+    const session = {
+      user: {
+        id: "u1",
+        organizationId: "org-afi",
+        organizationSlug: "afigroup",
+        role: "admin",
+      },
+    }
+    const req = makeReq({
+      pathname: "/dashboard",
+      host: "afigroup.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(200)
+    expect(res.headers.get("x-tenant-slug")).toBe("afigroup")
+    expect(res.headers.get("x-organization-id")).toBe("org-afi")
+  })
+
+  it("lets superadmin pass through on any tenant subdomain (bypass)", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const session = {
+      user: {
+        id: "u1",
+        organizationId: "org-leaddrive",
+        organizationSlug: "leaddrive",
+        role: "superadmin",
+      },
+    }
+    const req = makeReq({
+      pathname: "/dashboard",
+      host: "afigroup.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(200)
+    // No cross-tenant warning should fire for superadmin.
+    const crossTenantLogs = warnSpy.mock.calls.filter(
+      (c) => typeof c[0] === "string" && c[0].includes("[cross-tenant-block]"),
+    )
+    expect(crossTenantLogs).toHaveLength(0)
+    warnSpy.mockRestore()
+  })
+
+  it("blocks when session has no organizationSlug at all (old token)", async () => {
+    // JWTs issued before the organizationSlug field existed lack the slug.
+    // These must fail closed on tenant subdomains — safer to force re-login
+    // than to risk cross-tenant leakage.
+    const session = {
+      user: { id: "u1", organizationId: "org-leaddrive", role: "admin" },
+    }
+    const req = makeReq({
+      pathname: "/dashboard",
+      host: "zeytunpharm.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(307)
+    expect(res.headers.get("location")).toContain("error=cross-tenant")
+  })
+
+  it("does not run cross-tenant check on the app subdomain", async () => {
+    const session = {
+      user: {
+        id: "u1",
+        organizationId: "org-leaddrive",
+        organizationSlug: "leaddrive",
+        role: "admin",
+      },
+    }
+    const req = makeReq({
+      pathname: "/dashboard",
+      host: "app.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    // app.* is reserved — getOrgSubdomain returns null, no tenant binding check.
+    expect(res.status).toBe(200)
+  })
+
+  it("does not run cross-tenant check on public paths (/login)", async () => {
+    // User lands on tenant subdomain /login with a stale cross-tenant cookie.
+    // /login itself must not redirect (else infinite loop). The cross-tenant
+    // check only runs on authenticated paths.
+    const session = {
+      user: {
+        id: "u1",
+        organizationId: "org-leaddrive",
+        organizationSlug: "leaddrive",
+        role: "admin",
+      },
+    }
+    const req = makeReq({
+      pathname: "/login",
+      host: "afigroup.leaddrivecrm.org",
+      auth: session,
+    })
+    const res = await authMiddleware(req)
+    expect(res.status).toBe(200)
+  })
 })

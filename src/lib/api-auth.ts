@@ -14,6 +14,44 @@ const PW_CHECK_INTERVAL = 60_000 // 60 seconds
 const orgCache = new Map<string, { checkedAt: number; isActive: boolean; plan: string; addons: string[]; modules: Record<string, boolean> }>()
 const ORG_CACHE_INTERVAL = 30_000 // 30 seconds
 
+// In-memory cache for orgId → slug (used for cross-tenant binding check)
+const orgSlugCache = new Map<string, { checkedAt: number; slug: string }>()
+const ORG_SLUG_CACHE_INTERVAL = 60_000 // 60 seconds — slug rarely changes
+
+async function getOrgSlug(orgId: string): Promise<string> {
+  const now = Date.now()
+  const cached = orgSlugCache.get(orgId)
+  if (cached && now - cached.checkedAt < ORG_SLUG_CACHE_INTERVAL) return cached.slug
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { slug: true },
+    })
+    const slug = org?.slug || ""
+    orgSlugCache.set(orgId, { checkedAt: now, slug })
+    return slug
+  } catch {
+    return cached?.slug ?? ""
+  }
+}
+
+/**
+ * Cross-tenant binding defense-in-depth: middleware already redirects browser
+ * traffic on a tenant subdomain whose session belongs to a different org, but
+ * direct API calls (or a race where middleware didn't block) get a second
+ * check here. Compares the x-tenant-slug header (set by middleware from the
+ * {slug}.leaddrivecrm.org host) against the slug of the authenticated org.
+ * Returns true if allowed, false if mismatch.
+ */
+async function tenantBindingOk(req: NextRequest, orgId: string, role: string): Promise<boolean> {
+  const tenantSlug = req.headers.get("x-tenant-slug")
+  if (!tenantSlug) return true // not on a tenant subdomain
+  if (role === "superadmin") return true // superadmin bypass
+  if (!orgId) return false
+  const orgSlug = await getOrgSlug(orgId)
+  return orgSlug === tenantSlug
+}
+
 interface AuthResult {
   orgId: string
   userId: string
@@ -152,6 +190,9 @@ export async function requireAuth(
           return NextResponse.json({ error: "Forbidden", message: `API key missing scope: ${requiredScope}` }, { status: 403 })
         }
       }
+      if (!(await tenantBindingOk(req, apiKeyAuth.orgId, apiKeyAuth.role))) {
+        return NextResponse.json({ error: "Cross-tenant request blocked" }, { status: 403 })
+      }
       return apiKeyAuth
     }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -170,6 +211,12 @@ export async function requireAuth(
     role: (rawSession.user.role || "viewer") as Role,
     email: rawSession.user.email || "",
     name: rawSession.user.name || "",
+  }
+
+  // SECURITY: Cross-tenant binding check (defense-in-depth; middleware enforces
+  // the primary check on page navigation, this catches direct API calls).
+  if (!(await tenantBindingOk(req, session.orgId, session.role))) {
+    return NextResponse.json({ error: "Cross-tenant request blocked" }, { status: 403 })
   }
 
   // SECURITY: Check if password was changed after JWT was issued (runs on Node.js, not Edge)

@@ -77,6 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name,
             role: user.role,
             organizationId: user.organizationId,
+            organizationSlug: user.organization.slug,
             organizationName: user.organization.name,
             plan: user.organization.plan,
             // 2FA flags
@@ -188,6 +189,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.name = dbUser.name
           token.role = dbUser.role
           token.organizationId = dbUser.organizationId
+          token.organizationSlug = dbUser.organization?.slug || ""
           token.organizationName = dbUser.organization?.name || ""
           token.plan = dbUser.organization?.plan || "starter"
           token.addons = dbUser.organization?.addons || []
@@ -215,15 +217,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (updateData.name) token.name = updateData.name
       }
       // Periodically refresh name from DB (every token rotation)
+      // Also backfills organizationSlug for JWTs issued before the field existed.
       if (!user && token.email) {
         try {
           const freshUser = await prisma.user.findFirst({
             where: { email: token.email as string },
-            select: { name: true, role: true },
+            select: {
+              name: true,
+              role: true,
+              organizationId: true,
+              organization: { select: { slug: true } },
+            },
           })
           if (freshUser) {
             token.name = freshUser.name
             token.role = freshUser.role
+            if (freshUser.organizationId) token.organizationId = freshUser.organizationId
+            if (freshUser.organization?.slug) token.organizationSlug = freshUser.organization.slug
           }
         } catch {
           // Non-critical — keep existing token values
@@ -240,6 +250,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: token.name as string,
           role: token.role as string,
           organizationId: token.organizationId as string,
+          organizationSlug: (token.organizationSlug as string) || "",
           organizationName: token.organizationName as string,
           plan: token.plan as string,
           addons: (token.addons as string[]) || [],

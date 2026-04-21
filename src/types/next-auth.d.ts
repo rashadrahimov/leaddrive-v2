@@ -5,6 +5,7 @@ declare module "next-auth" {
   interface User {
     role?: string
     organizationId?: string
+    organizationSlug?: string
     organizationName?: string
     plan?: string
   }
@@ -17,6 +18,7 @@ declare module "next-auth" {
       image?: string | null
       role: string
       organizationId: string
+      organizationSlug: string
       organizationName: string
       plan: string
     }
@@ -27,6 +29,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     role?: string
     organizationId?: string
+    organizationSlug?: string
     organizationName?: string
     plan?: string
   }

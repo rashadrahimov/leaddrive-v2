@@ -348,6 +348,132 @@ describe("requireAuth", () => {
     expect(result).toBeInstanceOf(NextResponse)
     expect((result as NextResponse).status).toBe(403)
   })
+
+  // ─── Cross-tenant binding (defense-in-depth) ─────────────
+  // Middleware already blocks mismatched subdomain+session at the edge, but
+  // a direct API call (Host-spoof, race, or someone stripping middleware)
+  // must also be blocked by requireAuth. When x-tenant-slug is set, it must
+  // match the slug of the session's organization.
+
+  it("returns 403 when x-tenant-slug does not match session org slug", async () => {
+    // Session for LeadDrive org; request coming to afigroup.leaddrivecrm.org
+    const uniqueOrgId = `org-leaddrive-${Date.now()}`
+    vi.mocked(auth).mockResolvedValue({
+      user: { ...validSession.user, organizationId: uniqueOrgId },
+    } as any)
+    vi.mocked(resolveModuleFromPath).mockReturnValue(null)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      id: uniqueOrgId,
+      slug: "leaddrive", // actual slug on the org row
+      isActive: true,
+      plan: "starter",
+      addons: [],
+      features: [],
+    } as any)
+
+    const req = makeRequest("/api/v1/contacts", "GET", { "x-tenant-slug": "afigroup" })
+    const result = await requireAuth(req)
+    expect(result).toBeInstanceOf(NextResponse)
+    expect((result as NextResponse).status).toBe(403)
+    const json = await (result as NextResponse).json()
+    expect(json.error).toContain("Cross-tenant")
+  })
+
+  it("passes when x-tenant-slug matches session org slug", async () => {
+    const uniqueOrgId = `org-afi-${Date.now()}`
+    vi.mocked(auth).mockResolvedValue({
+      user: { ...validSession.user, organizationId: uniqueOrgId },
+    } as any)
+    vi.mocked(resolveModuleFromPath).mockReturnValue(null)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      id: uniqueOrgId,
+      slug: "afigroup",
+      isActive: true,
+      plan: "starter",
+      addons: [],
+      features: [],
+    } as any)
+
+    const req = makeRequest("/api/v1/contacts", "GET", { "x-tenant-slug": "afigroup" })
+    const result = await requireAuth(req)
+    expect(result).not.toBeInstanceOf(NextResponse)
+    expect((result as any).orgId).toBe(uniqueOrgId)
+  })
+
+  it("superadmin bypasses cross-tenant check", async () => {
+    const uniqueOrgId = `org-sa-${Date.now()}`
+    vi.mocked(auth).mockResolvedValue({
+      user: { ...validSession.user, organizationId: uniqueOrgId, role: "superadmin" },
+    } as any)
+    vi.mocked(resolveModuleFromPath).mockReturnValue(null)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      id: uniqueOrgId,
+      slug: "leaddrive",
+      isActive: true,
+      plan: "starter",
+      addons: [],
+      features: [],
+    } as any)
+
+    // Superadmin on afigroup subdomain — should pass even with mismatch.
+    const req = makeRequest("/api/v1/contacts", "GET", { "x-tenant-slug": "afigroup" })
+    const result = await requireAuth(req)
+    expect(result).not.toBeInstanceOf(NextResponse)
+    expect((result as any).role).toBe("superadmin")
+  })
+
+  it("returns 403 when API-key's org slug does not match x-tenant-slug", async () => {
+    vi.mocked(auth).mockResolvedValue(null as any)
+    vi.mocked(getMobileAuth).mockReturnValue(null)
+    vi.mocked(resolveModuleFromPath).mockReturnValue(null)
+    const uniqueOrgId = `org-apikey-xt-${Date.now()}`
+
+    vi.mocked(prisma.apiKey.findFirst).mockResolvedValue({
+      id: "key-1",
+      organizationId: uniqueOrgId,
+      createdBy: "user-api",
+      name: "API Key",
+      scopes: ["read:contacts"],
+      expiresAt: null,
+    } as any)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      id: uniqueOrgId,
+      slug: "leaddrive",
+    } as any)
+
+    const req = makeRequest("/api/v1/contacts", "GET", {
+      authorization: "Bearer ld_test_key",
+      "x-tenant-slug": "afigroup",
+    })
+    const result = await requireAuth(req)
+    expect(result).toBeInstanceOf(NextResponse)
+    expect((result as NextResponse).status).toBe(403)
+    const json = await (result as NextResponse).json()
+    expect(json.error).toContain("Cross-tenant")
+  })
+
+  it("does not run cross-tenant check when x-tenant-slug is absent", async () => {
+    // e.g. app.leaddrivecrm.org or marketing — middleware doesn't inject
+    // x-tenant-slug there. requireAuth must still succeed on normal auth.
+    const uniqueOrgId = `org-noslug-${Date.now()}`
+    vi.mocked(auth).mockResolvedValue({
+      user: { ...validSession.user, organizationId: uniqueOrgId },
+    } as any)
+    vi.mocked(resolveModuleFromPath).mockReturnValue(null)
+    vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+      id: uniqueOrgId,
+      slug: "leaddrive",
+      isActive: true,
+      plan: "starter",
+      addons: [],
+      features: [],
+    } as any)
+
+    const req = makeRequest("/api/v1/contacts", "GET")
+    const result = await requireAuth(req)
+    expect(result).not.toBeInstanceOf(NextResponse)
+    expect((result as any).orgId).toBe(uniqueOrgId)
+  })
 })
 
 // ===========================================================================
