@@ -300,11 +300,23 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
   const client = getClient()
   if (!client) return textFallback(textType, tone, instructions, contextName, contactName, industry, langName)
 
-  try {
-    const prompt = textType === "Email"
-      ? `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — the user wants you to naturally weave this idea into the email (do NOT copy-paste it literally, rephrase it elegantly and make it part of the message flow): "${instructions}"\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`
-      : `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars)", "textType": "SMS", "tone": "${tone}"}`
+  // Per-channel prompt adapters. Email is the only one that gets a subject
+  // line. SMS is bound to the classic 160-char ceiling. WhatsApp / Telegram
+  // are conversational — longer than SMS, shorter than email, emoji OK but
+  // never spammy, two short paragraphs max.
+  const promptsByType: Record<string, string> = {
+    Email:
+      `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — the user wants you to naturally weave this idea into the email (do NOT copy-paste it literally, rephrase it elegantly and make it part of the message flow): "${instructions}"\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`,
+    SMS:
+      `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars, no emoji, plain)", "textType": "SMS", "tone": "${tone}"}`,
+    WhatsApp:
+      `Write a WhatsApp business message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRules: 2-4 short sentences max, conversational but professional, one relevant emoji is OK (never more than one), no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "WhatsApp message body", "textType": "WhatsApp", "tone": "${tone}"}`,
+    Telegram:
+      `Write a Telegram business message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRules: 2-4 sentences max, conversational, Telegram-friendly (can use bold via *asterisks* sparingly), one relevant emoji max, no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "Telegram message body", "textType": "Telegram", "tone": "${tone}"}`,
+  }
+  const prompt = promptsByType[textType] || promptsByType.Email
 
+  try {
     const piiMasker = new PiiMasker()
     const maskedPrompt = piiMasker.mask(prompt)
     const t0 = Date.now()
@@ -330,25 +342,34 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
 }
 
 function textFallback(textType: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string) {
-  const fb: Record<string, { subject: string; body: string; sms: string }> = {
+  // Fallback copy used when STRIPE/ANTHROPIC key is missing or the model
+  // call failed. Messaging channels (WhatsApp / Telegram) reuse the SMS
+  // body — it's short and friendly enough to work for all of them.
+  const fb: Record<string, { subject: string; body: string; sms: string; messenger: string }> = {
     Russian: {
       subject: "Деловое предложение от нашей компании",
       body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\nLeadDrive Inc.`,
       sms: `Здравствуйте, ${contactName}! LeadDrive предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
+      messenger: `Здравствуйте, ${contactName}! 👋\n\nLeadDrive предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. ${instructions ? instructions + " " : ""}Удобно коротко созвониться на этой неделе?\n\n— Rashad`,
     },
     Azerbaijani: {
       subject: "Şirkətimizdən işgüzar təklif",
       body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\nLeadDrive Inc.`,
       sms: `Salam, ${contactName}! LeadDrive ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
+      messenger: `Salam, ${contactName}! 👋\n\nLeadDrive ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. ${instructions ? instructions + " " : ""}Bu həftə qısa zəng üçün münasib vaxtınız olarmı?\n\n— Rashad`,
     },
     English: {
       subject: "Business proposal from our company",
       body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\nLeadDrive Inc.`,
       sms: `Hello, ${contactName}! LeadDrive offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
+      messenger: `Hi ${contactName}! 👋\n\nLeadDrive offers collaboration${industry ? ` in ${industry}` : ""}. ${instructions ? instructions + " " : ""}Any chance of a short call this week?\n\n— Rashad`,
     },
   }
   const l = fb[langName] || fb.Russian
   const subject = textType === "Email" ? l.subject : ""
-  const emailBody = textType === "Email" ? l.body : l.sms
-  return NextResponse.json({ success: true, data: { subject, body: emailBody, textType, tone } })
+  const body =
+    textType === "Email" ? l.body :
+    textType === "SMS"   ? l.sms :
+                           l.messenger
+  return NextResponse.json({ success: true, data: { subject, body, textType, tone } })
 }

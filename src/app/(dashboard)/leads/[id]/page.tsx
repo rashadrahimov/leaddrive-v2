@@ -233,10 +233,23 @@ export default function LeadDetailPage() {
     } catch (err) { console.error(err) } finally { setScoring(false) }
   }
 
+  // Map the selected Da Vinci text type → inbox channel + destination address.
+  // Email is the only channel that uses the `subject` field; all messaging
+  // channels (SMS / WhatsApp / Telegram) reuse the same `body` payload.
+  const channelMap: Record<string, { channel: string; destField: "email" | "phone" | "telegramId" }> = {
+    Email:    { channel: "email",    destField: "email" },
+    SMS:      { channel: "sms",      destField: "phone" },
+    WhatsApp: { channel: "whatsapp", destField: "phone" },
+    Telegram: { channel: "telegram", destField: "telegramId" },
+  }
+
   const sendGenerated = async () => {
     if (!generatedText || !lead) return
-    const isSMS = textType === "SMS"
-    const to = isSMS ? lead.phone : lead.email
+    const cfg = channelMap[textType] || channelMap.Email
+    const to =
+      cfg.destField === "email"      ? lead.email :
+      cfg.destField === "phone"      ? lead.phone :
+      (lead as any).telegramId || null
     if (!to) return
     setSending(true)
     setSendError("")
@@ -245,9 +258,9 @@ export default function LeadDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify(
-          isSMS
-            ? { channel: "sms", to, body: generatedText.body }
-            : { channel: "email", to, subject: generatedText.subject, body: generatedText.body }
+          cfg.channel === "email"
+            ? { channel: "email", to, subject: generatedText.subject, body: generatedText.body }
+            : { channel: cfg.channel, to, body: generatedText.body }
         ),
       })
       const json = await res.json()
@@ -666,6 +679,8 @@ export default function LeadDetailPage() {
                 <Select value={textType} onChange={(e: any) => setTextType(e.target.value)}>
                   <option value="Email">Email</option>
                   <option value="SMS">SMS</option>
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Telegram">Telegram</option>
                 </Select>
               </div>
               <div>
@@ -702,11 +717,24 @@ export default function LeadDetailPage() {
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
                     <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
                   </Button>
-                  {(textType === "SMS" ? lead.phone : lead.email) && (
-                    <Button size="sm" onClick={sendGenerated} disabled={sending || sent} className="gap-1">
-                      <Send className="h-3 w-3" /> {sent ? (t("modalSent") || "Sent!") : sending ? (t("modalSending") || "Sending...") : textType === "SMS" ? (t("modalSendSMS") || "Send SMS") : (t("modalSendEmail") || "Send Email")}
-                    </Button>
-                  )}
+                  {(() => {
+                    const cfg = channelMap[textType] || channelMap.Email
+                    const dest =
+                      cfg.destField === "email" ? lead.email :
+                      cfg.destField === "phone" ? lead.phone :
+                      (lead as any).telegramId || null
+                    if (!dest) return null
+                    const sendLabel =
+                      textType === "SMS"      ? (t("modalSendSMS") || "Send SMS") :
+                      textType === "WhatsApp" ? "Send WhatsApp" :
+                      textType === "Telegram" ? "Send Telegram" :
+                                                (t("modalSendEmail") || "Send Email")
+                    return (
+                      <Button size="sm" onClick={sendGenerated} disabled={sending || sent} className="gap-1">
+                        <Send className="h-3 w-3" /> {sent ? (t("modalSent") || "Sent!") : sending ? (t("modalSending") || "Sending...") : sendLabel}
+                      </Button>
+                    )
+                  })()}
                   <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
                     <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
                   </Button>
