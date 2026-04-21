@@ -10,8 +10,9 @@ vi.hoisted(() => {
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    channelConfig: { findFirst: vi.fn() },
+    channelConfig: { findFirst: vi.fn(), update: vi.fn() },
     channelMessage: { create: vi.fn(), findFirst: vi.fn() },
+    whatsAppTemplate: { findFirst: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
     invoice: { findFirst: vi.fn() },
   },
 }))
@@ -64,6 +65,20 @@ vi.stubGlobal("fetch", mockFetch)
 // ═════════════════════════════════════════════════════════════════════════
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from "@/lib/whatsapp"
 
+// Helper: a valid per-tenant ChannelConfig row (new columns populated).
+const mockConfig = {
+  id: "cfg-1",
+  organizationId: "org-1",
+  accessToken: "token-123",
+  phoneNumberId: "phone-id-1",
+  businessAccountId: "bus-1",
+  verifyToken: "vt",
+  appSecret: "sec",
+  displayName: "Tenant 1",
+  // legacy columns (empty — new library should not read them when new columns set)
+  apiKey: null, phoneNumber: null, webhookUrl: null,
+}
+
 describe("whatsapp: sendWhatsAppMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -71,29 +86,26 @@ describe("whatsapp: sendWhatsAppMessage", () => {
     delete process.env.WHATSAPP_PHONE_NUMBER_ID
   })
 
-  it("returns error when WhatsApp is not configured", async () => {
+  it("returns error when tenant has no WhatsApp ChannelConfig", async () => {
     db.channelConfig.findFirst.mockResolvedValue(null)
     db.channelMessage.create.mockResolvedValue({})
     const result = await sendWhatsAppMessage({ to: "+994501234567", message: "Hello", organizationId: "org-1" })
-    expect(result).toEqual({ success: false, error: "WhatsApp not configured" })
+    expect(result).toEqual({ success: false, error: "WhatsApp not configured for this tenant" })
   })
 
-  it("logs failed message when not configured and orgId provided", async () => {
+  it("does NOT fall back to env vars when ChannelConfig is missing (isolation guarantee)", async () => {
+    process.env.WHATSAPP_ACCESS_TOKEN = "env-should-not-leak"
+    process.env.WHATSAPP_PHONE_NUMBER_ID = "env-phone"
     db.channelConfig.findFirst.mockResolvedValue(null)
     db.channelMessage.create.mockResolvedValue({})
-    await sendWhatsAppMessage({ to: "+994501234567", message: "Hi", organizationId: "org-1" })
-    expect(db.channelMessage.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          status: "failed",
-          metadata: expect.objectContaining({ error: "WhatsApp not configured" }),
-        }),
-      })
-    )
+    const result = await sendWhatsAppMessage({ to: "+994501234567", message: "Hi", organizationId: "org-1" })
+    expect(result.success).toBe(false)
+    expect(result.error).toBe("WhatsApp not configured for this tenant")
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it("sends text message when within 24h window", async () => {
-    db.channelConfig.findFirst.mockResolvedValue({ apiKey: "token-123", phoneNumber: "phone-id-1" })
+  it("sends text message when within 24h session window", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
     db.channelMessage.findFirst.mockResolvedValue({ createdAt: new Date(Date.now() - 2 * 3600000) })
     mockFetch.mockResolvedValue({
       ok: true,
@@ -111,26 +123,22 @@ describe("whatsapp: sendWhatsAppMessage", () => {
     expect(fetchBody.text.body).toBe("Hello from CRM")
   })
 
-  it("sends template message when outside 24h window (no inbound)", async () => {
-    db.channelConfig.findFirst.mockResolvedValue({ apiKey: "token-123", phoneNumber: "phone-id-1" })
+  it("returns outside_window error when no inbound in 24h (no hardcoded template fallback)", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
     db.channelMessage.findFirst.mockResolvedValue(null)
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ messages: [{ id: "wamid-2" }] }),
-    })
     db.channelMessage.create.mockResolvedValue({})
 
     const result = await sendWhatsAppMessage({
       to: "+994501234567", message: "Hello", organizationId: "org-1",
     })
-    expect(result.success).toBe(true)
-    const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-    expect(fetchBody.type).toBe("template")
+    expect(result.success).toBe(false)
+    expect(result.error).toBe("outside_window_no_template")
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it("cleans phone number (removes spaces, dashes, leading +)", async () => {
-    db.channelConfig.findFirst.mockResolvedValue({ apiKey: "token-123", phoneNumber: "phone-id-1" })
-    db.channelMessage.findFirst.mockResolvedValue(null)
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.channelMessage.findFirst.mockResolvedValue({ createdAt: new Date(Date.now() - 1 * 3600000) })
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ messages: [{ id: "w3" }] }) })
     db.channelMessage.create.mockResolvedValue({})
 
@@ -139,9 +147,9 @@ describe("whatsapp: sendWhatsAppMessage", () => {
     expect(fetchBody.to).toBe("994501234567")
   })
 
-  it("returns error on API failure", async () => {
-    db.channelConfig.findFirst.mockResolvedValue({ apiKey: "token-123", phoneNumber: "phone-id-1" })
-    db.channelMessage.findFirst.mockResolvedValue(null)
+  it("returns Meta API error message on send failure", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.channelMessage.findFirst.mockResolvedValue({ createdAt: new Date(Date.now() - 1 * 3600000) })
     mockFetch.mockResolvedValue({
       ok: false, status: 400,
       json: async () => ({ error: { message: "Invalid phone" } }),
@@ -153,28 +161,21 @@ describe("whatsapp: sendWhatsAppMessage", () => {
     expect(result.error).toBe("Invalid phone")
   })
 
-  it("falls back to env vars for config", async () => {
-    process.env.WHATSAPP_ACCESS_TOKEN = "env-token"
-    process.env.WHATSAPP_PHONE_NUMBER_ID = "env-phone-id"
-    db.channelConfig.findFirst.mockResolvedValue(null)
-    db.channelMessage.findFirst.mockResolvedValue(null)
-    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ messages: [{ id: "env-1" }] }) })
-    db.channelMessage.create.mockResolvedValue({})
-
-    const result = await sendWhatsAppMessage({ to: "994501234567", message: "via env", organizationId: "org-1" })
-    expect(result.success).toBe(true)
-    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBe("Bearer env-token")
-  })
-
   it("catches fetch exceptions without throwing", async () => {
-    db.channelConfig.findFirst.mockResolvedValue({ apiKey: "t", phoneNumber: "p" })
-    db.channelMessage.findFirst.mockResolvedValue(null)
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.channelMessage.findFirst.mockResolvedValue({ createdAt: new Date(Date.now() - 1 * 3600000) })
     mockFetch.mockRejectedValue(new Error("Network error"))
     db.channelMessage.create.mockResolvedValue({})
 
     const result = await sendWhatsAppMessage({ to: "994501234567", message: "test", organizationId: "org-1" })
     expect(result.success).toBe(false)
     expect(result.error).toBe("Network error")
+  })
+
+  it("requires organizationId (no cross-tenant default)", async () => {
+    const result = await sendWhatsAppMessage({ to: "994501234567", message: "test" } as any)
+    expect(result.success).toBe(false)
+    expect(result.error).toBe("organizationId required")
   })
 })
 
@@ -185,38 +186,55 @@ describe("whatsapp: sendWhatsAppTemplate", () => {
     delete process.env.WHATSAPP_PHONE_NUMBER_ID
   })
 
-  it("returns error when not configured", async () => {
+  it("returns error when tenant not configured", async () => {
     db.channelConfig.findFirst.mockResolvedValue(null)
     const result = await sendWhatsAppTemplate({ to: "123", templateName: "test", organizationId: "org-1" })
     expect(result).toEqual({ success: false, error: "WhatsApp not configured for this tenant" })
   })
 
-  it("sends template with correct structure", async () => {
-    process.env.WHATSAPP_ACCESS_TOKEN = "token"
-    process.env.WHATSAPP_PHONE_NUMBER_ID = "phone-id"
+  it("sends template with correct structure from DB config", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.whatsAppTemplate.findFirst.mockResolvedValue({
+      name: "welcome_message", language: "en_US", variables: [],
+    })
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({ messages: [{ id: "tmpl-1" }] }) })
     db.channelMessage.create.mockResolvedValue({})
 
     const result = await sendWhatsAppTemplate({
-      to: "994501234567", templateName: "welcome_message", languageCode: "en", organizationId: "org-1",
+      to: "994501234567", templateName: "welcome_message", languageCode: "en_US", organizationId: "org-1",
     })
     expect(result.success).toBe(true)
     const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body)
     expect(fetchBody.template.name).toBe("welcome_message")
-    expect(fetchBody.template.language.code).toBe("en")
+    expect(fetchBody.template.language.code).toBe("en_US")
+    expect(fetchBody.type).toBe("template")
   })
 
-  it("returns error on API failure", async () => {
-    process.env.WHATSAPP_ACCESS_TOKEN = "token"
-    process.env.WHATSAPP_PHONE_NUMBER_ID = "phone-id"
+  it("passes positional variables through as text parameters", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.whatsAppTemplate.findFirst.mockResolvedValue({
+      name: "order_update", language: "en_US", variables: ["1", "2"],
+    })
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ messages: [{ id: "ord-1" }] }) })
+    db.channelMessage.create.mockResolvedValue({})
+
+    await sendWhatsAppTemplate({
+      to: "994501234567", templateName: "order_update", languageCode: "en_US",
+      variables: ["ORDER-42", "shipped"], organizationId: "org-1",
+    })
+    const fetchBody = JSON.parse(mockFetch.mock.calls[0][1].body)
+    expect(fetchBody.template.components[0].parameters[0]).toEqual({ type: "text", text: "ORDER-42" })
+    expect(fetchBody.template.components[0].parameters[1]).toEqual({ type: "text", text: "shipped" })
+  })
+
+  it("returns Meta error on API failure", async () => {
+    db.channelConfig.findFirst.mockResolvedValue(mockConfig)
+    db.whatsAppTemplate.findFirst.mockResolvedValue(null)
     mockFetch.mockResolvedValue({ ok: false, status: 404, json: async () => ({ error: { message: "Template not found" } }) })
 
     const result = await sendWhatsAppTemplate({ to: "994501234567", templateName: "nonexistent", organizationId: "org-1" })
     expect(result.success).toBe(false)
-    // The library now short-circuits before hitting Meta because the DB
-    // lookup returns null (mock). The message matches whatever the runtime
-    // returns; we just assert we're not crashing and failure is surfaced.
-    expect(result.error).toBeDefined()
+    expect(result.error).toBe("Template not found")
   })
 })
 
