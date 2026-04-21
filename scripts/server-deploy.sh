@@ -71,18 +71,31 @@ set -a
 source "$APP_DIR/.env" 2>/dev/null || true
 set +a
 
-npx prisma migrate deploy --schema="$APP_DIR/prisma/schema.prisma" 2>&1 || {
-  log "WARNING: prisma migrate returned non-zero (may be OK if no pending migrations)"
-}
+# The root $APP_DIR/prisma directory is NOT updated by the tarball deploy —
+# it's whatever git commit the repo is at. The fresh schema + migrations
+# always live in the standalone bundle. Point prisma migrate at that so a
+# redeploy actually picks up new migrations.
+STANDALONE_SCHEMA="$APP_DIR/.next/standalone/prisma/schema.prisma"
+if [ -f "$STANDALONE_SCHEMA" ]; then
+  npx prisma migrate deploy --schema="$STANDALONE_SCHEMA" 2>&1 || {
+    log "WARNING: prisma migrate returned non-zero (may be OK if no pending migrations)"
+  }
+else
+  npx prisma migrate deploy --schema="$APP_DIR/prisma/schema.prisma" 2>&1 || {
+    log "WARNING: prisma migrate returned non-zero (may be OK if no pending migrations)"
+  }
+fi
 
 # ── Step 3b: One-shot WhatsApp env → ChannelConfig backfill for LeadDrive ──
 # After the whatsapp_multitenant migration, the runtime library reads creds
 # from ChannelConfig instead of env. LeadDrive tenant's creds live in env on
 # this box, so we seed them into its ChannelConfig row. Idempotent.
-if [ -f "$APP_DIR/scripts/migrate-leaddrive-whatsapp.mjs" ]; then
-  node "$APP_DIR/scripts/migrate-leaddrive-whatsapp.mjs" 2>&1 || {
-    log "WARNING: wa-migrate returned non-zero (non-fatal)"
-  }
+MIG_SCRIPT_STANDALONE="$APP_DIR/.next/standalone/scripts/migrate-leaddrive-whatsapp.mjs"
+MIG_SCRIPT_ROOT="$APP_DIR/scripts/migrate-leaddrive-whatsapp.mjs"
+if [ -f "$MIG_SCRIPT_STANDALONE" ]; then
+  node "$MIG_SCRIPT_STANDALONE" 2>&1 || log "WARNING: wa-migrate returned non-zero (non-fatal)"
+elif [ -f "$MIG_SCRIPT_ROOT" ]; then
+  node "$MIG_SCRIPT_ROOT" 2>&1 || log "WARNING: wa-migrate returned non-zero (non-fatal)"
 fi
 
 # ── Step 4: Copy ecosystem config ──────────────────────────
