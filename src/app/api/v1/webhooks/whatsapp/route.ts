@@ -415,10 +415,10 @@ const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный д
 5. О ценах не говори — направь к менеджеру.
 6. Не используй markdown разметку (жирный, курсив) — WhatsApp их не поддерживает так же.
 7. ЯЗЫК: По умолчанию отвечай на АЗЕРБАЙДЖАНСКОМ языке (Azərbaycan dili). НЕ путай с узбекским, турецким или другими тюркскими языками. Если клиент пишет на русском — отвечай на русском. Если на английском — на английском.
-8. НИКОГДА не добавляй [ESCALATE] или [CREATE_TICKET] в свой ПЕРВЫЙ ответ клиенту. Сначала ВСЕГДА попытайся помочь сам. Только после минимум 2-х сообщений от клиента можешь эскалировать.
+8. По умолчанию сначала попытайся помочь сам — не эскалируй на общих вопросах. ИСКЛЮЧЕНИЕ: если клиент ЯВНО просит тикет/менеджера/оператора прямо в первом сообщении ("открой тикет", "нужен менеджер", "ticket aç", "menecerə yönləndir") — сразу добавляй маркер, не тяни.
 9. Если клиент ЯВНО просит менеджера/оператора/человека (например "menecerə yönləndir", "оператор", "хочу менеджера") — добавь [ESCALATE] в ответ.
 10. Если клиент подтверждает перевод ("Bəli", "Да", "Yes" на твой вопрос о менеджере) — тоже добавь [ESCALATE].
-11. Если клиент ЯВНО просит создать тикет — добавь [CREATE_TICKET] в ответ.
+11. Если клиент ЯВНО просит создать тикет ("открой тикет", "ticket aç", "заведи обращение") — добавь [CREATE_TICKET] в ответ, даже если это первое сообщение.
 12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.
 13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.`
 
@@ -599,7 +599,7 @@ async function handleAiAutoReply(
     })
 
     // Handle escalation — create ticket from WhatsApp chat
-    // Guard 1: need at least 3 full exchanges (6 messages) before ticket creation
+    // Guard 1: need at least 2 messages in session (1 user + 1 AI reply) — allows first-turn ticket on explicit request
     const messageCount = await prisma.aiChatMessage.count({ where: { sessionId: session.id } })
     // Guard 2: don't create duplicate tickets in same session
     const existingTicket = await prisma.ticket.findFirst({
@@ -608,7 +608,7 @@ async function handleAiAutoReply(
       select: { ticketNumber: true, createdAt: true },
     })
     const hasRecentTicket = existingTicket && (Date.now() - existingTicket.createdAt.getTime()) < 60 * 60 * 1000 // within 1h
-    if ((shouldEscalate || shouldCreateTicket) && messageCount >= 6 && !hasRecentTicket) {
+    if ((shouldEscalate || shouldCreateTicket) && messageCount >= 2 && !hasRecentTicket) {
       try {
         const chatMessages = await prisma.aiChatMessage.findMany({
           where: { sessionId: session.id },
