@@ -104,6 +104,23 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const oldStatus = original.status
 
+    // Guard: a ticket linked to ComplaintMeta is in the complaints registry and cannot
+    // have its category changed away from "complaint" — operators must not be able to
+    // silently remove a complaint from the registry. The only way out is deleting the
+    // ticket entirely (which cascades the ComplaintMeta).
+    if (parsed.data.category && parsed.data.category !== "complaint") {
+      const hasComplaint = await prisma.complaintMeta.findUnique({
+        where: { ticketId: id },
+        select: { id: true },
+      })
+      if (hasComplaint) {
+        return NextResponse.json(
+          { error: "Нельзя снять флаг жалобы — тикет находится в реестре жалоб" },
+          { status: 409 },
+        )
+      }
+    }
+
     const fieldPerms = await getFieldPermissions(orgId, role, "ticket")
     // Increment escalationLevel when priority is changed to critical
     const isEscalation = parsed.data.priority === "critical" && original.priority !== "critical"

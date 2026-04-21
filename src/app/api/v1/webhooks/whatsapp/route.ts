@@ -4,6 +4,7 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { sanitizeForPrompt, sanitizeLog } from "@/lib/sanitize"
 import Anthropic from "@anthropic-ai/sdk"
 import { PiiMasker } from "@/lib/ai/pii-masker"
+import { enrichComplaintInBackground } from "@/lib/complaint-ai"
 import { createHmac, timingSafeEqual } from "crypto"
 
 /**
@@ -420,7 +421,8 @@ const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный д
 10. Если клиент подтверждает перевод ("Bəli", "Да", "Yes" на твой вопрос о менеджере) — тоже добавь [ESCALATE].
 11. Если клиент ЯВНО просит создать тикет ("открой тикет", "ticket aç", "заведи обращение") — добавь [CREATE_TICKET] в ответ, даже если это первое сообщение.
 12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.
-13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.`
+13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.
+14. Если клиент ЖАЛУЕТСЯ на качество товара/услуги, сервис, задержку, брак, или явно пишет "жалоба/жалуюсь/пожаловаться/şikayət/complaint/недоволен/некачественный" — добавь маркер [COMPLAINT] ВМЕСТЕ с [CREATE_TICKET] в свой ответ. Это переведёт обращение в реестр жалоб. В тексте ответа клиенту просто вежливо подтверди, что жалоба принята и передана ответственным — НЕ упоминай слова "тикет" или "реестр".`
 
 async function handleAiAutoReply(
   organizationId: string,
@@ -574,11 +576,22 @@ async function handleAiAutoReply(
     // Check for escalation/ticket markers BEFORE cleaning
     // Only use explicit Da Vinci markers — no regex guessing (was too aggressive, created tickets on every message)
     const shouldEscalate = rawReply.includes("[ESCALATE]")
-    const shouldCreateTicket = rawReply.includes("[CREATE_TICKET]")
+    const shouldCreateTicketMarker = rawReply.includes("[CREATE_TICKET]")
+    const shouldMarkComplaintMarker = rawReply.includes("[COMPLAINT]")
+
+    // Keyword fallback — fires even if Da Vinci missed the marker. Customer language matters,
+    // not the AI reply, so match against userMessage.
+    const complaintKeywordRegex = /\b(жалоб|пожалов|şikay[aə]t|complain|complaint|недоволен|некачеств)/i
+    const keywordComplaint = complaintKeywordRegex.test(userMessage)
+    const isComplaint = shouldMarkComplaintMarker || keywordComplaint
+
+    // A complaint always implies a ticket, even when AI forgot [CREATE_TICKET]
+    const shouldCreateTicket = shouldCreateTicketMarker || isComplaint
 
     const aiReply = rawReply
       .replace(/\[ESCALATE\]/g, "")
       .replace(/\[CREATE_TICKET\]/g, "")
+      .replace(/\[COMPLAINT\]/g, "")
       .trim()
 
     if (!aiReply) return
@@ -623,21 +636,48 @@ async function handleAiAutoReply(
         const ticketCount = await prisma.ticket.count({ where: { organizationId } })
         const ticketNumber = `DV-${String(ticketCount + 1).padStart(4, "0")}`
 
+        const subjectPrefix = isComplaint
+          ? "Жалоба WhatsApp"
+          : shouldEscalate
+            ? "WhatsApp Эскалация"
+            : "WhatsApp Тикет"
+        const ticketCategory = isComplaint ? "complaint" : "ai_escalation"
+        const secondaryTag = isComplaint
+          ? "complaint"
+          : shouldEscalate
+            ? "ai_escalation"
+            : "ai_ticket"
+
         const ticket = await prisma.ticket.create({
           data: {
             organizationId,
             ticketNumber,
-            subject: `[WhatsApp ${shouldEscalate ? "Эскалация" : "Тикет"}] ${userMessage.slice(0, 80)}`,
+            subject: `[${subjectPrefix}] ${userMessage.slice(0, 80)}`,
             description: `Создан из WhatsApp чата.\nКлиент: ${senderName} (+${waPhone})\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
             priority: "high",
             status: "open",
-            category: "ai_escalation",
+            category: ticketCategory,
             contactId: contactId || null,
-            tags: ["whatsapp", shouldEscalate ? "ai_escalation" : "ai_ticket", "auto_created"],
+            tags: ["whatsapp", secondaryTag, "auto_created"],
             source: "whatsapp",
             sourceMeta: { phone: waPhone },
           },
         })
+
+        // Attach complaint metadata so the ticket shows up in /complaints registry.
+        // Risk level + responsible department are filled asynchronously by the Haiku classifier.
+        if (isComplaint) {
+          await prisma.complaintMeta.create({
+            data: {
+              ticketId: ticket.id,
+              organizationId,
+              complaintType: "complaint",
+            },
+          }).catch((err: unknown) => {
+            console.error(`[WA AI] Failed to attach ComplaintMeta to ${ticketNumber}:`, err)
+          })
+          enrichComplaintInBackground(ticket.id, organizationId).catch(() => {})
+        }
 
         // Copy chat as ticket comments
         for (const msg of chatMessages) {
@@ -656,7 +696,7 @@ async function handleAiAutoReply(
           data: { status: "escalated" },
         })
 
-        console.log(`[WA AI] Ticket ${ticketNumber} created from WhatsApp chat with ${waPhone}`)
+        console.log(`[WA AI] ${isComplaint ? "Complaint" : "Ticket"} ${ticketNumber} created from WhatsApp chat with ${waPhone}`)
       } catch (ticketErr) {
         console.error(`[WA AI] Failed to create ticket:`, ticketErr)
       }

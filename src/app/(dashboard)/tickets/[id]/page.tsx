@@ -542,7 +542,7 @@ export default function TicketDetailPage() {
               size="sm" variant="outline"
               className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
               onClick={() => setConvertOpen(true)}
-              title="Перевести этот тикет в реестр жалоб"
+              title="Перевести тикет в реестр жалоб. Это действие необратимо — снять флаг потом будет нельзя."
             >
               <MessageSquareWarning className="h-3.5 w-3.5 mr-1.5" /> В жалобы
             </Button>

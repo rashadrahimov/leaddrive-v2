@@ -205,7 +205,7 @@ export function TicketForm({ open, onOpenChange, onSaved, initialData, orgId }: 
             <div><Label>{tc("subject")} *</Label><Input value={form.subject} onChange={e => u("subject", e.target.value)} onBlur={tryAiCategorize} required />{aiCategorizing && <p className="text-[10px] text-muted-foreground mt-1 animate-pulse">{ta("aiClassifying")}</p>}</div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>{tc("priority")}</Label><Select value={form.priority} onChange={e => u("priority", e.target.value)}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></Select></div>
-              <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)} disabled={asComplaint}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option>{asComplaint && <option value="complaint">Complaint</option>}</Select></div>
+              <div><Label>{tc("category")}</Label><Select value={form.category} onChange={e => u("category", e.target.value)} disabled={asComplaint || !!initialData?.complaintMeta}><option value="general">General</option><option value="technical">Technical</option><option value="billing">Billing</option><option value="feature_request">Feature Request</option>{(asComplaint || initialData?.category === "complaint") && <option value="complaint">Complaint</option>}</Select></div>
             </div>
             {!isEdit && (
               <label className="flex items-start gap-2 text-sm cursor-pointer p-2 -mx-2 rounded hover:bg-muted/40">
