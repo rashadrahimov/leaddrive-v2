@@ -3775,6 +3775,19 @@
     "inactive": "Deaktiv",
     "roles": "Rollar"
   },
+  "customFields": {
+    "title": "Xüsusi sahələr",
+    "pageDescription": "Companies, Contacts, Deals və Leads-ə öz sahələrinizi əlavə edin. Formalarda görünür və workflow şərtlərində istifadə oluna bilər.",
+    "add": "Sahə əlavə et",
+    "adminOnly": "Yalnız administrator xüsusi sahələri idarə edə bilər. Siz mövcud olanları görə bilərsiniz.",
+    "filterByEntity": "Obyektə görə filtr",
+    "allEntities": "Bütün obyektlər",
+    "noFields": "Xüsusi sahə yoxdur",
+    "noFieldsHint": "Standart formaları genişləndirmək üçün ilk sahəni yaradın.",
+    "required": "Məcburi",
+    "inactive": "Deaktiv",
+    "deleteConfirm": "«{name}» sahəsi silinsin? Bütün saxlanılan dəyərlər tamamilə silinəcək."
+  },
   "dashboardWidgets": {
     "title": "Dashboard Blokları",
     "subtitle": "Blokları söndürün/yandırın — dəyişikliklər avtomatik saxlanılır",

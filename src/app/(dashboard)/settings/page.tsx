@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2, Building2, Bot, MessageCircle } from "lucide-react"
+import { ChevronRight, CreditCard, Users, Radio, Zap, LayoutDashboard, Globe, Lock, FileText, Clock, Shield, FileSpreadsheet, Plug, Keyboard, Bell, Globe2, Building2, Bot, MessageCircle, Sparkles } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { InfoHint } from "@/components/info-hint"
 import { PageDescription } from "@/components/page-description"
@@ -22,7 +22,8 @@ export default function SettingsPage() {
     { icon: Users, title: t("roles"), description: t("rolesDesc"), href: "/settings/roles", hint: t("hintRoles") },
     { icon: Radio, title: t("channels"), description: t("channelsDesc"), href: "/settings/channels", hint: t("hintChannels") },
     { icon: Zap, title: t("workflows"), description: t("workflowsDesc"), href: "/settings/workflows", hint: t("hintWorkflows") },
-    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/custom-fields", hint: t("hintDashboardSettings") },
+    { icon: LayoutDashboard, title: t("dashboardSettings"), description: t("dashboardSettingsDesc"), href: "/settings/dashboard", hint: t("hintDashboardSettings") },
+    { icon: Sparkles, title: t("customFields"), description: t("customFieldsDesc"), href: "/settings/custom-fields", hint: t("hintCustomFields") },
     { icon: FileSpreadsheet, title: t("invoiceSettings"), description: t("invoiceSettingsDesc"), href: "/settings/invoice-settings", hint: t("hintInvoiceSettings") },
     { icon: Bell, title: t("financeNotifications"), description: t("financeNotificationsDesc"), href: "/settings/finance-notifications", hint: t("hintFinanceNotifications") },
     { icon: Globe, title: t("currencies"), description: t("currenciesDesc"), href: "/settings/currencies", hint: t("hintCurrencies") },

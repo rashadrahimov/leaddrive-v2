@@ -3775,6 +3775,19 @@
     "inactive": "Inactive",
     "roles": "Roles"
   },
+  "customFields": {
+    "title": "Custom Fields",
+    "pageDescription": "Extend Companies, Contacts, Deals and Leads with your own fields. They appear in forms and can be used in workflow conditions.",
+    "add": "Add field",
+    "adminOnly": "Only admins can manage custom fields. You can view existing ones.",
+    "filterByEntity": "Filter by entity",
+    "allEntities": "All entities",
+    "noFields": "No custom fields yet",
+    "noFieldsHint": "Create the first field to extend default forms.",
+    "required": "Required",
+    "inactive": "Inactive",
+    "deleteConfirm": "Delete field \"{name}\"? All stored values will be removed permanently."
+  },
   "dashboardWidgets": {
     "title": "Dashboard Widgets",
     "subtitle": "Toggle widgets on/off — changes are saved automatically",
