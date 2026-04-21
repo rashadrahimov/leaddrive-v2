@@ -34,16 +34,6 @@ model Organization {
   provisionedAt       DateTime?
   provisionedBy       String?
   deletionScheduledAt DateTime?
-
-  // Stripe subscription state — Phase 1 bills the base tier
-  // (tier-5/-10/-25/-50/enterprise); addons are tracked in settings until
-  // a follow-up phase introduces separate subscription records.
-  stripeCustomerId     String?  @unique
-  stripeSubscriptionId String?  @unique
-  subscriptionStatus   String?  // active | trialing | past_due | canceled | incomplete | null
-  currentPeriodEnd     DateTime?
-  trialEndsAt          DateTime?
-
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
