@@ -94,10 +94,13 @@ export async function POST(req: NextRequest) {
       }
 
       const trimmed = stripReplyQuotes(body_text).slice(0, 10000)
+      // Prefix with 📧 so the UI can render a "via email" badge without needing
+      // an extra JOIN against email_logs. The marker is stripped from the
+      // display text client-side.
       await prisma.ticketComment.create({
         data: {
           ticketId: ticket.id,
-          comment: trimmed,
+          comment: `📧 ${trimmed}`,
           isInternal: false,
         },
       })
@@ -156,7 +159,7 @@ export async function POST(req: NextRequest) {
       await prisma.ticketComment.create({
         data: {
           ticketId: openTicket.id,
-          comment: stripReplyQuotes(body_text).slice(0, 10000),
+          comment: `📧 ${stripReplyQuotes(body_text).slice(0, 10000)}`,
           isInternal: false,
         },
       })

@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
         <p style="color: #999; font-size: 12px;">LeadDrive CRM</p>
       </div>
     `,
+    transactional: true,
   })
 
   return successResponse

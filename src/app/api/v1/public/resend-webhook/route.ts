@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import crypto from "crypto"
 import { prisma } from "@/lib/prisma"
 import { checkRateLimit, RATE_LIMIT_CONFIG } from "@/lib/rate-limit"
+import { verifySvixSignature } from "@/lib/svix-verify"
 
 // POST /api/v1/public/resend-webhook
 //   Receives Resend delivery events (delivered, bounced, complained, opened,
@@ -31,31 +31,6 @@ type ResendEvent = {
   }
 }
 
-function verifySvixSignature(
-  id: string | null,
-  ts: string | null,
-  sig: string | null,
-  rawBody: string,
-  secret: string,
-): boolean {
-  // Resend uses Svix signatures: "v1,<base64-sig> v1,<base64-sig>" (space-separated).
-  // signed_payload = `${id}.${ts}.${body}`, key is the portion after "whsec_" decoded from base64.
-  if (!id || !ts || !sig || !secret) return false
-  try {
-    const keyB64 = secret.startsWith("whsec_") ? secret.slice("whsec_".length) : secret
-    const key = Buffer.from(keyB64, "base64")
-    const toSign = `${id}.${ts}.${rawBody}`
-    const expected = crypto.createHmac("sha256", key).update(toSign).digest("base64")
-    for (const part of sig.split(" ")) {
-      const [ver, val] = part.split(",")
-      if (ver === "v1" && val && val === expected) return true
-    }
-    return false
-  } catch {
-    return false
-  }
-}
-
 export async function POST(req: NextRequest) {
   const expected = process.env.RESEND_WEBHOOK_SECRET
   if (!expected) {
@@ -73,13 +48,13 @@ export async function POST(req: NextRequest) {
   }
 
   const rawBody = await req.text()
-  const ok = verifySvixSignature(
-    req.headers.get("svix-id"),
-    req.headers.get("svix-timestamp"),
-    req.headers.get("svix-signature"),
+  const ok = verifySvixSignature({
+    id: req.headers.get("svix-id"),
+    timestamp: req.headers.get("svix-timestamp"),
+    signature: req.headers.get("svix-signature"),
     rawBody,
-    expected,
-  )
+    secret: expected,
+  })
   if (!ok) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
   }

@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
     },
     organizationId: contact.organizationId,
     contactId: contact.id,
+    transactional: true,
   })
 
   if (!result.success) {

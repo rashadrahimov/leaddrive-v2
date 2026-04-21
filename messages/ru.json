@@ -4615,6 +4615,7 @@
     "triggerStatusChanged": "Статус изменён",
     "triggerStageChanged": "Этап изменён",
     "triggerAssigned": "Назначено",
+    "triggerReplied": "Ответ клиента (email)",
     "conditions": "Условия",
     "addCondition": "Добавить условие",
     "conditionField": "Поле",

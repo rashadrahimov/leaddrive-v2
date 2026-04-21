@@ -819,27 +819,38 @@ export default function TicketDetailPage() {
               {filteredComments.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">Нет комментариев</p>
               )}
-              {filteredComments.map(comment => (
-                <div key={comment.id} className={`flex gap-3 ${comment.isInternal ? "bg-amber-50/50 dark:bg-amber-950/20 -mx-3 px-3 py-2 rounded border-l-2 border-amber-400" : ""}`}>
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium flex-shrink-0">
-                    {getInitials((comment as any).userName || "System")}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-sm font-medium ${comment.isInternal ? "text-amber-700 dark:text-amber-400" : ""}`}>
-                        {(comment as any).userName || "System"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
-                      {comment.isInternal && (
-                        <Badge variant="outline" className="text-[10px] h-4 border-amber-400 text-amber-600">
-                          <Lock className="h-2.5 w-2.5 mr-0.5" /> {t("internalBadge")}
-                        </Badge>
-                      )}
+              {filteredComments.map(comment => {
+                // Inbound email replies get a 📧 prefix from /api/v1/public/email-inbound.
+                // Strip it from the visible text and render a "via email" badge instead.
+                const viaEmail = typeof comment.comment === "string" && comment.comment.startsWith("📧 ")
+                const visibleText = viaEmail ? comment.comment.slice(2).trimStart() : comment.comment
+                return (
+                  <div key={comment.id} className={`flex gap-3 ${comment.isInternal ? "bg-amber-50/50 dark:bg-amber-950/20 -mx-3 px-3 py-2 rounded border-l-2 border-amber-400" : viaEmail ? "bg-sky-50/50 dark:bg-sky-950/20 -mx-3 px-3 py-2 rounded border-l-2 border-sky-400" : ""}`}>
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium flex-shrink-0">
+                      {getInitials((comment as any).userName || "System")}
                     </div>
-                    <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{comment.comment}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-sm font-medium ${comment.isInternal ? "text-amber-700 dark:text-amber-400" : viaEmail ? "text-sky-700 dark:text-sky-400" : ""}`}>
+                          {(comment as any).userName || "System"}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                        {comment.isInternal && (
+                          <Badge variant="outline" className="text-[10px] h-4 border-amber-400 text-amber-600">
+                            <Lock className="h-2.5 w-2.5 mr-0.5" /> {t("internalBadge")}
+                          </Badge>
+                        )}
+                        {viaEmail && (
+                          <Badge variant="outline" className="text-[10px] h-4 border-sky-400 text-sky-600">
+                            ✉ via email
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm mt-1 text-muted-foreground whitespace-pre-wrap">{visibleText}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {/* Comment input area */}
               <div className="border-t pt-4 space-y-3">

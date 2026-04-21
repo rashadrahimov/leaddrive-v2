@@ -4615,6 +4615,7 @@
     "triggerStatusChanged": "Status changed",
     "triggerStageChanged": "Stage changed",
     "triggerAssigned": "Assigned",
+    "triggerReplied": "Customer email reply",
     "conditions": "Conditions",
     "addCondition": "Add condition",
     "conditionField": "Field",

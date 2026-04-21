@@ -4615,6 +4615,7 @@
     "triggerStatusChanged": "Status dəyişdi",
     "triggerStageChanged": "Mərhələ dəyişdi",
     "triggerAssigned": "Təyin edildi",
+    "triggerReplied": "Müştəri email cavabı",
     "conditions": "Şərtlər",
     "addCondition": "Şərt əlavə et",
     "conditionField": "Sahə",

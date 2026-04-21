@@ -150,6 +150,7 @@ export async function sendEmail({
   variantId,
   sentBy,
   attachments,
+  transactional = false,
 }: {
   to: string
   subject: string
@@ -164,7 +165,43 @@ export async function sendEmail({
   variantId?: string
   sentBy?: string
   attachments?: { filename: string; path: string }[]
+  /**
+   * When true, skips the global SurveyUnsubscribe check. Use for registration
+   * emails, password reset, ticket replies — anything a customer can't opt out
+   * of without losing access to their own data. Defaults to false (= marketing).
+   */
+  transactional?: boolean
 }) {
+  // Respect global opt-out unless this is a transactional email. We look up by
+  // (organizationId, email) — if any row has surveyId=null we treat it as a
+  // universal "do not send" flag.
+  if (!transactional && organizationId) {
+    const optedOut = await prisma.surveyUnsubscribe.findFirst({
+      where: { organizationId, email: to.toLowerCase(), surveyId: null },
+      select: { id: true },
+    })
+    if (optedOut) {
+      console.log(`[EMAIL] Skipping — ${to} globally unsubscribed from ${organizationId}`)
+      await prisma.emailLog.create({
+        data: {
+          organizationId,
+          direction: "outbound",
+          fromEmail: process.env.EMAIL_FROM_ADDRESS || NOREPLY_EMAIL,
+          toEmail: to,
+          subject,
+          body: html,
+          status: "skipped_unsubscribed",
+          campaignId,
+          templateId,
+          contactId,
+          variantId,
+          sentBy,
+        },
+      }).catch(() => {})
+      return { success: false, error: "Recipient unsubscribed" }
+    }
+  }
+
   const config = await getSmtpConfig(organizationId)
 
   // When Resend is enabled globally (BOTH RESEND_API_KEY and EMAIL_FROM_ADDRESS
