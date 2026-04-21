@@ -240,32 +240,48 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 // ─── WhatsApp status notification ────────────────────────────────────────
-
-const STATUS_MESSAGES: Record<string, string> = {
-  in_progress: "Sizin sorğunuz ({ticketNumber}) qəbul edildi və hazırda üzərində işlənilir.",
-  waiting: "Sorğunuz ({ticketNumber}) üzrə sizdən əlavə məlumat gözlənilir.",
-  resolved: "Sorğunuz ({ticketNumber}) həll edildi. Əgər razı deyilsinizsə, bu mesaja cavab yazın — sorğu yenidən açılacaq.",
-  closed: "Sorğunuz ({ticketNumber}) bağlandı. Əgər razı deyilsinizsə, bu mesaja cavab yazın — sorğu yenidən açılacaq.",
-}
+//
+// Ticket status changes on whatsapp-sourced tickets are now sent via a
+// per-tenant Meta-approved template. The tenant configures a template name
+// (per status) in ChannelConfig.settings:
+//
+//   { whatsappTicketStatusTemplates: {
+//       in_progress: "ticket_in_progress",
+//       waiting:     "ticket_waiting_info",
+//       resolved:    "ticket_resolved",
+//       closed:      "ticket_closed",
+//     } }
+//
+// If the tenant has no template configured for the new status, we silently
+// skip — better to send nothing than a hardcoded Azerbaijani payment
+// reminder. Template body placeholders are filled with {{1}}=ticketNumber
+// by default (positional). Tenants can also configure named parameters
+// in Meta and the library will bind them by name.
 
 async function sendWhatsAppStatusNotification(
   orgId: string,
   ticket: { id: string; ticketNumber: string | null; description: string | null; contactId: string | null; tags: string[] },
   newStatus: string,
 ) {
-  const template = STATUS_MESSAGES[newStatus]
-  if (!template) return
+  // Resolve tenant's configured template mapping from ChannelConfig.settings.
+  const waConfig = await prisma.channelConfig.findFirst({
+    where: { organizationId: orgId, channelType: "whatsapp", isActive: true },
+    select: { settings: true },
+  })
+  const tmplMap = (waConfig?.settings as any)?.whatsappTicketStatusTemplates || {}
+  const templateName: string | undefined = tmplMap[newStatus]
+  if (!templateName) {
+    console.log(`[Ticket WA] No status template configured for "${newStatus}" — skip`)
+    return
+  }
 
-  const message = template.replace("{ticketNumber}", ticket.ticketNumber || ticket.id.slice(0, 8))
+  const ticketNumber = ticket.ticketNumber || ticket.id.slice(0, 8)
 
-  // Extract phone — same logic as comments route
+  // Extract phone — same heuristics as before.
   let waPhone: string | undefined
-
-  // 1. From ticket description
   const phoneMatch = ticket.description?.match(/\+(\d{10,15})/)
   if (phoneMatch) waPhone = phoneMatch[1]
 
-  // 2. From contact record
   if (!waPhone && ticket.contactId) {
     const contact = await prisma.contact.findFirst({
       where: { id: ticket.contactId, organizationId: orgId },
@@ -274,7 +290,6 @@ async function sendWhatsAppStatusNotification(
     if (contact?.phone) waPhone = contact.phone.replace(/[\s\-\(\)\+]/g, "")
   }
 
-  // 3. From recent WhatsApp messages
   if (!waPhone && ticket.contactId) {
     const recentMsg = await prisma.channelMessage.findFirst({
       where: { organizationId: orgId, contactId: ticket.contactId, channelType: "whatsapp", direction: "inbound" },
@@ -286,13 +301,15 @@ async function sendWhatsAppStatusNotification(
   }
 
   if (!waPhone) {
-    console.log(`[Ticket WA] No phone for status notification, ticket ${ticket.ticketNumber}`)
+    console.log(`[Ticket WA] No phone for status notification, ticket ${ticketNumber}`)
     return
   }
 
   const result = await sendWhatsAppMessage({
     to: waPhone,
-    message,
+    message: `[template:${templateName}]`,
+    templateName,
+    templateVariables: { "1": ticketNumber, ticketNumber },
     organizationId: orgId,
     contactId: ticket.contactId || undefined,
   })

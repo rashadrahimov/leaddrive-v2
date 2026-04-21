@@ -70,9 +70,31 @@ export async function sendSurveyInvite({
   if (channel === "whatsapp") {
     if (!phone) return { ok: false, error: "no phone" }
     try {
+      // Survey invites go out via a pre-approved Meta template. The tenant
+      // configures it in ChannelConfig.settings.whatsappSurveyTemplate; if
+      // missing we silently skip rather than sending a wrong-brand template.
+      const waConfig = await prisma.channelConfig.findFirst({
+        where: { organizationId, channelType: "whatsapp", isActive: true },
+        select: { settings: true },
+      })
+      const templateName = (waConfig?.settings as any)?.whatsappSurveyTemplate
+      if (!templateName) {
+        return { ok: false, error: "no survey template configured (ChannelConfig.settings.whatsappSurveyTemplate)" }
+      }
       const { sendWhatsAppMessage } = await import("@/lib/whatsapp")
-      const body = `${survey.name}\n${survey.description || ""}\n\n${link}`
-      const r = await sendWhatsAppMessage({ to: phone, message: body, organizationId, contactId: contactId || undefined })
+      const r = await sendWhatsAppMessage({
+        to: phone,
+        message: `[template:${templateName}]`,
+        templateName,
+        templateVariables: {
+          "1": survey.name,
+          "2": link,
+          survey_name: survey.name,
+          survey_link: link,
+        },
+        organizationId,
+        contactId: contactId || undefined,
+      })
       if (!(r as { success?: boolean }).success) return { ok: false, error: "whatsapp send failed" }
       await prisma.survey.update({ where: { id: survey.id }, data: { totalSent: { increment: 1 } } })
       return { ok: true }

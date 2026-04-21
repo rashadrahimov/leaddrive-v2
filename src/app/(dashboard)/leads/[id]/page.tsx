@@ -103,6 +103,12 @@ export default function LeadDetailPage() {
   const [sent, setSent] = useState(false)
   const [sendError, setSendError] = useState("")
   const [scoring, setScoring] = useState(false)
+  // WhatsApp template picker state (phase 4)
+  type WaTemplate = { id: string; name: string; language: string; category: string; status: string; bodyText: string | null; variables: string[] }
+  const [waTemplates, setWaTemplates] = useState<WaTemplate[]>([])
+  const [waTemplatesLoading, setWaTemplatesLoading] = useState(false)
+  const [waSelectedTemplate, setWaSelectedTemplate] = useState<string>("")
+  const [waVariables, setWaVariables] = useState<Record<string, string>>({})
 
   const { isVisible, isEditable } = useFieldPermissions("lead")
   const id = params.id as string
@@ -250,6 +256,68 @@ export default function LeadDetailPage() {
       case "Email":
       default:         return { channel: "email",    to: l.email }
     }
+  }
+
+  // Fetch approved WhatsApp templates when the user switches to WhatsApp
+  // channel for the first time. Meta requires a pre-approved template to
+  // send outside the 24h customer service window — which, for a cold lead,
+  // is always. The picker below renders empty-state with a link to
+  // /settings/channels/whatsapp/templates when this list is empty.
+  useEffect(() => {
+    if (textType !== "WhatsApp" || waTemplates.length > 0 || waTemplatesLoading) return
+    setWaTemplatesLoading(true)
+    fetch("/api/v1/whatsapp/templates?status=APPROVED", {
+      headers: orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>,
+    })
+      .then(r => r.json())
+      .then(j => { if (j.success) setWaTemplates(j.data as WaTemplate[]) })
+      .catch(() => {})
+      .finally(() => setWaTemplatesLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textType])
+
+  // Reset variable inputs when the template selection changes.
+  useEffect(() => {
+    if (!waSelectedTemplate) { setWaVariables({}); return }
+    const tpl = waTemplates.find(t => t.id === waSelectedTemplate)
+    if (!tpl) return
+    setWaVariables(Object.fromEntries(tpl.variables.map(v => [v, ""])))
+  }, [waSelectedTemplate, waTemplates])
+
+  const sendWaTemplate = async () => {
+    if (!lead) return
+    const tpl = waTemplates.find(t => t.id === waSelectedTemplate)
+    if (!tpl) return
+    const to = lead.phoneWhatsApp || lead.phone
+    if (!to) { setSendError("У лида нет WhatsApp / телефона"); return }
+    setSending(true)
+    setSendError("")
+    try {
+      const res = await fetch("/api/v1/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+        body: JSON.stringify({
+          to,
+          templateName: tpl.name,
+          languageCode: tpl.language,
+          variables: waVariables,
+          contactId: undefined,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) { setSent(true) } else { setSendError(json.error || "Failed to send") }
+    } catch (err: any) {
+      setSendError(err?.message || "Network error")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // Render a template body with variable placeholders substituted. Supports
+  // positional ({{1}}..{{N}}) and named ({{param_name}}) Meta placeholders.
+  const renderTemplatePreview = (body: string | null | undefined, vars: Record<string, string>): string => {
+    if (!body) return ""
+    return body.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] || `{{${key}}}`)
   }
 
   const sendGenerated = async () => {
@@ -700,85 +768,181 @@ export default function LeadDetailPage() {
       {activeTab === "aitext" && (
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">{t("modalTextType") || "Канал"}</Label>
-                <Select value={textType} onChange={(e: any) => setTextType(e.target.value)}>
+                <Select value={textType} onChange={(e: any) => { setTextType(e.target.value); setGeneratedText(null); setSent(false); setSendError("") }}>
                   <option value="Email">Email</option>
                   <option value="SMS">SMS</option>
                   <option value="WhatsApp">WhatsApp</option>
                   <option value="Telegram">Telegram</option>
                 </Select>
               </div>
-              <div>
-                <Label className="text-xs">Тема</Label>
-                <Select value={topic} onChange={(e: any) => setTopic(e.target.value)}>
-                  <option value="welcome">Знакомство</option>
-                  <option value="follow_up">Follow-up</option>
-                  <option value="offer">Коммерческое предложение</option>
-                  <option value="meeting_request">Запрос встречи</option>
-                  <option value="reminder">Напоминание</option>
-                  <option value="thank_you">Благодарность</option>
-                  <option value="reengagement">Реактивация</option>
-                  <option value="custom">Свободная тема</option>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">{t("modalTone") || "Тон"}</Label>
-                <Select value={tone} onChange={(e: any) => setTone(e.target.value)}>
-                  <option value="professional">{t("modalProfessional") || "Профессиональный"}</option>
-                  <option value="friendly">{t("modalFriendly") || "Дружелюбный"}</option>
-                  <option value="formal">{t("modalFormal") || "Формальный"}</option>
-                  <option value="persuasive">{t("modalPersuasive") || "Убедительный"}</option>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-xs">{t("modalExtraInstructions") || "Доп. инструкции"}</Label>
-                <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "например: упомянуть скидку 10%"} />
-              </div>
             </div>
-            <Button onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} disabled={aiLoading} className="w-full gap-2">
-              {aiLoading ? (t("modalGenerating") || "Генерирую...") : (t("modalGenerateText") || "Сгенерировать текст")}
-            </Button>
 
-            {generatedText && (
-              <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
-                {textType === "Email" && (
+            {textType === "WhatsApp" ? (
+              // ═══ WhatsApp template picker — outside 24h window Meta requires ═══
+              // a pre-approved template. For a cold lead that's always. Free text
+              // goes through sendWhatsAppText from the messaging lib but is
+              // forbidden by the Graph API if no recent inbound — so we don't
+              // even offer a free-text UI here.
+              <div className="space-y-3 border rounded-lg p-4 bg-emerald-50/30 dark:bg-emerald-950/10">
+                <div className="flex items-start gap-2">
+                  <div className="text-xs text-emerald-800 dark:text-emerald-200 flex-1">
+                    <p className="font-medium mb-0.5">WhatsApp Business API — отправка по шаблону</p>
+                    <p className="text-emerald-700 dark:text-emerald-300">
+                      Для cold-outreach Meta требует использовать пре-одобренный шаблон. Бесплатный текст — только в пределах 24-часового окна после входящего от клиента.
+                    </p>
+                  </div>
+                </div>
+
+                {waTemplatesLoading ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Загружаю шаблоны…</p>
+                ) : waTemplates.length === 0 ? (
+                  <div className="text-center py-6 border rounded-lg bg-background">
+                    <p className="text-sm text-muted-foreground">Нет одобренных WhatsApp-шаблонов.</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Синхронизируйте с Meta в{" "}
+                      <a href="/settings/channels/whatsapp" className="text-primary underline">WhatsApp Settings</a>.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-xs">Шаблон</Label>
+                      <Select value={waSelectedTemplate} onChange={(e: any) => setWaSelectedTemplate(e.target.value)}>
+                        <option value="">— выберите —</option>
+                        {waTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.name} ({t.language}) · {t.category}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {waSelectedTemplate && (() => {
+                      const tpl = waTemplates.find(t => t.id === waSelectedTemplate)
+                      if (!tpl) return null
+                      return (
+                        <>
+                          {tpl.variables.length > 0 && (
+                            <div className="space-y-2">
+                              <Label className="text-xs">Параметры</Label>
+                              {tpl.variables.map((v) => (
+                                <div key={v} className="flex items-center gap-2">
+                                  <code className="text-[11px] font-mono w-24 text-muted-foreground">{`{{${v}}}`}</code>
+                                  <Input
+                                    value={waVariables[v] || ""}
+                                    onChange={(e: any) => setWaVariables(prev => ({ ...prev, [v]: e.target.value }))}
+                                    placeholder={`значение для {{${v}}}`}
+                                    className="text-sm"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {tpl.bodyText && (
+                            <div>
+                              <Label className="text-xs">Preview</Label>
+                              <div className="text-sm whitespace-pre-wrap bg-background border rounded p-3 mt-1">
+                                {renderTemplatePreview(tpl.bodyText, waVariables)}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 justify-end">
+                            {(lead.phoneWhatsApp || lead.phone) && (
+                              <Button size="sm" onClick={sendWaTemplate} disabled={sending || sent} className="gap-1">
+                                <Send className="h-3 w-3" />
+                                {sent ? "Отправлено" : sending ? "Отправляю…" : `Send WhatsApp → ${lead.phoneWhatsApp || lead.phone}`}
+                              </Button>
+                            )}
+                          </div>
+
+                          {sendError && (
+                            <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{sendError}</p>
+                          )}
+                        </>
+                      )
+                    })()}
+                  </>
+                )}
+              </div>
+            ) : (
+              // ═══ Email / SMS / Telegram — existing Da Vinci free-form flow ═══
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-xs text-primary uppercase">{t("modalSubject") || "Subject"}</Label>
-                    <Input value={generatedText.subject || ""} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1 bg-background" />
+                    <Label className="text-xs">Тема</Label>
+                    <Select value={topic} onChange={(e: any) => setTopic(e.target.value)}>
+                      <option value="welcome">Знакомство</option>
+                      <option value="follow_up">Follow-up</option>
+                      <option value="offer">Коммерческое предложение</option>
+                      <option value="meeting_request">Запрос встречи</option>
+                      <option value="reminder">Напоминание</option>
+                      <option value="thank_you">Благодарность</option>
+                      <option value="reengagement">Реактивация</option>
+                      <option value="custom">Свободная тема</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("modalTone") || "Тон"}</Label>
+                    <Select value={tone} onChange={(e: any) => setTone(e.target.value)}>
+                      <option value="professional">{t("modalProfessional") || "Профессиональный"}</option>
+                      <option value="friendly">{t("modalFriendly") || "Дружелюбный"}</option>
+                      <option value="formal">{t("modalFormal") || "Формальный"}</option>
+                      <option value="persuasive">{t("modalPersuasive") || "Убедительный"}</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{t("modalExtraInstructions") || "Доп. инструкции"}</Label>
+                    <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "например: упомянуть скидку 10%"} />
+                  </div>
+                </div>
+                <Button onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} disabled={aiLoading} className="w-full gap-2">
+                  {aiLoading ? (t("modalGenerating") || "Генерирую...") : (t("modalGenerateText") || "Сгенерировать текст")}
+                </Button>
+
+                {generatedText && (
+                  <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
+                    {textType === "Email" && (
+                      <div>
+                        <Label className="text-xs text-primary uppercase">{t("modalSubject") || "Subject"}</Label>
+                        <Input value={generatedText.subject || ""} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1 bg-background" />
+                      </div>
+                    )}
+                    <div>
+                      <Label className="text-xs uppercase">{t("modalText") || "Text"}</Label>
+                      <Textarea value={generatedText.body} rows={8} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1 bg-background" />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
+                        <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
+                      </Button>
+                      {(() => {
+                        const { to: dest } = resolveDestination(textType, lead)
+                        if (!dest) return null
+                        const sendLabel =
+                          textType === "SMS"      ? (t("modalSendSMS") || "Send SMS") :
+                          textType === "Telegram" ? "Send Telegram" :
+                                                    (t("modalSendEmail") || "Send Email")
+                        return (
+                          <Button size="sm" onClick={sendGenerated} disabled={sending || sent} className="gap-1">
+                            <Send className="h-3 w-3" /> {sent ? (t("modalSent") || "Sent!") : sending ? (t("modalSending") || "Sending...") : sendLabel}
+                          </Button>
+                        )
+                      })()}
+                      <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
+                        <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
+                      </Button>
+                    </div>
+                    {sendError && (
+                      <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{sendError}</p>
+                    )}
                   </div>
                 )}
-                <div>
-                  <Label className="text-xs uppercase">{t("modalText") || "Text"}</Label>
-                  <Textarea value={generatedText.body} rows={8} onChange={(e: any) => setGeneratedText({ ...generatedText, body: e.target.value })} className="mt-1 bg-background" />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
-                    <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
-                  </Button>
-                  {(() => {
-                    const { to: dest } = resolveDestination(textType, lead)
-                    if (!dest) return null
-                    const sendLabel =
-                      textType === "SMS"      ? (t("modalSendSMS") || "Send SMS") :
-                      textType === "WhatsApp" ? "Send WhatsApp" :
-                      textType === "Telegram" ? "Send Telegram" :
-                                                (t("modalSendEmail") || "Send Email")
-                    return (
-                      <Button size="sm" onClick={sendGenerated} disabled={sending || sent} className="gap-1">
-                        <Send className="h-3 w-3" /> {sent ? (t("modalSent") || "Sent!") : sending ? (t("modalSending") || "Sending...") : sendLabel}
-                      </Button>
-                    )
-                  })()}
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
-                    <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
-                  </Button>
-                </div>
-                {sendError && (
-                  <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{sendError}</p>
-                )}
-              </div>
+              </>
             )}
           </CardContent>
         </Card>

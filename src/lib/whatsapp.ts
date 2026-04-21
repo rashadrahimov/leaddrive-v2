@@ -202,7 +202,11 @@ export async function sendWhatsAppTemplate({
   }
 
   // Resolve template spec from DB. If languageCode is given we match on it,
-  // otherwise we take the first APPROVED match by name.
+  // otherwise we take the first APPROVED match by name. When the template
+  // isn't in our DB we still try to send — Meta will reject if the tenant's
+  // WABA doesn't actually have it approved. This way the built-in
+  // `hello_world` sample works before the first templates-sync, and we
+  // avoid a chicken-and-egg problem on first-time credential validation.
   const template = await prisma.whatsAppTemplate.findFirst({
     where: {
       organizationId,
@@ -211,11 +215,8 @@ export async function sendWhatsAppTemplate({
       ...(languageCode ? { language: languageCode } : {}),
     },
   })
-  if (!template) {
-    return { success: false, error: `template "${templateName}" not approved for this tenant` }
-  }
 
-  const lang = languageCode || template.language
+  const lang = languageCode || template?.language || "en_US"
   const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
 
   // Build components from stored variables + caller-supplied values.
@@ -225,7 +226,7 @@ export async function sendWhatsAppTemplate({
   if (variables) {
     if (Array.isArray(variables)) {
       for (const val of variables) bodyParams.push({ type: "text", text: String(val) })
-    } else {
+    } else if (template) {
       for (const key of template.variables) {
         const val = variables[key] ?? ""
         const isPositional = /^\d+$/.test(key)

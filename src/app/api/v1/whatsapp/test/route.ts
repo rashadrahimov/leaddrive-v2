@@ -5,6 +5,12 @@ import { sendWhatsAppMessage } from "@/lib/whatsapp"
 
 const testSchema = z.object({
   to: z.string().min(1, "Phone number is required"),
+  // Cold test sends must use a pre-approved Meta template. Meta's sample
+  // `hello_world` template (language `en_US`) is auto-created for every
+  // new WABA and is a safe universal default. Tenants can override via
+  // the body to test one of their own approved templates.
+  templateName: z.string().default("hello_world"),
+  languageCode: z.string().default("en_US"),
 })
 
 export async function POST(req: NextRequest) {
@@ -19,7 +25,9 @@ export async function POST(req: NextRequest) {
 
   const result = await sendWhatsAppMessage({
     to: parsed.data.to,
-    message: "Тестовое сообщение от LeadDrive CRM. WhatsApp интеграция работает!",
+    message: `[template:${parsed.data.templateName}]`,
+    templateName: parsed.data.templateName,
+    templateLanguage: parsed.data.languageCode,
     organizationId: orgId,
   })
 
