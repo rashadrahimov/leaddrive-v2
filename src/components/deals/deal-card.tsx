@@ -100,7 +100,11 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -1 }}
       transition={{ duration: 0.2 }}
-      className="relative group"
+      // z-30 when the quick-add popover is open — otherwise the NEXT card's
+      // `.relative` (its own stacking context, later in DOM order) paints on
+      // top of this card's popover (which lives in THIS card's stacking
+      // context and so can't escape it).
+      className={cn("relative group", quickAdd && "z-30")}
     >
       <div
         className={cn(
