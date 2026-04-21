@@ -44,6 +44,102 @@ const variableButtons = [
   { labelKey: "varYear", variable: "year", icon: "📅" },
 ]
 
+// Pre-styled block snippets the user can drop into the WYSIWYG canvas.
+// All styling is inline + email-safe (Gmail / Outlook / Apple Mail render
+// identically). These replace Unlayer's drag-drop block palette — a user
+// clicks once, the HTML lands at the cursor, and the block is then
+// freely editable in the contentEditable surface.
+const BLOCK_TEMPLATES: { key: string; label: string; icon: string; html: string }[] = [
+  {
+    key: "hero",
+    label: "Hero / Заголовок",
+    icon: "🎯",
+    html: `<div style="background:#0f172a;color:#ffffff;padding:40px 24px;text-align:center;border-radius:8px;margin:12px 0;">
+<h1 style="margin:0;font-size:28px;font-weight:700;line-height:1.3;">Ваш заголовок</h1>
+<p style="margin:12px 0 0;font-size:16px;opacity:0.85;line-height:1.5;">Короткое вступление — 1-2 предложения о ценности.</p>
+</div>`,
+  },
+  {
+    key: "text",
+    label: "Текстовый блок",
+    icon: "📝",
+    html: `<div style="padding:16px 0;font-size:15px;line-height:1.6;color:#1f2937;">
+<p style="margin:0 0 12px;">Здравствуйте, {{client_name}}!</p>
+<p style="margin:0;">Текст письма. Замените этот абзац на ваш контент — можно редактировать прямо здесь.</p>
+</div>`,
+  },
+  {
+    key: "button",
+    label: "Кнопка CTA",
+    icon: "🔘",
+    html: `<div style="text-align:center;padding:20px 0;">
+<a href="#" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:6px;font-size:15px;font-weight:600;">Призыв к действию</a>
+</div>`,
+  },
+  {
+    key: "two-col",
+    label: "2 колонки",
+    icon: "⫴",
+    html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;"><tr>
+<td valign="top" style="width:50%;padding-right:12px;vertical-align:top;">
+<h3 style="margin:0 0 8px;font-size:17px;color:#0f172a;">Колонка 1</h3>
+<p style="margin:0;font-size:14px;line-height:1.5;color:#4b5563;">Описание первой колонки.</p>
+</td>
+<td valign="top" style="width:50%;padding-left:12px;vertical-align:top;">
+<h3 style="margin:0 0 8px;font-size:17px;color:#0f172a;">Колонка 2</h3>
+<p style="margin:0;font-size:14px;line-height:1.5;color:#4b5563;">Описание второй колонки.</p>
+</td>
+</tr></table>`,
+  },
+  {
+    key: "image",
+    label: "Картинка",
+    icon: "🖼️",
+    html: `<div style="text-align:center;padding:16px 0;">
+<img src="https://placehold.co/600x300/e2e8f0/64748b?text=Замените+картинку" alt="Описание картинки" style="max-width:100%;height:auto;border-radius:6px;display:inline-block;" />
+<p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Подпись к картинке</p>
+</div>`,
+  },
+  {
+    key: "image-text",
+    label: "Картинка + текст",
+    icon: "🖼️📝",
+    html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;"><tr>
+<td style="width:40%;padding-right:16px;vertical-align:top;">
+<img src="https://placehold.co/240x180/e2e8f0/64748b?text=Image" alt="" style="width:100%;height:auto;border-radius:6px;" />
+</td>
+<td style="vertical-align:top;">
+<h3 style="margin:0 0 8px;font-size:17px;color:#0f172a;">Заголовок раздела</h3>
+<p style="margin:0;font-size:14px;line-height:1.5;color:#4b5563;">Описание справа от картинки. Замените на ваш текст.</p>
+</td>
+</tr></table>`,
+  },
+  {
+    key: "divider",
+    label: "Разделитель",
+    icon: "➖",
+    html: `<hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />`,
+  },
+  {
+    key: "quote",
+    label: "Цитата",
+    icon: "❝",
+    html: `<blockquote style="margin:16px 0;padding:16px 20px;border-left:4px solid #2563eb;background:#eff6ff;color:#1e40af;font-size:15px;line-height:1.6;font-style:italic;">
+«Цитата клиента или ключевая фраза. Замените на вашу.»
+<footer style="margin-top:8px;font-size:13px;font-style:normal;color:#64748b;">— Автор, Должность</footer>
+</blockquote>`,
+  },
+  {
+    key: "footer",
+    label: "Футер",
+    icon: "🔚",
+    html: `<div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;line-height:1.6;">
+<p style="margin:0 0 6px;"><strong>{{company}}</strong></p>
+<p style="margin:0;">Адрес компании · Телефон · <a href="#" style="color:#6b7280;text-decoration:underline;">Отписаться</a></p>
+</div>`,
+  },
+]
+
 export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, orgId, onDelete }: EmailTemplateFormProps) {
   const tf = useTranslations("forms")
   const tc = useTranslations("common")
@@ -162,6 +258,35 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     } else {
       update("htmlBody", form.htmlBody + tag)
     }
+  }
+
+  // Insert a pre-styled HTML block at the cursor position inside the
+  // contentEditable. Email-safe inline styles are used (no external CSS,
+  // no webfonts) so the output renders identically in Gmail, Outlook,
+  // Apple Mail and Yandex.Mail.
+  const insertBlock = (html: string) => {
+    if (!editorRef.current) return
+    editorRef.current.focus()
+
+    const sel = window.getSelection()
+    if (sel && sel.rangeCount > 0 && editorRef.current.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0)
+      range.deleteContents()
+      const wrapper = document.createElement("div")
+      wrapper.innerHTML = html
+      const frag = document.createDocumentFragment()
+      let node: ChildNode | null
+      while ((node = wrapper.firstChild)) frag.appendChild(node)
+      range.insertNode(frag)
+      // Move cursor after inserted content
+      range.collapse(false)
+      sel.removeAllRanges()
+      sel.addRange(range)
+    } else {
+      // No selection inside editor — append to end
+      editorRef.current.insertAdjacentHTML("beforeend", html)
+    }
+    syncEditorContent()
   }
 
   const toggleHtmlMode = () => {
@@ -289,6 +414,33 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               <p className="text-xs text-muted-foreground mb-2">
                 {t("editorHint")}
               </p>
+
+              {/* Block palette — click a block, it appends to the canvas at cursor.
+                  Each block is plain email-safe HTML with inline styles, so the
+                  output renders identically in all mail clients. User can then
+                  edit the inserted block inline in the contentEditable. */}
+              {activeTab === "editor" && (
+                <div className="mb-3 p-3 border rounded-lg bg-muted/30">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">🧱 Блоки</span>
+                    <span className="text-xs text-muted-foreground">клик вставляет блок в позицию курсора</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {BLOCK_TEMPLATES.map(b => (
+                      <button
+                        key={b.key}
+                        type="button"
+                        onClick={() => insertBlock(b.html)}
+                        className="text-xs px-2.5 py-1.5 rounded-md bg-background border border-border hover:border-primary hover:bg-primary/5 transition-colors font-medium text-foreground"
+                        title={b.label}
+                      >
+                        <span className="mr-1">{b.icon}</span>
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Tabs: Editor / Preview */}
               <div className="flex border-b mb-0">
