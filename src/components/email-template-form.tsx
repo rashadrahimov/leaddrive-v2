@@ -249,6 +249,88 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     }
   }
 
+  // ─── Click-to-select resize for images + buttons + sections ─────────────
+  // When the user clicks an img / a (button) / table / hr / blockquote inside
+  // the contentEditable canvas, we tag it with data-selected="true" so CSS
+  // gives it a dashed outline + native `resize: both` corner handle. Clicking
+  // anywhere outside clears the selection. A small floating toolbar appears
+  // next to the selected image with quick width% controls — CSS resize works
+  // in pixels but users think in percentages for email.
+  const [selectedEl, setSelectedEl] = useState<HTMLElement | null>(null)
+  const [selBoxStyle, setSelBoxStyle] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => {
+    const canvas = editorRef.current
+    if (!canvas) return
+
+    const clearSelection = () => {
+      canvas.querySelectorAll('[data-selected="true"]').forEach((el) => {
+        (el as HTMLElement).removeAttribute("data-selected")
+      })
+    }
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null
+      if (!target) return
+      // Find the nearest resizable element
+      const resizable = target.closest("img, a, table, hr, blockquote, [data-block]") as HTMLElement | null
+      clearSelection()
+      if (resizable && canvas.contains(resizable)) {
+        resizable.setAttribute("data-selected", "true")
+        setSelectedEl(resizable)
+        // Position the floating width toolbar above the element
+        const rect = resizable.getBoundingClientRect()
+        const canvasRect = canvas.getBoundingClientRect()
+        setSelBoxStyle({
+          top: rect.top - canvasRect.top - 36,
+          left: rect.left - canvasRect.left,
+        })
+      } else {
+        setSelectedEl(null)
+        setSelBoxStyle(null)
+      }
+    }
+
+    // Clicking outside the canvas (e.g. toolbar) should also clear selection
+    const handleBlur = (e: FocusEvent) => {
+      const next = e.relatedTarget as HTMLElement | null
+      // Keep selection if focus is moving to the width slider/toolbar
+      if (next?.closest("[data-selection-toolbar]")) return
+      clearSelection()
+      setSelectedEl(null)
+      setSelBoxStyle(null)
+    }
+
+    canvas.addEventListener("click", handleClick)
+    canvas.addEventListener("blur", handleBlur, true)
+    return () => {
+      canvas.removeEventListener("click", handleClick)
+      canvas.removeEventListener("blur", handleBlur, true)
+    }
+  }, [open, activeTab])
+
+  // Apply a width (in percent) to the currently-selected element by patching
+  // its inline `width` style. Sync back to htmlBody so the preview and save
+  // reflect the change.
+  const setSelectedWidth = (pct: number) => {
+    if (!selectedEl) return
+    if (selectedEl.tagName === "IMG") {
+      selectedEl.style.width = `${pct}%`
+      selectedEl.style.height = "auto"
+    } else {
+      selectedEl.style.width = `${pct}%`
+    }
+    syncEditorContent()
+  }
+
+  const removeSelected = () => {
+    if (!selectedEl) return
+    selectedEl.remove()
+    setSelectedEl(null)
+    setSelBoxStyle(null)
+    syncEditorContent()
+  }
+
   const insertVariable = (variable: string) => {
     const tag = `{{${variable}}}`
     if (activeTab === "editor" && editorRef.current) {
@@ -673,12 +755,35 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                     ))}
                   </div>
 
-                  {/* ContentEditable area */}
+                  {/* ContentEditable area with click-to-select resize handles */}
                   <div className="relative">
+                    {/* Scoped styles for selection outline + native CSS resize
+                        on images. `[data-selected]` gets a blue dashed outline
+                        and a real corner-drag handle via `resize: both`. The
+                        hover cue shows what's resizable before the user
+                        commits to a click. */}
+                    <style>{`
+                      [data-ld-editor] img { cursor: pointer; max-width: 100%; height: auto; display: inline-block; }
+                      [data-ld-editor] img:hover { outline: 2px dashed #60a5fa; outline-offset: 2px; }
+                      [data-ld-editor] a:hover { outline: 2px dashed #60a5fa; outline-offset: 2px; }
+                      [data-ld-editor] table:hover { outline: 2px dashed #60a5fa; outline-offset: 2px; }
+                      [data-ld-editor] [data-selected="true"] {
+                        outline: 2px solid #2563eb !important;
+                        outline-offset: 2px;
+                      }
+                      [data-ld-editor] img[data-selected="true"] {
+                        resize: both;
+                        overflow: hidden;
+                      }
+                    `}</style>
                     <div
                       ref={editorRef}
+                      data-ld-editor
                       contentEditable
-                      className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 focus:outline-none text-sm leading-relaxed"
+                      className={cn(
+                        "focus:outline-none text-sm leading-relaxed p-4 overflow-y-auto",
+                        isFullscreen ? "flex-1 min-h-0" : "min-h-[200px] max-h-[300px]"
+                      )}
                       onInput={syncEditorContent}
                       onBlur={syncEditorContent}
                       suppressContentEditableWarning
@@ -687,6 +792,51 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                     {!form.htmlBody && (
                       <div className="absolute top-4 left-4 text-sm text-muted-foreground/50 pointer-events-none leading-relaxed">
                         {t("editorPlaceholder")}
+                      </div>
+                    )}
+
+                    {/* Floating selection toolbar — appears above the currently
+                        selected element with width % slider + delete button.
+                        Positioned absolutely relative to the editor container. */}
+                    {selectedEl && selBoxStyle && (
+                      <div
+                        data-selection-toolbar
+                        style={{
+                          position: "absolute",
+                          top: Math.max(selBoxStyle.top, 4),
+                          left: selBoxStyle.left,
+                          zIndex: 30,
+                        }}
+                        className="flex items-center gap-2 px-2 py-1 rounded-md shadow-lg bg-slate-900 text-white text-xs"
+                      >
+                        <span className="font-medium opacity-70">
+                          {selectedEl.tagName === "IMG" ? "🖼️" :
+                           selectedEl.tagName === "A" ? "🔘" :
+                           selectedEl.tagName === "TABLE" ? "⫴" :
+                           selectedEl.tagName === "HR" ? "➖" :
+                           selectedEl.tagName === "BLOCKQUOTE" ? "❝" : "📦"}
+                        </span>
+                        <label className="flex items-center gap-1">
+                          <span className="opacity-70">W:</span>
+                          <input
+                            type="range"
+                            min={10}
+                            max={100}
+                            step={5}
+                            defaultValue={100}
+                            onInput={(e) => setSelectedWidth(Number((e.target as HTMLInputElement).value))}
+                            className="w-24 accent-amber-400"
+                          />
+                        </label>
+                        <span className="opacity-60 text-[10px]">или тяни за правый-нижний угол</span>
+                        <button
+                          type="button"
+                          onClick={removeSelected}
+                          className="ml-1 px-1.5 py-0.5 rounded bg-red-500/80 hover:bg-red-500"
+                          title="Удалить блок"
+                        >
+                          🗑
+                        </button>
                       </div>
                     )}
                   </div>
