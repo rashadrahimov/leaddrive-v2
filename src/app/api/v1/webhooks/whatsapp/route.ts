@@ -422,7 +422,7 @@ const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный д
 11. Если клиент ЯВНО просит создать тикет ("открой тикет", "ticket aç", "заведи обращение") — добавь [CREATE_TICKET] в ответ, даже если это первое сообщение.
 12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.
 13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.
-14. Если клиент ЖАЛУЕТСЯ на качество товара/услуги, сервис, задержку, брак, или явно пишет "жалоба/жалуюсь/пожаловаться/şikayət/complaint/недоволен/некачественный" — добавь маркер [COMPLAINT] ВМЕСТЕ с [CREATE_TICKET] в свой ответ. Это переведёт обращение в реестр жалоб. В тексте ответа клиенту просто вежливо подтверди, что жалоба принята и передана ответственным — НЕ упоминай слова "тикет" или "реестр".`
+14. ПРИОРИТЕТ МАРКЕРА: если клиент ЖАЛУЕТСЯ на качество товара/услуги, сервис, задержку, брак, или явно пишет любое из слов: "жалоба/жалуюсь/пожаловаться/şikayət/shikayet/sikayet/complaint/complain/недоволен/narazı/naraziyam/некачественный/возмущён" (даже в транслите и с опечатками) — ОБЯЗАТЕЛЬНО добавь ОБА маркера: [CREATE_TICKET] И [COMPLAINT]. Маркер [COMPLAINT] ВАЖНЕЕ [ESCALATE] — если сомневаешься, ставь [COMPLAINT]. Не ограничивайся одним [ESCALATE] — иначе обращение НЕ попадёт в реестр жалоб. В тексте ответа клиенту просто вежливо подтверди, что жалоба принята и передана ответственным — НЕ упоминай слова "тикет" или "реестр".`
 
 async function handleAiAutoReply(
   organizationId: string,
@@ -580,8 +580,9 @@ async function handleAiAutoReply(
     const shouldMarkComplaintMarker = rawReply.includes("[COMPLAINT]")
 
     // Keyword fallback — fires even if Da Vinci missed the marker. Customer language matters,
-    // not the AI reply, so match against userMessage.
-    const complaintKeywordRegex = /\b(жалоб|пожалов|şikay[aə]t|complain|complaint|недоволен|некачеств)/i
+    // not the AI reply, so match against userMessage. Covers Russian, Azerbaijani (native
+    // and Latin transliteration), and English.
+    const complaintKeywordRegex = /(жалоб|пожалов|недоволен|недовольств|некачеств|возмущ|shikay[aeə]t|şikay[aeə]t|sikay[aeə]t|şikaeət|naraz[iıoı]|complain|complaint|grievance|unhappy\s+with|dissatisf)/i
     const keywordComplaint = complaintKeywordRegex.test(userMessage)
     const isComplaint = shouldMarkComplaintMarker || keywordComplaint
 
