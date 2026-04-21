@@ -75,6 +75,16 @@ npx prisma migrate deploy --schema="$APP_DIR/prisma/schema.prisma" 2>&1 || {
   log "WARNING: prisma migrate returned non-zero (may be OK if no pending migrations)"
 }
 
+# ── Step 3b: One-shot WhatsApp env → ChannelConfig backfill for LeadDrive ──
+# After the whatsapp_multitenant migration, the runtime library reads creds
+# from ChannelConfig instead of env. LeadDrive tenant's creds live in env on
+# this box, so we seed them into its ChannelConfig row. Idempotent.
+if [ -f "$APP_DIR/scripts/migrate-leaddrive-whatsapp.mjs" ]; then
+  node "$APP_DIR/scripts/migrate-leaddrive-whatsapp.mjs" 2>&1 || {
+    log "WARNING: wa-migrate returned non-zero (non-fatal)"
+  }
+fi
+
 # ── Step 4: Copy ecosystem config ──────────────────────────
 log "Updating PM2 config..."
 cp "$APP_DIR/.next/standalone/ecosystem.config.cjs" "$APP_DIR/ecosystem.config.cjs" 2>/dev/null || true

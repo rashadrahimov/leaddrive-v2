@@ -1423,10 +1423,10 @@ model ChannelConfig {
   configName     String
   botToken       String?
   webhookUrl     String?
-  apiKey         String?
-  phoneNumber    String?
+  apiKey         String?        // DEPRECATED for whatsapp — use accessToken
+  phoneNumber    String?        // DEPRECATED for whatsapp — use phoneNumberId
   appId          String?
-  appSecret      String?
+  appSecret      String?        // for whatsapp: Meta App Secret (HMAC sig verification)
   pageId         String?
   settings       Json?
   isActive       Boolean  @default(true)
@@ -1434,11 +1434,53 @@ model ChannelConfig {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // WhatsApp Cloud API per-tenant credentials. Replaces env-var fallback so
+  // each tenant has a separate WABA and messages never cross tenant lines.
+  accessToken        String?
+  phoneNumberId      String?
+  businessAccountId  String?
+  verifyToken        String?    // per-tenant webhook verify token (Meta Setup)
+  displayName        String?    // cosmetic, shown in UI
+  lastValidatedAt    DateTime?  // set by /api/v1/whatsapp/validate success
+  lastTemplateSyncAt DateTime?  // set by /api/v1/whatsapp/templates POST
+
   messages       ChannelMessage[]
   conversations  SocialConversation[]
+  waTemplates    WhatsAppTemplate[]
 
   @@index([organizationId])
   @@map("channel_configs")
+}
+
+// Approved WhatsApp message templates synced from Meta Business Manager.
+// Single source of truth for outbound template sends — no hardcoded names
+// anywhere in src/. Synced via WhatsApp Graph API
+// GET /v21.0/{businessAccountId}/message_templates
+model WhatsAppTemplate {
+  id               String   @id @default(cuid())
+  organizationId   String
+  channelConfigId  String
+  channelConfig    ChannelConfig @relation(fields: [channelConfigId], references: [id], onDelete: Cascade)
+  metaTemplateId   String?  // Meta's numeric id (optional; unique-ish per WABA)
+  name             String
+  category         String   // MARKETING | UTILITY | AUTHENTICATION
+  language         String   // en_US, ru, az, ...
+  status           String   // APPROVED | PENDING | REJECTED | DISABLED | PAUSED
+  bodyText         String?  @db.Text
+  headerType       String?  // TEXT | IMAGE | VIDEO | DOCUMENT | LOCATION
+  headerText       String?  @db.Text
+  footerText       String?  @db.Text
+  buttons          Json?    // [{type, text, url, phone_number, ...}]
+  variables        String[] @default([]) // extracted placeholders from body
+  rawMeta          Json?    // raw Graph API payload for debugging
+  lastSyncAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([organizationId, name, language])
+  @@index([organizationId, status])
+  @@index([channelConfigId])
+  @@map("whatsapp_templates")
 }
 
 model ChannelMessage {
