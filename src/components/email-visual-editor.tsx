@@ -121,6 +121,12 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
     useEffect(() => {
       destroyedRef.current = false
       let editorInstance: any = null
+      // Hard timeout for `editor:ready` — Unlayer's iframe loads third-party
+      // resources (api.unlayer.com, cdn.unlayer.com, fonts, images) that
+      // ad-blockers and corporate firewalls commonly block. If the event
+      // never fires, loading would spin forever. 20 seconds is generous
+      // for slow networks, short enough that the user doesn't give up.
+      let readyTimeout: ReturnType<typeof setTimeout> | null = null
 
       const init = async () => {
         try {
@@ -160,7 +166,19 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
             source: { name: "react-email-editor", version: "1.8.0" },
           })
 
+          readyTimeout = setTimeout(() => {
+            if (destroyedRef.current || editorRef.current) return
+            setError(
+              "Редактор не загрузился за 20 сек. Скорее всего блокировщик " +
+              "рекламы или корпоративный firewall режет editor.unlayer.com / " +
+              "api.unlayer.com. Переключись на HTML-редактор выше — это " +
+              "полноценный fallback.",
+            )
+            setLoading(false)
+          }, 20000)
+
           editorInstance.addEventListener("editor:ready", () => {
+            if (readyTimeout) { clearTimeout(readyTimeout); readyTimeout = null }
             if (destroyedRef.current) return
             editorRef.current = editorInstance
 
@@ -184,6 +202,7 @@ export const EmailVisualEditor = forwardRef<EmailVisualEditorHandle, Props>(
 
       return () => {
         destroyedRef.current = true
+        if (readyTimeout) { clearTimeout(readyTimeout); readyTimeout = null }
         if (editorInstance) {
           try { editorInstance.destroy() } catch {}
         }
