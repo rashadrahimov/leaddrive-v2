@@ -173,23 +173,17 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
             const tgSettings = (tgChannel.settings as any) || {}
             const chatId = config.chatId || config.chat_id || tgSettings.chatId
             if (chatId) {
-              const tgText = [
-                `<b>💳 Ödəniş xatırlatması</b>`,
-                ``,
-                message,
-                ``,
-                `Maliyyə məsələləri üçün:`,
-                `📧 accreceivable@gtc.az`,
-              ].join("\n")
+              // Previously this wrapped the message in a hardcoded Azerbaijani
+              // "Ödəniş xatırlatması" header and the Güvən Technology finance
+              // address (accreceivable@gtc.az, +994 10 236 99 09). That leaked
+              // the old brand into every tenant's Telegram messages regardless
+              // of language. The message itself is already localized by
+              // invoice-chain-template.ts based on invoice.documentLanguage,
+              // so we just send it as-is.
               const tgBody: any = {
                 chat_id: chatId,
-                text: tgText,
+                text: message,
                 parse_mode: "HTML",
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: "📞 Əlaqə: +994 10 236 99 09", url: process.env.NEXT_PUBLIC_MARKETING_URL || "https://www.leaddrivecrm.org" }],
-                  ],
-                },
               }
               const tgRes = await fetch(`https://api.telegram.org/bot${tgChannel.botToken}/sendMessage`, {
                 method: "POST",

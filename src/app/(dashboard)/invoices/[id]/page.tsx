@@ -600,22 +600,63 @@ export default function InvoiceDetailPage() {
     }
   }
 
-  const chainStepDefaults: Record<string, any> = {
-    wait: { days: 1, unit: "minutes" },
-    send_email: {
-      subject: "Ödəniş xatırlatması: Hesab-faktura {{invoice_number}}",
-      body: "Hörmətli {{recipient_name}},\n\nHesab-faktura {{invoice_number}} məbləği {{amount}} ödənişini xatırladırıq.\n\nÖdəniş tarixi: {{due_date}}\nQalıq məbləğ: {{balance_due}}\n\nXahiş edirik ən qısa zamanda ödəniş edin.\n\nHörmətlə",
+  // Payment-chain step defaults per invoice language. Previously hardcoded
+  // in Azerbaijani which leaked into every tenant's UI regardless of locale.
+  // Picks ru / az / en by invoice.documentLanguage (if the invoice carries a
+  // preferred language) with "ru" as the default.
+  const chainStepDefaultsByLang: Record<string, Record<string, any>> = {
+    ru: {
+      wait: { days: 1, unit: "minutes" },
+      send_email: {
+        subject: "Напоминание об оплате: Счёт {{invoice_number}}",
+        body: "Уважаемый(ая) {{recipient_name}},\n\nНапоминаем об оплате счёта {{invoice_number}} на сумму {{amount}}.\n\nСрок оплаты: {{due_date}}\nОстаток: {{balance_due}}\n\nПожалуйста, произведите оплату в ближайшее время.\n\nС уважением",
+      },
+      sms: {
+        message: "Напоминание: Счёт {{invoice_number}} на {{amount}} не оплачен. Остаток: {{balance_due}}. Пожалуйста, свяжитесь с нами.",
+      },
+      send_whatsapp: {
+        message: "Здравствуйте, {{recipient_name}}! Счёт {{invoice_number}} ({{amount}}) всё ещё ожидает оплаты. Остаток: {{balance_due}}. Срок: {{due_date}}.",
+      },
+      send_telegram: {
+        message: "Напоминание: Счёт {{invoice_number}} на {{amount}} не оплачен. Остаток: {{balance_due}}. Пожалуйста, свяжитесь с нами.",
+      },
     },
-    sms: {
-      message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+    az: {
+      wait: { days: 1, unit: "minutes" },
+      send_email: {
+        subject: "Ödəniş xatırlatması: Hesab-faktura {{invoice_number}}",
+        body: "Hörmətli {{recipient_name}},\n\nHesab-faktura {{invoice_number}} məbləği {{amount}} ödənişini xatırladırıq.\n\nÖdəniş tarixi: {{due_date}}\nQalıq məbləğ: {{balance_due}}\n\nXahiş edirik ən qısa zamanda ödəniş edin.\n\nHörmətlə",
+      },
+      sms: {
+        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+      },
+      send_whatsapp: {
+        message: "Salam, {{recipient_name}}! Hesab-faktura {{invoice_number}} ({{amount}}) hələ ödənilməyib. Qalıq: {{balance_due}}. Son tarix: {{due_date}}.",
+      },
+      send_telegram: {
+        message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+      },
     },
-    send_whatsapp: {
-      message: "Salam, {{recipient_name}}! Hesab-faktura {{invoice_number}} ({{amount}}) hələ ödənilməyib. Qalıq: {{balance_due}}. Son tarix: {{due_date}}.",
-    },
-    send_telegram: {
-      message: "Xatırlatma: Hesab-faktura {{invoice_number}} məbləği {{amount}} ödənilməyib. Qalıq: {{balance_due}}. Bizimlə əlaqə saxlayın.",
+    en: {
+      wait: { days: 1, unit: "minutes" },
+      send_email: {
+        subject: "Payment reminder: Invoice {{invoice_number}}",
+        body: "Dear {{recipient_name}},\n\nThis is a reminder that invoice {{invoice_number}} for {{amount}} is due.\n\nDue date: {{due_date}}\nBalance due: {{balance_due}}\n\nPlease arrange payment at your earliest convenience.\n\nBest regards",
+      },
+      sms: {
+        message: "Reminder: Invoice {{invoice_number}} for {{amount}} is unpaid. Balance: {{balance_due}}. Please contact us.",
+      },
+      send_whatsapp: {
+        message: "Hello {{recipient_name}}! Invoice {{invoice_number}} ({{amount}}) is still awaiting payment. Balance: {{balance_due}}. Due: {{due_date}}.",
+      },
+      send_telegram: {
+        message: "Reminder: Invoice {{invoice_number}} for {{amount}} is unpaid. Balance: {{balance_due}}. Please contact us.",
+      },
     },
   }
+  const invoiceLang = ((invoice as any)?.documentLanguage as string) || "ru"
+  const chainStepDefaults: Record<string, any> =
+    chainStepDefaultsByLang[invoiceLang] || chainStepDefaultsByLang.ru
 
   function addChainStep() {
     const defaultConfig = chainStepDefaults[newStepType] || {}
