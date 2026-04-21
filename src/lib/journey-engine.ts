@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { sendEmail } from "@/lib/email"
+import { sendSms } from "@/lib/sms"
 
 // Whitelist of fields that journey steps are allowed to update per entity type
 const SAFE_UPDATE_FIELDS: Record<string, Set<string>> = {
@@ -151,50 +152,14 @@ export async function processEnrollmentStep(enrollmentId: string, orgId: string)
 
       case "sms": {
         const message = replaceVars(config.message || "")
-        const smsChannel = await prisma.channelConfig.findFirst({
-          where: { organizationId: orgId, channelType: "sms", isActive: true },
-        })
-
-        if (smsChannel?.apiKey && smsChannel?.phoneNumber && recipientPhone) {
-          // Twilio SMS sending
-          const smsSettings = (smsChannel.settings as any) || {}
-          const accountSid = smsSettings.accountSid || ""
-          const authToken = smsChannel.apiKey
-
-          if (accountSid) {
-            try {
-              const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-              const twilioAuth = Buffer.from(`${accountSid}:${authToken}`).toString("base64")
-              const params = new URLSearchParams({
-                To: recipientPhone,
-                From: smsChannel.phoneNumber,
-                Body: message,
-              })
-              const smsRes = await fetch(twilioUrl, {
-                method: "POST",
-                headers: {
-                  "Authorization": `Basic ${twilioAuth}`,
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: params.toString(),
-              })
-              const smsData = await smsRes.json()
-              if (smsData.sid) {
-                result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS sent via Twilio to ${recipientPhone}: SID ${smsData.sid}` }
-              } else {
-                result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `Twilio error: ${smsData.message || JSON.stringify(smsData)}` }
-              }
-            } catch (smsErr: any) {
-              result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS error: ${smsErr.message}` }
-            }
-          } else {
-            console.log(`[Journey SMS] No accountSid configured. To: ${recipientPhone}, Message: ${message}`)
-            result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS logged (no accountSid): "${message.slice(0, 50)}..." → ${recipientPhone}` }
-          }
-        } else {
-          console.log(`[Journey SMS] Missing config or phone. To: ${recipientPhone}, Message: ${message}`)
-          result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS logged: "${message.slice(0, 50)}..." → ${recipientPhone || "(no phone)"}` }
+        if (!recipientPhone) {
+          result = { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS skipped (no phone): "${message.slice(0, 50)}..."` }
+          break
         }
+        const smsResult = await sendSms({ to: recipientPhone, message, organizationId: orgId })
+        result = smsResult.success
+          ? { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS sent to ${recipientPhone}${smsResult.messageId ? ` (id ${smsResult.messageId})` : ""}` }
+          : { stepId: currentStep.id, stepType: "sms", status: "completed", message: `SMS error: ${smsResult.error || "unknown"}` }
         break
       }
 

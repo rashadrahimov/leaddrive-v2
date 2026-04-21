@@ -442,7 +442,7 @@ Email, Telegram, SMS, WhatsApp, Facebook, Instagram, VKontakte
 |---------|----------------|
 | Telegram | botToken |
 | WhatsApp | apiKey (Bearer), phoneNumber (phone_number_id) |
-| SMS | apiKey (Twilio), phoneNumber |
+| SMS | settings: `{ smsProvider, <provider-specific non-secrets> }` + `apiKey` column = provider secret (masked on GET) |
 | Email | SMTP settings |
 | Facebook | appId, appSecret, pageId |
 | Instagram | appId, appSecret, pageId |

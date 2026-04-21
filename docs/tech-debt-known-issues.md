@@ -91,7 +91,7 @@ These are intentionally deferred and should not be confused with debt:
   `assignTo`, `url` are not exposed yet. Add them when a concrete template
   requires customer-facing customization.
 
-- **SMS providers beyond Twilio/Vonage** — the abstraction in
+- **SMS providers beyond the registered set (Twilio, Vonage, ATL)** — the abstraction in
   `src/lib/sms/providers/types.ts` + registry in `src/lib/sms.ts` is ready.
   AWS SNS, MessageBird, etc. can be plugged in without touching `sendSms` or
   `sendOtp`.

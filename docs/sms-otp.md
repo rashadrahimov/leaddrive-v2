@@ -73,14 +73,34 @@ Body:
 
 ## Provider selection
 
-`sendSms` resolves the provider in this order:
+`sendSms` resolves the provider in this order (highest → lowest priority):
 
-1. `ChannelConfig(voip).settings.smsProvider` — per-org override
-   (`"twilio"` | `"vonage"` | `"atl"`)
-2. `SMS_PROVIDER` env var (default: `"twilio"`)
+1. **`ChannelConfig(sms).settings.smsProvider`** + settings — canonical per-org.
+   Configured in the UI under `/settings/channels` → SMS card. The secret
+   (ATL password / Twilio auth token / Vonage API secret) is stored in the
+   top-level `apiKey` column (masked by the GET endpoint).
+2. **Legacy `ChannelConfig(sms)` Twilio shape** — a row with no
+   `settings.smsProvider` but with `apiKey` + `phoneNumber` + `settings.accountSid`
+   is synthesized as Twilio. Keeps pre-refactor orgs working without a DB
+   migration.
+3. **`ChannelConfig(voip).settings.smsProvider`** — backward compat for orgs
+   that used the earlier VoIP-based override. New writes should not go here.
+4. **`SMS_PROVIDER` env var** (default: `"atl"` on LeadDrive prod) + provider
+   env vars. Used as the shared-instance default and for pre-auth flows
+   (signup, phone verification before an org exists).
 
-All three providers (Twilio, Vonage, ATL) support env-level fallbacks for
-pre-auth flows (signup, phone verification before an org exists).
+### ATL SMS (Azerbaijan) — production default
+
+```bash
+ATL_LOGIN=...
+ATL_PASSWORD=...
+ATL_TITLE=TEST           # sender name; must be pre-registered with ATL
+ATL_ENDPOINT=https://send.atlsms.az:7443/bulksms/api   # optional override
+```
+
+Org settings (stored in `ChannelConfig(sms).settings`): `{ smsProvider: "atl", atlLogin, atlTitle }`
+— with `atlPassword` kept in the top-level `apiKey` column so the GET endpoint
+masks it as `****XXXX`.
 
 ### Twilio
 
@@ -90,7 +110,7 @@ TWILIO_AUTH_TOKEN=...
 TWILIO_FROM_NUMBER=+1...
 ```
 
-Org settings: `{ accountSid, authToken, twilioNumber }`
+Org settings: `{ smsProvider: "twilio", accountSid, twilioNumber }` + `apiKey` column = auth token.
 
 ### Vonage (Nexmo)
 
@@ -100,18 +120,7 @@ VONAGE_API_SECRET=...
 VONAGE_FROM_NAME=LeadDrive
 ```
 
-Org settings: `{ apiKey, apiSecret, fromName }`
-
-### ATL SMS (Azerbaijan)
-
-```bash
-ATL_LOGIN=...
-ATL_PASSWORD=...
-ATL_TITLE=TEST           # sender name; must be pre-registered with ATL
-ATL_ENDPOINT=https://send.atlsms.az:7443/bulksms/api   # optional override
-```
-
-Org settings: `{ smsProvider: "atl", atlLogin, atlPassword, atlTitle }`
+Org settings: `{ smsProvider: "vonage", apiKey, fromName }` + `apiKey` column = api secret.
 
 ATL uses an XML-over-HTTPS protocol. The adapter:
 
@@ -151,7 +160,9 @@ goes back to the caller.
   are responsible for correlating phone→user).
 - **No UI** — backend only. The "Enable 2FA via SMS" screen in profile
   settings is not implemented in Phase 1.
-- **Not a secondary provider** — only Twilio is wired. Adding Vonage/SNS
-  would live in `sendSms` as another branch.
+- **Provider registry already supports Twilio, Vonage, and ATL (Azerbaijan).**
+  Production default for LeadDrive is ATL. Adding a new provider (e.g. AWS SNS)
+  is a matter of dropping an adapter in `src/lib/sms/providers/` and registering
+  it in `src/lib/sms.ts`.
 - **Rate limit is in-memory** — on PM2 single instance this is fine. For
   multi-instance, migrate `src/lib/rate-limit.ts` to Redis first.

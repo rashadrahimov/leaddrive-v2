@@ -2,9 +2,15 @@
  * SMS utilities: generic sending + OTP generation/verification.
  *
  * Delivery is pluggable via the provider registry in src/lib/sms/providers/.
- * Provider selection order:
- *   1. ChannelConfig(voip).settings.smsProvider (per-org)
- *   2. SMS_PROVIDER env var (default: "twilio")
+ * Provider resolution order (highest → lowest priority):
+ *   1. ChannelConfig(sms).settings.smsProvider + settings — canonical per-org.
+ *   2. ChannelConfig(sms) legacy shape (apiKey + phoneNumber + settings.accountSid)
+ *      → synthesized as Twilio. Lets orgs created before the refactor keep
+ *      working without a DB migration.
+ *   3. ChannelConfig(voip).settings.smsProvider + settings — backward compat
+ *      for orgs that set it under the VoIP row.
+ *   4. SMS_PROVIDER env + provider env vars — shared-instance default and
+ *      fallback for pre-auth flows (signup has no organizationId).
  *
  * OTP codes are single-use, time-limited (10 min), and stored hashed via bcrypt.
  */
@@ -26,22 +32,73 @@ const PROVIDERS: Record<string, SmsProvider> = {
   atl: atlProvider,
 }
 
-async function resolveProvider(organizationId?: string): Promise<{ provider: SmsProvider; settings: SmsProviderSettings }> {
-  let settings: SmsProviderSettings = {}
-  let providerName = process.env.SMS_PROVIDER || "twilio"
+/**
+ * Map a provider name to the settings key it expects its secret under.
+ * Secrets live in `ChannelConfig.apiKey` (masked by GET) — the UI never
+ * stores raw secrets in `settings` JSON.
+ */
+const PROVIDER_SECRET_KEY: Record<string, string> = {
+  twilio: "authToken",
+  atl: "atlPassword",
+  vonage: "apiSecret",
+}
 
+function mergeSecret(providerName: string, settings: SmsProviderSettings, secret: string | null | undefined): SmsProviderSettings {
+  if (!secret) return settings
+  const key = PROVIDER_SECRET_KEY[providerName]
+  if (!key) return settings
+  if (settings[key]) return settings
+  return { ...settings, [key]: secret }
+}
+
+async function resolveProvider(organizationId?: string): Promise<{ provider: SmsProvider; settings: SmsProviderSettings }> {
   if (organizationId) {
-    const cfg = await prisma.channelConfig.findFirst({
-      where: { organizationId, channelType: "voip", isActive: true },
-    })
-    if (cfg?.settings) {
-      settings = cfg.settings as SmsProviderSettings
-      if (typeof settings.smsProvider === "string") providerName = settings.smsProvider
+    const [smsRow, voipRow] = await Promise.all([
+      prisma.channelConfig.findFirst({
+        where: { organizationId, channelType: "sms", isActive: true },
+      }),
+      prisma.channelConfig.findFirst({
+        where: { organizationId, channelType: "voip", isActive: true },
+      }),
+    ])
+
+    // Tier 1: ChannelConfig(sms) with an explicit provider in settings.
+    const smsSettings = (smsRow?.settings as SmsProviderSettings | null) || null
+    if (smsRow && smsSettings && typeof smsSettings.smsProvider === "string") {
+      const name = smsSettings.smsProvider
+      const merged = mergeSecret(name, smsSettings, smsRow.apiKey)
+      return { provider: PROVIDERS[name] || PROVIDERS.twilio, settings: merged }
+    }
+
+    // Tier 2: Legacy ChannelConfig(sms) Twilio shape — apiKey + phoneNumber + settings.accountSid.
+    if (smsRow?.apiKey && smsRow?.phoneNumber) {
+      const legacyAccountSid =
+        smsSettings && typeof smsSettings.accountSid === "string" ? smsSettings.accountSid : undefined
+      if (legacyAccountSid) {
+        return {
+          provider: PROVIDERS.twilio,
+          settings: {
+            smsProvider: "twilio",
+            accountSid: legacyAccountSid,
+            authToken: smsRow.apiKey,
+            twilioNumber: smsRow.phoneNumber,
+          } as SmsProviderSettings,
+        }
+      }
+    }
+
+    // Tier 3: ChannelConfig(voip).settings.smsProvider — backward compat.
+    const voipSettings = (voipRow?.settings as SmsProviderSettings | null) || null
+    if (voipRow && voipSettings && typeof voipSettings.smsProvider === "string") {
+      const name = voipSettings.smsProvider
+      const merged = mergeSecret(name, voipSettings, voipRow.apiKey)
+      return { provider: PROVIDERS[name] || PROVIDERS.twilio, settings: merged }
     }
   }
 
-  const provider = PROVIDERS[providerName] || PROVIDERS.twilio
-  return { provider, settings }
+  // Tier 4: env defaults (shared-instance default + pre-auth flows).
+  const envProviderName = process.env.SMS_PROVIDER || "twilio"
+  return { provider: PROVIDERS[envProviderName] || PROVIDERS.twilio, settings: {} }
 }
 
 export interface SendSmsOptions {

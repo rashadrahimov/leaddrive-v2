@@ -10,6 +10,8 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "
 import { Mail, Send, MessageSquare, Smartphone, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+type SmsProvider = "atl" | "twilio" | "vonage"
+
 interface ChannelConfigFormData {
   configName: string
   channelType: string
@@ -24,6 +26,18 @@ interface ChannelConfigFormData {
   pageId: string
   confirmationCode: string
   isActive: boolean
+  // SMS provider-specific (non-secret) fields
+  smsProvider: SmsProvider
+  atlLogin: string
+  atlTitle: string
+  twilioAccountSid: string
+  twilioNumber: string
+  vonageApiKey: string
+  vonageFromName: string
+  /** The secret for the selected SMS provider. Stored in ChannelConfig.apiKey (masked on read). */
+  smsSecret: string
+  /** True when the form loaded an existing channel — secret field shows a "leave blank to keep" placeholder. */
+  smsEditing: boolean
 }
 
 interface ChannelConfigFormProps {
@@ -32,6 +46,61 @@ interface ChannelConfigFormProps {
   onSaved: () => void
   initialData?: Partial<ChannelConfigFormData> & { id?: string }
   orgId?: string
+}
+
+/**
+ * Build the POST/PUT payload from form state. Routes SMS configs through a
+ * provider-aware shape: non-secrets go into `settings`, the secret goes into
+ * the top-level `apiKey` column (which the GET endpoint masks as `****XXXX`).
+ * Empty values are sent as `undefined` so Prisma's updateMany doesn't overwrite
+ * stored secrets when the user leaves the field blank on edit.
+ */
+function buildChannelPayload(form: ChannelConfigFormData) {
+  if (form.channelType === "sms") {
+    const settings: Record<string, unknown> = { smsProvider: form.smsProvider }
+    let secret: string | undefined
+    let phoneNumber: string | undefined
+    if (form.smsProvider === "atl") {
+      if (form.atlLogin) settings.atlLogin = form.atlLogin
+      if (form.atlTitle) settings.atlTitle = form.atlTitle
+      secret = form.smsSecret || undefined
+    } else if (form.smsProvider === "twilio") {
+      if (form.twilioAccountSid) settings.accountSid = form.twilioAccountSid
+      if (form.twilioNumber) settings.twilioNumber = form.twilioNumber
+      secret = form.smsSecret || undefined
+      phoneNumber = form.twilioNumber || undefined
+    } else if (form.smsProvider === "vonage") {
+      if (form.vonageApiKey) settings.apiKey = form.vonageApiKey
+      if (form.vonageFromName) settings.fromName = form.vonageFromName
+      secret = form.smsSecret || undefined
+    }
+    return {
+      configName: form.configName,
+      channelType: "sms",
+      apiKey: secret,
+      phoneNumber,
+      settings,
+      isActive: form.isActive,
+    }
+  }
+
+  return {
+    configName: form.configName,
+    channelType: form.channelType,
+    botToken: form.botToken || undefined,
+    webhookUrl: form.webhookUrl || undefined,
+    apiKey: form.apiKey || undefined,
+    phoneNumber: form.phoneNumber || undefined,
+    appId: form.appId || undefined,
+    appSecret: form.appSecret || undefined,
+    pageId: form.pageId || undefined,
+    settings: {
+      ...(form.chatId ? { chatId: form.chatId } : {}),
+      ...(form.accountSid ? { accountSid: form.accountSid } : {}),
+      ...(form.confirmationCode ? { confirmationCode: form.confirmationCode } : {}),
+    },
+    isActive: form.isActive,
+  }
 }
 
 const channelTypes = [
@@ -62,13 +131,34 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
     pageId: "",
     confirmationCode: "",
     isActive: true,
+    smsProvider: "atl",
+    atlLogin: "",
+    atlTitle: "",
+    twilioAccountSid: "",
+    twilioNumber: "",
+    vonageApiKey: "",
+    vonageFromName: "",
+    smsSecret: "",
+    smsEditing: false,
   })
+  const [smsTesting, setSmsTesting] = useState(false)
+  const [smsTestResult, setSmsTestResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [smsTestNumber, setSmsTestNumber] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
   useEffect(() => {
     if (open) {
       const settings = (initialData as any)?.settings || {}
+      // SMS provider detection: explicit settings.smsProvider wins;
+      // otherwise, if row has legacy Twilio fields (apiKey + phoneNumber + settings.accountSid), surface as "twilio".
+      let detectedSmsProvider: SmsProvider = "atl"
+      if (settings.smsProvider === "atl" || settings.smsProvider === "twilio" || settings.smsProvider === "vonage") {
+        detectedSmsProvider = settings.smsProvider
+      } else if (initialData?.channelType === "sms" && (settings.accountSid || initialData?.phoneNumber)) {
+        detectedSmsProvider = "twilio"
+      }
+      const hasExistingSms = initialData?.channelType === "sms" && !!initialData?.id
       setForm({
         configName: initialData?.configName || "",
         channelType: initialData?.channelType || "email",
@@ -83,7 +173,18 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         pageId: (initialData as any)?.pageId || "",
         confirmationCode: settings.confirmationCode || "",
         isActive: initialData?.isActive ?? true,
+        smsProvider: detectedSmsProvider,
+        atlLogin: settings.atlLogin || "",
+        atlTitle: settings.atlTitle || "",
+        twilioAccountSid: settings.accountSid || "",
+        twilioNumber: settings.twilioNumber || initialData?.phoneNumber || "",
+        vonageApiKey: settings.apiKey || "",
+        vonageFromName: settings.fromName || "",
+        smsSecret: "",
+        smsEditing: hasExistingSms,
       })
+      setSmsTestResult(null)
+      setSmsTestNumber("")
       setError("")
     }
   }, [open, initialData])
@@ -99,29 +200,14 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
 
     try {
       const url = isEdit ? `/api/v1/channels/${initialData!.id}` : "/api/v1/channels"
+      const payload = buildChannelPayload(form)
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
         },
-        body: JSON.stringify({
-          configName: form.configName,
-          channelType: form.channelType,
-          botToken: form.botToken || undefined,
-          webhookUrl: form.webhookUrl || undefined,
-          apiKey: form.apiKey || undefined,
-          phoneNumber: form.phoneNumber || undefined,
-          appId: form.appId || undefined,
-          appSecret: form.appSecret || undefined,
-          pageId: form.pageId || undefined,
-          settings: {
-            ...(form.chatId ? { chatId: form.chatId } : {}),
-            ...(form.accountSid ? { accountSid: form.accountSid } : {}),
-            ...(form.confirmationCode ? { confirmationCode: form.confirmationCode } : {}),
-          },
-          isActive: form.isActive,
-        }),
+        body: JSON.stringify(payload),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || tc("failedToSave"))
@@ -311,42 +397,178 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
             {form.channelType === "sms" && (
               <>
                 <div>
-                  <Label htmlFor="accountSid" className="text-sm font-medium">Twilio Account SID</Label>
-                  <Input
-                    id="accountSid"
-                    value={form.accountSid}
-                    onChange={(e) => update("accountSid", e.target.value)}
-                    placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    className="mt-1.5 font-mono text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {tf("twilioSidHint")}
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="apiKey" className="text-sm font-medium">Twilio Auth Token</Label>
-                  <Input
-                    id="apiKey"
-                    value={form.apiKey}
-                    onChange={(e) => update("apiKey", e.target.value)}
-                    placeholder="Auth Token from Twilio"
-                    className="mt-1.5 font-mono text-sm"
-                    type="password"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phoneNumber" className="text-sm font-medium">{tf("twilioSenderPhone")}</Label>
-                  <Input
-                    id="phoneNumber"
-                    value={form.phoneNumber}
-                    onChange={(e) => update("phoneNumber", e.target.value)}
-                    placeholder="+14155552671"
+                  <Label htmlFor="smsProvider" className="text-sm font-medium">{tf("smsProviderLabel")}</Label>
+                  <Select
+                    id="smsProvider"
+                    value={form.smsProvider}
+                    onChange={(e: any) => { update("smsProvider", e.target.value as SmsProvider); update("smsSecret", "") }}
                     className="mt-1.5"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {tf("twilioPhoneHint")}
-                  </p>
+                  >
+                    <option value="atl">{tf("smsProviderATL")}</option>
+                    <option value="twilio">{tf("smsProviderTwilio")}</option>
+                    <option value="vonage">{tf("smsProviderVonage")}</option>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">{tf("smsProviderHint")}</p>
                 </div>
+
+                {form.smsProvider === "atl" && (
+                  <>
+                    <div>
+                      <Label htmlFor="atlLogin" className="text-sm font-medium">{tf("atlLogin")}</Label>
+                      <Input
+                        id="atlLogin"
+                        value={form.atlLogin}
+                        onChange={(e) => update("atlLogin", e.target.value)}
+                        placeholder="login"
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="smsSecret" className="text-sm font-medium">{tf("atlPassword")}</Label>
+                      <Input
+                        id="smsSecret"
+                        value={form.smsSecret}
+                        onChange={(e) => update("smsSecret", e.target.value)}
+                        placeholder={form.smsEditing ? tf("leaveBlankToKeep") : "password"}
+                        className="mt-1.5 font-mono text-sm"
+                        type="password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="atlTitle" className="text-sm font-medium">{tf("atlTitle")}</Label>
+                      <Input
+                        id="atlTitle"
+                        value={form.atlTitle}
+                        onChange={(e) => update("atlTitle", e.target.value)}
+                        placeholder="TEST"
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">{tf("atlTitleHint")}</p>
+                    </div>
+                  </>
+                )}
+
+                {form.smsProvider === "twilio" && (
+                  <>
+                    <div>
+                      <Label htmlFor="twilioAccountSid" className="text-sm font-medium">Twilio Account SID</Label>
+                      <Input
+                        id="twilioAccountSid"
+                        value={form.twilioAccountSid}
+                        onChange={(e) => update("twilioAccountSid", e.target.value)}
+                        placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">{tf("twilioSidHint")}</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="smsSecret" className="text-sm font-medium">Twilio Auth Token</Label>
+                      <Input
+                        id="smsSecret"
+                        value={form.smsSecret}
+                        onChange={(e) => update("smsSecret", e.target.value)}
+                        placeholder={form.smsEditing ? tf("leaveBlankToKeep") : "Auth Token from Twilio"}
+                        className="mt-1.5 font-mono text-sm"
+                        type="password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="twilioNumber" className="text-sm font-medium">{tf("twilioSenderPhone")}</Label>
+                      <Input
+                        id="twilioNumber"
+                        value={form.twilioNumber}
+                        onChange={(e) => update("twilioNumber", e.target.value)}
+                        placeholder="+14155552671"
+                        className="mt-1.5"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">{tf("twilioPhoneHint")}</p>
+                    </div>
+                  </>
+                )}
+
+                {form.smsProvider === "vonage" && (
+                  <>
+                    <div>
+                      <Label htmlFor="vonageApiKey" className="text-sm font-medium">Vonage API Key</Label>
+                      <Input
+                        id="vonageApiKey"
+                        value={form.vonageApiKey}
+                        onChange={(e) => update("vonageApiKey", e.target.value)}
+                        placeholder="a1b2c3d4"
+                        className="mt-1.5 font-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="smsSecret" className="text-sm font-medium">Vonage API Secret</Label>
+                      <Input
+                        id="smsSecret"
+                        value={form.smsSecret}
+                        onChange={(e) => update("smsSecret", e.target.value)}
+                        placeholder={form.smsEditing ? tf("leaveBlankToKeep") : "Vonage API secret"}
+                        className="mt-1.5 font-mono text-sm"
+                        type="password"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="vonageFromName" className="text-sm font-medium">{tf("vonageFromName")}</Label>
+                      <Input
+                        id="vonageFromName"
+                        value={form.vonageFromName}
+                        onChange={(e) => update("vonageFromName", e.target.value)}
+                        placeholder="LeadDrive"
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {isEdit && (
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <Label htmlFor="smsTestNumber" className="text-sm font-medium">{tf("smsTestLabel")}</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="smsTestNumber"
+                        value={smsTestNumber}
+                        onChange={(e) => setSmsTestNumber(e.target.value)}
+                        placeholder="+994501234567"
+                        className="font-mono text-sm"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={smsTesting || !smsTestNumber.trim()}
+                        onClick={async () => {
+                          setSmsTesting(true)
+                          setSmsTestResult(null)
+                          try {
+                            const res = await fetch("/api/v1/channels/sms/test", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>),
+                              },
+                              body: JSON.stringify({ to: smsTestNumber.trim() }),
+                            })
+                            const json = await res.json()
+                            setSmsTestResult({ success: !!json.success, message: json.success ? (tf("smsTestSuccess") as string) : (json.error || "Error") })
+                          } catch (err: any) {
+                            setSmsTestResult({ success: false, message: err.message || "Network error" })
+                          } finally {
+                            setSmsTesting(false)
+                          }
+                        }}
+                      >
+                        {smsTesting ? <Loader2 className="h-4 w-4 animate-spin" /> : tf("smsTestButton")}
+                      </Button>
+                    </div>
+                    {smsTestResult && (
+                      <p className={cn("text-xs", smsTestResult.success ? "text-green-600" : "text-red-600")}>
+                        {smsTestResult.message}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">{tf("smsTestHint")}</p>
+                  </div>
+                )}
               </>
             )}
 

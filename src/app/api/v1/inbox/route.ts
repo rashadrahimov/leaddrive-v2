@@ -3,6 +3,7 @@ import { z } from "zod"
 import { prisma } from "@/lib/prisma"
 import { getOrgId } from "@/lib/api-auth"
 import { sendEmail } from "@/lib/email"
+import { sendSms } from "@/lib/sms"
 import { sendWhatsAppMessage } from "@/lib/whatsapp"
 import { PAGE_SIZE } from "@/lib/constants"
 
@@ -361,33 +362,9 @@ export async function POST(req: NextRequest) {
       }
 
       case "sms": {
-        const smsChannel = await prisma.channelConfig.findFirst({
-          where: { organizationId: orgId, channelType: "sms", isActive: true },
-        })
-        if (!smsChannel?.apiKey || !smsChannel?.phoneNumber) {
-          return NextResponse.json({ error: "SMS (Twilio) не настроен" }, { status: 400 })
-        }
-        const smsSettings = (smsChannel.settings as any) || {}
-        const accountSid = smsSettings.accountSid
-        if (!accountSid) {
-          return NextResponse.json({ error: "Twilio Account SID не настроен" }, { status: 400 })
-        }
-        try {
-          const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
-          const twilioAuth = Buffer.from(`${accountSid}:${smsChannel.apiKey}`).toString("base64")
-          const params = new URLSearchParams({ To: to, From: smsChannel.phoneNumber, Body: msgBody })
-          const smsRes = await fetch(twilioUrl, {
-            method: "POST",
-            headers: { Authorization: `Basic ${twilioAuth}`, "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString(),
-          })
-          const smsData = await smsRes.json()
-          status = smsData.sid ? "delivered" : "failed"
-          if (!smsData.sid) errorMsg = smsData.message || "Twilio error"
-        } catch (err: any) {
-          status = "failed"
-          errorMsg = err.message
-        }
+        const smsResult = await sendSms({ to, message: msgBody, organizationId: orgId })
+        status = smsResult.success ? "delivered" : "failed"
+        if (!smsResult.success) errorMsg = smsResult.error || "SMS send failed"
         break
       }
 
