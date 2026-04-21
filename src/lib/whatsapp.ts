@@ -1,48 +1,299 @@
 import { prisma } from "@/lib/prisma"
 
-interface WhatsAppConfig {
+// ═══════════════════════════════════════════════════════════════════════
+// WhatsApp Cloud API — multi-tenant send library
+//
+// Per-tenant credentials live in ChannelConfig (accessToken, phoneNumberId,
+// businessAccountId, verifyToken, appSecret). The env-var fallback that used
+// to route every tenant through LeadDrive's WABA has been removed — if a
+// tenant has no whatsapp ChannelConfig row, sending returns null and the
+// caller handles the "not configured" case explicitly.
+//
+// Templates come from the whatsapp_templates table, which is populated by
+// syncTemplatesFromMeta(). There are no hardcoded template names anywhere.
+// ═══════════════════════════════════════════════════════════════════════
+
+const GRAPH_API_VERSION = "v21.0"
+const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`
+
+// 24h customer service window in WhatsApp policy. We use 23h to stay safely
+// inside the window even with slight clock skew between us and Meta.
+const SESSION_WINDOW_HOURS = 23
+
+export interface WhatsAppConfig {
+  id: string
+  organizationId: string
   accessToken: string
   phoneNumberId: string
-  businessAccountId?: string
+  businessAccountId: string | null
+  verifyToken: string | null
+  appSecret: string | null
+  displayName: string | null
 }
 
-async function getWhatsAppConfig(organizationId?: string): Promise<WhatsAppConfig | null> {
-  // Try org-level channel config first
-  if (organizationId) {
-    const channel = await prisma.channelConfig.findFirst({
+/**
+ * Resolve per-tenant WhatsApp config from ChannelConfig. Reads new columns
+ * first with legacy aliases as fallback for the transition period. Returns
+ * null when the tenant has no whatsapp row or the essential creds are
+ * missing — callers must treat null as "not configured".
+ */
+export async function resolveWhatsAppConfig(organizationId: string): Promise<WhatsAppConfig | null> {
+  if (!organizationId) return null
+
+  const row = await prisma.channelConfig.findFirst({
+    where: { organizationId, channelType: "whatsapp", isActive: true },
+  })
+  if (!row) return null
+
+  // New columns first; fall back to legacy names for un-migrated rows.
+  const accessToken   = row.accessToken   || row.apiKey      || null
+  const phoneNumberId = row.phoneNumberId || row.phoneNumber || null
+  const businessAccountId = row.businessAccountId || row.webhookUrl || null
+
+  if (!accessToken || !phoneNumberId) return null
+
+  return {
+    id: row.id,
+    organizationId,
+    accessToken,
+    phoneNumberId,
+    businessAccountId,
+    verifyToken: row.verifyToken || null,
+    appSecret: row.appSecret || null,
+    displayName: row.displayName || null,
+  }
+}
+
+/**
+ * Approved templates for a tenant. Use in UI pickers and send endpoints.
+ */
+export async function listApprovedTemplates(
+  organizationId: string,
+  opts: { language?: string; category?: string } = {},
+) {
+  return prisma.whatsAppTemplate.findMany({
+    where: {
+      organizationId,
+      status: "APPROVED",
+      ...(opts.language ? { language: opts.language } : {}),
+      ...(opts.category ? { category: opts.category } : {}),
+    },
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+  })
+}
+
+/**
+ * Helper to check whether we're inside the 24h customer service window.
+ * Looks for the most recent inbound WhatsApp message from the same phone.
+ */
+async function insideSessionWindow(
+  organizationId: string,
+  toPhone: string,
+): Promise<boolean> {
+  const clean = toPhone.replace(/[^0-9]/g, "").slice(-10)
+  const inbound = await prisma.channelMessage
+    .findFirst({
       where: {
         organizationId,
+        direction: "inbound",
         channelType: "whatsapp",
-        isActive: true,
+        OR: [
+          { from: { contains: clean } },
+          { metadata: { path: ["waPhone"], string_contains: clean } as any },
+        ],
       },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
     })
-    if (channel?.apiKey && channel?.phoneNumber) {
-      return {
-        accessToken: channel.apiKey,        // Access Token from Meta
-        phoneNumberId: channel.phoneNumber,  // Phone Number ID from API Setup
-        businessAccountId: channel.webhookUrl || undefined, // Business Account ID stored in webhookUrl field
+    .catch(() => null)
+
+  if (!inbound) return false
+  const hours = (Date.now() - inbound.createdAt.getTime()) / (1000 * 60 * 60)
+  return hours < SESSION_WINDOW_HOURS
+}
+
+// ─── Free-form text send ─────────────────────────────────────────────
+//
+// Allowed ONLY when the tenant is inside the 24h customer service window
+// with the recipient. Outside that window Meta requires a pre-approved
+// template — see sendWhatsAppTemplate.
+export async function sendWhatsAppText({
+  to,
+  body,
+  organizationId,
+  contactId,
+}: {
+  to: string
+  body: string
+  organizationId: string
+  contactId?: string
+}): Promise<{ success: boolean; messageId?: string; error?: string; hint?: string }> {
+  const config = await resolveWhatsAppConfig(organizationId)
+  if (!config) {
+    return { success: false, error: "WhatsApp not configured for this tenant" }
+  }
+
+  const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
+  const windowOk = await insideSessionWindow(organizationId, cleanPhone)
+  if (!windowOk) {
+    return {
+      success: false,
+      error: "outside_window_no_template",
+      hint: "This recipient hasn't messaged you in 23h. Use sendWhatsAppTemplate with an approved template.",
+    }
+  }
+
+  try {
+    const res = await fetch(`${GRAPH_API_BASE}/${config.phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: cleanPhone,
+        type: "text",
+        text: { body },
+      }),
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      const err = data?.error?.message || `HTTP ${res.status}`
+      await logMessage(organizationId, config, cleanPhone, body, "failed", contactId, { error: err })
+      return { success: false, error: err }
+    }
+
+    const messageId = data?.messages?.[0]?.id
+    await logMessage(organizationId, config, cleanPhone, body, "delivered", contactId, { waMessageId: messageId })
+    return { success: true, messageId }
+  } catch (err: any) {
+    const msg = err?.message || "network error"
+    await logMessage(organizationId, config, cleanPhone, body, "failed", contactId, { error: msg })
+    return { success: false, error: msg }
+  }
+}
+
+// ─── Template send ───────────────────────────────────────────────────
+//
+// Required for outbound messages outside the 24h window AND for any first-
+// contact outreach. Template must be APPROVED in Meta Business Manager and
+// present in the whatsapp_templates table (populated via syncTemplatesFromMeta).
+export async function sendWhatsAppTemplate({
+  to,
+  templateName,
+  languageCode,
+  variables,
+  organizationId,
+  contactId,
+}: {
+  to: string
+  templateName: string
+  languageCode?: string  // if omitted we resolve from the stored template
+  variables?: Record<string, string> | string[]
+  organizationId: string
+  contactId?: string
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const config = await resolveWhatsAppConfig(organizationId)
+  if (!config) {
+    return { success: false, error: "WhatsApp not configured for this tenant" }
+  }
+
+  // Resolve template spec from DB. If languageCode is given we match on it,
+  // otherwise we take the first APPROVED match by name.
+  const template = await prisma.whatsAppTemplate.findFirst({
+    where: {
+      organizationId,
+      name: templateName,
+      status: "APPROVED",
+      ...(languageCode ? { language: languageCode } : {}),
+    },
+  })
+  if (!template) {
+    return { success: false, error: `template "${templateName}" not approved for this tenant` }
+  }
+
+  const lang = languageCode || template.language
+  const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
+
+  // Build components from stored variables + caller-supplied values.
+  // Stored variables are either named parameters (if Meta returned them) or
+  // positional {{1}}..{{N}}. We support both shapes of `variables` input.
+  const bodyParams: any[] = []
+  if (variables) {
+    if (Array.isArray(variables)) {
+      for (const val of variables) bodyParams.push({ type: "text", text: String(val) })
+    } else {
+      for (const key of template.variables) {
+        const val = variables[key] ?? ""
+        const isPositional = /^\d+$/.test(key)
+        bodyParams.push(
+          isPositional
+            ? { type: "text", text: String(val) }
+            : { type: "text", parameter_name: key, text: String(val) },
+        )
       }
     }
   }
 
-  // Fallback to env vars
-  if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
-    return {
-      accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
-      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
-      businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID,
-    }
-  }
+  const components = bodyParams.length > 0
+    ? [{ type: "body", parameters: bodyParams }]
+    : []
 
-  return null
+  try {
+    const res = await fetch(`${GRAPH_API_BASE}/${config.phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to: cleanPhone,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: lang },
+          ...(components.length ? { components } : {}),
+        },
+      }),
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      const err = data?.error?.message || `HTTP ${res.status}`
+      await logMessage(organizationId, config, cleanPhone, `[template:${templateName}]`, "failed", contactId, { error: err, template: templateName })
+      return { success: false, error: err }
+    }
+
+    const messageId = data?.messages?.[0]?.id
+    await logMessage(organizationId, config, cleanPhone, `[template:${templateName}]`, "delivered", contactId, {
+      waMessageId: messageId, template: templateName, language: lang,
+    })
+    return { success: true, messageId }
+  } catch (err: any) {
+    const msg = err?.message || "network error"
+    await logMessage(organizationId, config, cleanPhone, `[template:${templateName}]`, "failed", contactId, { error: msg, template: templateName })
+    return { success: false, error: msg }
+  }
 }
 
+// ─── Facade for existing callsites ───────────────────────────────────
+//
+// Kept for backward compatibility with the 8 callsites documented in the
+// phase-1 audit. If `templateName` is passed we send via template. Otherwise
+// we try free-form; outside the session window we return a structured error
+// (no more hardcoded "invoice_payment_reminder" fallback).
 export async function sendWhatsAppMessage({
   to,
   message,
   organizationId,
   contactId,
-  sentBy,
+  templateName,
+  templateLanguage,
+  templateVariables,
   forceText,
 }: {
   to: string
@@ -50,267 +301,246 @@ export async function sendWhatsAppMessage({
   organizationId?: string
   contactId?: string
   sentBy?: string
+  templateName?: string
+  templateLanguage?: string
+  templateVariables?: Record<string, string> | string[]
   forceText?: boolean
 }) {
-  const config = await getWhatsAppConfig(organizationId)
-
-  if (!config) {
-    console.log(`[WHATSAPP] Not configured | To: ${to} | Message: ${message.slice(0, 50)}...`)
-
-    if (organizationId) {
-      await prisma.channelMessage.create({
-        data: {
-          organizationId,
-          direction: "outbound",
-          from: "system",
-          to,
-          body: message,
-          status: "failed",
-          metadata: { error: "WhatsApp not configured", channel: "whatsapp" },
-        },
-      }).catch(() => {})
-    }
-
-    return { success: false, error: "WhatsApp not configured" }
+  if (!organizationId) {
+    return { success: false, error: "organizationId required" }
   }
 
-  try {
-    // Clean phone number: remove spaces, dashes, ensure starts with country code
+  if (templateName) {
+    return sendWhatsAppTemplate({
+      to,
+      templateName,
+      languageCode: templateLanguage,
+      variables: templateVariables,
+      organizationId,
+      contactId,
+    })
+  }
+
+  // forceText=true callers bypass the window check (they already know).
+  if (forceText) {
+    const config = await resolveWhatsAppConfig(organizationId)
+    if (!config) return { success: false, error: "WhatsApp not configured for this tenant" }
     const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
-
-    // Check if we're within the 24h messaging window by looking at last inbound WA message
-    let useTemplate = forceText ? false : true // Default to template (safe — always works)
-    if (!forceText && organizationId) {
-      const lastInbound = await prisma.channelMessage.findFirst({
-        where: {
-          organizationId,
-          direction: "inbound",
-          channelType: "whatsapp",
-          metadata: { path: ["waPhone"], string_contains: cleanPhone.slice(-10) },
-        },
-        orderBy: { createdAt: "desc" },
-        select: { createdAt: true },
-      }).catch(() => null)
-
-      if (lastInbound) {
-        const hoursSinceLastInbound = (Date.now() - lastInbound.createdAt.getTime()) / (1000 * 60 * 60)
-        if (hoursSinceLastInbound < 23) { // 23h to be safe (not exactly 24)
-          useTemplate = false
-          console.log(`[WHATSAPP] Within 24h window (${hoursSinceLastInbound.toFixed(1)}h ago) — sending as text`)
-        } else {
-          console.log(`[WHATSAPP] Outside 24h window (${hoursSinceLastInbound.toFixed(1)}h ago) — using template`)
-        }
-      } else {
-        console.log(`[WHATSAPP] No inbound message found for ${cleanPhone} — using template`)
-      }
-    }
-
-    let response: Response
-    let data: any
-    let usedTemplate = false
-
-    if (useTemplate) {
-      // Send via invoice_payment_reminder template (works outside 24h window)
-      // Uses named parameters: customer_name, invoice_number, amount, balance_due, due_date
-      response = await fetch(
-        `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${config.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: cleanPhone,
-            type: "template",
-            template: {
-              name: "invoice_payment_reminder",
-              language: { code: "az" },
-              components: [
-                { type: "body", parameters: [
-                  { type: "text", parameter_name: "customer_name", text: message.slice(0, 200) },
-                  { type: "text", parameter_name: "invoice_number", text: "-" },
-                  { type: "text", parameter_name: "amount", text: "-" },
-                  { type: "text", parameter_name: "balance_due", text: "-" },
-                  { type: "text", parameter_name: "due_date", text: "-" },
-                ] },
-              ],
-            },
-          }),
-        }
-      )
-      data = await response.json()
-      usedTemplate = true
-    } else {
-      // Within 24h window — send as free-form text
-      response = await fetch(
-        `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${config.accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: cleanPhone,
-            type: "text",
-            text: { body: message },
-          }),
-        }
-      )
-      data = await response.json()
-    }
-
-    if (!response.ok) {
-      const errorMsg = data?.error?.message || `HTTP ${response.status}`
-      console.error(`[WHATSAPP] Send failed:`, errorMsg)
-
-      if (organizationId) {
-        await prisma.channelMessage.create({
-          data: {
-            organizationId,
-            direction: "outbound",
-            from: config.phoneNumberId,
-            to: cleanPhone,
-            body: message,
-            status: "failed",
-            metadata: { error: errorMsg, channel: "whatsapp" },
-            contactId,
-          },
-        }).catch(() => {})
-      }
-
-      return { success: false, error: errorMsg }
-    }
-
-    const messageId = data?.messages?.[0]?.id
-
-    // Log success
-    if (organizationId) {
-      await prisma.channelMessage.create({
-        data: {
-          organizationId,
-          direction: "outbound",
-          from: config.phoneNumberId,
-          to: cleanPhone,
-          body: message,
-          status: "delivered",
-          externalId: messageId,
-          metadata: {
-            channel: "whatsapp",
-            waMessageId: messageId,
-            ...(usedTemplate ? { template: "crm_notification_" } : {}),
-          },
-          contactId,
-        },
-      }).catch(() => {})
-    }
-
-    console.log(`[WHATSAPP] Sent ${usedTemplate ? "via template" : "as text"} to ${cleanPhone} | ID: ${messageId}`)
-    return { success: true, messageId }
-  } catch (err: any) {
-    console.error(`[WHATSAPP] Error:`, err.message)
-
-    if (organizationId) {
-      await prisma.channelMessage.create({
-        data: {
-          organizationId,
-          direction: "outbound",
-          from: config.phoneNumberId,
-          to,
-          body: message,
-          status: "failed",
-          metadata: { error: err.message, channel: "whatsapp" },
-          contactId,
-        },
-      }).catch(() => {})
-    }
-
-    return { success: false, error: err.message }
-  }
-}
-
-export async function sendWhatsAppTemplate({
-  to,
-  templateName,
-  languageCode = "en",
-  components,
-  organizationId,
-  contactId,
-}: {
-  to: string
-  templateName: string
-  languageCode?: string
-  components?: any[]
-  organizationId?: string
-  contactId?: string
-}) {
-  const config = await getWhatsAppConfig(organizationId)
-
-  if (!config) {
-    return { success: false, error: "WhatsApp not configured" }
-  }
-
-  try {
-    const cleanPhone = to.replace(/[\s\-\(\)]/g, "").replace(/^\+/, "")
-
-    const body: any = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: cleanPhone,
-      type: "template",
-      template: {
-        name: templateName,
-        language: { code: languageCode },
-      },
-    }
-
-    if (components) {
-      body.template.components = components
-    }
-
-    const response = await fetch(
-      `https://graph.facebook.com/v21.0/${config.phoneNumberId}/messages`,
-      {
+    try {
+      const res = await fetch(`${GRAPH_API_BASE}/${config.phoneNumberId}/messages`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${config.accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
-      }
-    )
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      const errorMsg = data?.error?.message || `HTTP ${response.status}`
-      return { success: false, error: errorMsg }
-    }
-
-    const messageId = data?.messages?.[0]?.id
-
-    if (organizationId) {
-      await prisma.channelMessage.create({
-        data: {
-          organizationId,
-          direction: "outbound",
-          from: config.phoneNumberId,
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
           to: cleanPhone,
-          body: `[Template: ${templateName}]`,
-          status: "delivered",
-          externalId: messageId,
-          metadata: { channel: "whatsapp", template: templateName, waMessageId: messageId },
-          contactId,
-        },
-      }).catch(() => {})
+          type: "text",
+          text: { body: message },
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        const err = data?.error?.message || `HTTP ${res.status}`
+        await logMessage(organizationId, config, cleanPhone, message, "failed", contactId, { error: err })
+        return { success: false, error: err }
+      }
+      const messageId = data?.messages?.[0]?.id
+      await logMessage(organizationId, config, cleanPhone, message, "delivered", contactId, { waMessageId: messageId })
+      return { success: true, messageId }
+    } catch (err: any) {
+      const msg = err?.message || "network error"
+      await logMessage(organizationId, config, cleanPhone, message, "failed", contactId, { error: msg })
+      return { success: false, error: msg }
+    }
+  }
+
+  return sendWhatsAppText({ to, body: message, organizationId, contactId })
+}
+
+// ─── Template sync with Meta ────────────────────────────────────────
+//
+// Fetches approved templates from Graph API and upserts them into the
+// whatsapp_templates table. Called from the admin UI "Sync" button.
+export async function syncTemplatesFromMeta(organizationId: string): Promise<{
+  success: boolean
+  synced: number
+  error?: string
+}> {
+  const config = await resolveWhatsAppConfig(organizationId)
+  if (!config) {
+    return { success: false, synced: 0, error: "WhatsApp not configured" }
+  }
+  if (!config.businessAccountId) {
+    return { success: false, synced: 0, error: "businessAccountId missing — configure it in /settings/channels/whatsapp" }
+  }
+
+  let totalSynced = 0
+  let nextUrl: string | null = `${GRAPH_API_BASE}/${config.businessAccountId}/message_templates?fields=name,language,status,category,components&limit=100`
+
+  try {
+    while (nextUrl) {
+      const res: Response = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${config.accessToken}` },
+      })
+      const data: any = await res.json()
+      if (!res.ok) {
+        return { success: false, synced: totalSynced, error: data?.error?.message || `HTTP ${res.status}` }
+      }
+
+      for (const t of (data.data || []) as any[]) {
+        const { variables, bodyText, headerType, headerText, footerText, buttons } = extractTemplateParts(t.components || [])
+
+        await prisma.whatsAppTemplate.upsert({
+          where: {
+            organizationId_name_language: {
+              organizationId,
+              name: t.name,
+              language: t.language,
+            },
+          },
+          update: {
+            channelConfigId: config.id,
+            status: t.status || "PENDING",
+            category: t.category || "UTILITY",
+            bodyText, headerType, headerText, footerText,
+            buttons, variables,
+            rawMeta: t,
+            lastSyncAt: new Date(),
+          },
+          create: {
+            organizationId,
+            channelConfigId: config.id,
+            metaTemplateId: t.id?.toString() || null,
+            name: t.name,
+            language: t.language,
+            status: t.status || "PENDING",
+            category: t.category || "UTILITY",
+            bodyText, headerType, headerText, footerText,
+            buttons, variables,
+            rawMeta: t,
+          },
+        })
+        totalSynced++
+      }
+
+      nextUrl = data.paging?.next || null
     }
 
-    return { success: true, messageId }
+    await prisma.channelConfig.update({
+      where: { id: config.id },
+      data: { lastTemplateSyncAt: new Date() },
+    })
+
+    return { success: true, synced: totalSynced }
   } catch (err: any) {
-    return { success: false, error: err.message }
+    return { success: false, synced: totalSynced, error: err?.message || "network error" }
   }
+}
+
+function extractTemplateParts(components: any[]): {
+  variables: string[]
+  bodyText: string | null
+  headerType: string | null
+  headerText: string | null
+  footerText: string | null
+  buttons: any
+} {
+  let bodyText: string | null = null
+  let headerType: string | null = null
+  let headerText: string | null = null
+  let footerText: string | null = null
+  let buttons: any = null
+  const variables = new Set<string>()
+
+  for (const c of components) {
+    if (c.type === "BODY") {
+      bodyText = c.text || null
+      // Prefer named parameters when Meta returns them.
+      const named: string[] = c.example?.body_text_named_params?.map((p: any) => p.param_name) || []
+      if (named.length) {
+        for (const n of named) variables.add(n)
+      } else if (bodyText) {
+        const matches = bodyText.match(/\{\{\d+\}\}/g) || []
+        for (const m of matches) variables.add(m.replace(/[{}]/g, ""))
+      }
+    } else if (c.type === "HEADER") {
+      headerType = c.format || null
+      headerText = c.text || null
+    } else if (c.type === "FOOTER") {
+      footerText = c.text || null
+    } else if (c.type === "BUTTONS") {
+      buttons = c.buttons || c
+    }
+  }
+
+  return {
+    variables: Array.from(variables),
+    bodyText,
+    headerType,
+    headerText,
+    footerText,
+    buttons,
+  }
+}
+
+// ─── Validate credentials ────────────────────────────────────────────
+export async function validateWhatsAppCredentials(
+  organizationId: string,
+): Promise<{ ok: boolean; verifiedName?: string; displayPhoneNumber?: string; error?: string }> {
+  const config = await resolveWhatsAppConfig(organizationId)
+  if (!config) return { ok: false, error: "WhatsApp not configured" }
+
+  try {
+    const res = await fetch(
+      `${GRAPH_API_BASE}/${config.phoneNumberId}?fields=verified_name,display_phone_number`,
+      { headers: { Authorization: `Bearer ${config.accessToken}` } },
+    )
+    const data = await res.json()
+    if (!res.ok) return { ok: false, error: data?.error?.message || `HTTP ${res.status}` }
+
+    await prisma.channelConfig.update({
+      where: { id: config.id },
+      data: { lastValidatedAt: new Date() },
+    })
+
+    return {
+      ok: true,
+      verifiedName: data.verified_name,
+      displayPhoneNumber: data.display_phone_number,
+    }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "network error" }
+  }
+}
+
+// ─── internal: message log helper ────────────────────────────────────
+async function logMessage(
+  organizationId: string,
+  config: WhatsAppConfig,
+  to: string,
+  body: string,
+  status: "delivered" | "failed",
+  contactId: string | undefined,
+  extraMeta: Record<string, any>,
+) {
+  try {
+    await prisma.channelMessage.create({
+      data: {
+        organizationId,
+        channelConfigId: config.id,
+        direction: "outbound",
+        channelType: "whatsapp",
+        from: config.phoneNumberId,
+        to,
+        body,
+        status,
+        externalId: extraMeta.waMessageId,
+        metadata: { channel: "whatsapp", ...extraMeta },
+        contactId,
+      },
+    })
+  } catch { /* logging failure must not break the send flow */ }
 }

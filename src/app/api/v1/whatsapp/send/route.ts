@@ -8,6 +8,10 @@ const sendSchema = z.object({
   message: z.string().optional(),
   templateName: z.string().optional(),
   languageCode: z.string().optional(),
+  variables: z.union([
+    z.array(z.string()),
+    z.record(z.string(), z.string()),
+  ]).optional(),
   contactId: z.string().optional(),
 })
 
@@ -21,13 +25,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
   }
 
-  const { to, message, templateName, languageCode, contactId } = parsed.data
+  const { to, message, templateName, languageCode, variables, contactId } = parsed.data
 
   if (templateName) {
     const result = await sendWhatsAppTemplate({
       to,
       templateName,
       languageCode,
+      variables,
       organizationId: orgId,
       contactId,
     })
