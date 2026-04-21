@@ -42,6 +42,25 @@ cp -r public/* .next/standalone/public/
 - Путь `.next/standalone/.next/static` — БЕЗ вложенной `leaddrive-v2/` (Next.js 16 её не создаёт)
 - Smoke-check: `curl -s -o /dev/null -w '%{http_code}' http://localhost:3001/_next/static/chunks/webpack-*.js` → должен вернуть 200
 
+### КРИТИЧНО: Prisma engine в standalone (баг 21.04.2026)
+
+`serverExternalPackages: ["@prisma/client", ".prisma/client"]` в `next.config.ts` означает что
+Next.js НЕ трейсит Prisma в standalone. Без дополнительного копирования
+`libquery_engine-<platform>.so.node` **все DB-запросы упадут** с
+`PrismaClientInitializationError: Query Engine not found`.
+
+Что уже сделано:
+- `next.config.ts` → `outputFileTracingIncludes` для `/api/**` включает engine + schema
+- `scripts/server-deploy.sh` после extract проверяет `libquery_engine-*.so.node` и копирует из host `node_modules` если отсутствует
+- Новый `/api/v1/ping` делает `prisma.organization.count()` → health-check hit: 200 = OK, 500 = engine missing → auto-rollback
+
+Manual deploy (если без CI):
+```bash
+cp -r node_modules/.prisma .next/standalone/node_modules/.prisma
+cp -r node_modules/@prisma .next/standalone/node_modules/@prisma
+curl -s http://localhost:3001/api/v1/ping  # должно вернуть {"ok":true,"db":"ok"}
+```
+
 ## Multi-Client Deployments
 
 - **Architecture**: одна ветка (`main`), кастомизация через БД (`Organization.features` + `Organization.branding`)

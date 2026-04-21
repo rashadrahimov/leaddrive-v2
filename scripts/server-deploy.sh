@@ -44,6 +44,24 @@ log "Verified: $CSS_COUNT CSS, $JS_COUNT JS files"
 [ "$CSS_COUNT" -gt 0 ] || { log "FATAL: No CSS files"; exit 1; }
 [ "$JS_COUNT" -gt 0 ] || { log "FATAL: No JS files"; exit 1; }
 
+# ── Step 2b: Verify Prisma engine is in the standalone tarball ────
+# Next.js traces Prisma as external — if the engine binary didn't make it
+# into the tarball, every DB-hitting request will throw
+# PrismaClientInitializationError. Copy from the host's node_modules as
+# fallback so we never ship a DB-broken build.
+PRISMA_ENGINE_PATTERN="$APP_DIR/.next/standalone/node_modules/.prisma/client/libquery_engine-*.so.node"
+# shellcheck disable=SC2086
+if ! ls $PRISMA_ENGINE_PATTERN 1>/dev/null 2>&1; then
+  log "WARNING: Prisma engine missing in extracted tarball — copying from host node_modules"
+  mkdir -p "$APP_DIR/.next/standalone/node_modules/.prisma/client"
+  mkdir -p "$APP_DIR/.next/standalone/node_modules/@prisma"
+  cp -r "$APP_DIR/node_modules/.prisma/client/." "$APP_DIR/.next/standalone/node_modules/.prisma/client/" 2>/dev/null || log "ERROR: host .prisma/client missing too!"
+  cp -r "$APP_DIR/node_modules/@prisma/." "$APP_DIR/.next/standalone/node_modules/@prisma/" 2>/dev/null || log "ERROR: host @prisma missing too!"
+  # shellcheck disable=SC2086
+  ls $PRISMA_ENGINE_PATTERN 1>/dev/null 2>&1 || { log "FATAL: Prisma engine missing and can't be recovered"; exit 1; }
+fi
+log "Prisma engine verified: $(ls $PRISMA_ENGINE_PATTERN | head -1 | xargs basename)"
+
 # ── Step 3: Prisma migrate deploy ──────────────────────────
 log "Running Prisma migrations..."
 cd "$APP_DIR"
@@ -113,11 +131,22 @@ for i in 1 2 3 4 5; do
     if [ -n "$CSS_URL" ]; then
       CSS_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "${HEALTH_URL}${CSS_URL}" 2>/dev/null || echo "000")
       if [ "$CSS_CODE" = "200" ]; then
-        HEALTHY=true
-        log "PASSED (page: $HTTP_CODE, CSS: $CSS_CODE)"
-        break
+        # DB-path probe — hits an endpoint that loads Prisma Client. A
+        # missing query engine surfaces here as 500; the login/static
+        # checks above don't touch Prisma and would pass even on a broken
+        # build. Expect 401 (unauth but DB queried) or 200.
+        # /api/v1/ping does `prisma.organization.count()` — returns 200 when
+        # the query engine loaded successfully, 500 when it's missing/crashed.
+        DB_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL/api/v1/ping" 2>/dev/null || echo "000")
+        if [ "$DB_CODE" = "200" ]; then
+          HEALTHY=true
+          log "PASSED (page: $HTTP_CODE, CSS: $CSS_CODE, db: $DB_CODE)"
+          break
+        fi
+        log "DB probe returned $DB_CODE (Prisma engine likely missing — will rollback)"
+      else
+        log "CSS returned $CSS_CODE (expected 200)"
       fi
-      log "CSS returned $CSS_CODE (expected 200)"
     else
       log "No CSS URL found in page HTML"
     fi
