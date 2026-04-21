@@ -101,9 +101,10 @@ import { GET as widgetGet, PUT as widgetPut } from "@/app/api/v1/dashboard/widge
 
 /* ───────── helpers ───────── */
 
-const mkParams = (...ids: string[]) => {
-  if (ids.length === 1) return Promise.resolve({ id: ids[0] })
-  return Promise.resolve({ id: ids[0], variantId: ids[1] })
+// Returns a params promise that satisfies both overloads in the test suite
+// (campaign-level + variant-level) without TS rejecting the wider shape.
+const mkParams = (...ids: string[]): Promise<{ id: string; variantId: string }> => {
+  return Promise.resolve({ id: ids[0], variantId: ids[1] || "" })
 }
 
 const sampleCampaign = {

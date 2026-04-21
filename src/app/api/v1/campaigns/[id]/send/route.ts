@@ -228,6 +228,7 @@ export async function POST(
     }
 
     let sentCount = 0
+    let unsubscribedCount = 0
     const errors: string[] = []
 
     // Check if A/B test
@@ -267,6 +268,7 @@ export async function POST(
           if (vTemplate?.htmlBody) variantHtml = vTemplate.htmlBody
         }
 
+        let variantSentCount = 0
         for (const contact of variantContacts) {
           if (!contact.email) continue
           const rendered = renderTemplate(variantHtml, {
@@ -285,15 +287,19 @@ export async function POST(
           })
           if (result.success) {
             sentCount++
+            variantSentCount++
             trackContactEvent(orgId, contact.id, "email_sent", { campaignId: campaign.id, variantId: variant.id }).catch(() => {})
+          } else if (result.error === "Recipient unsubscribed") {
+            unsubscribedCount++
+          } else if (errors.length < 3) {
+            errors.push(`${contact.email}: ${result.error}`)
           }
-          else if (errors.length < 3) errors.push(`${contact.email}: ${result.error}`)
         }
 
-        // Update variant stats
+        // Accurate variant stats — actually-delivered count, not attempted
         await prisma.campaignVariant.update({
           where: { id: variant.id },
-          data: { totalSent: variantContacts.length },
+          data: { totalSent: variantSentCount },
         })
       }
 
@@ -307,6 +313,7 @@ export async function POST(
           sentAt: new Date(),
           totalSent: sentCount,
           totalRecipients: contacts.length,
+          totalUnsubscribed: unsubscribedCount,
           holdoutIds: holdoutIds,
         },
       })
@@ -330,12 +337,15 @@ export async function POST(
         if (result.success) {
           sentCount++
           trackContactEvent(orgId, contact.id, "email_sent", { campaignId: campaign.id }).catch(() => {})
+        } else if (result.error === "Recipient unsubscribed") {
+          unsubscribedCount++
         } else if (errors.length < 3) {
           errors.push(`${contact.email}: ${result.error}`)
         }
       }
 
-      // Update campaign stats
+      // Update campaign stats — totalUnsubscribed reflects how many recipients
+      // had a global opt-out and were skipped by sendEmail's compliance layer.
       await prisma.campaign.update({
         where: { id },
         data: {
@@ -343,6 +353,7 @@ export async function POST(
           sentAt: sentCount > 0 ? new Date() : undefined,
           totalSent: sentCount,
           totalRecipients: contacts.length,
+          totalUnsubscribed: unsubscribedCount,
         },
       })
     }
@@ -360,7 +371,7 @@ export async function POST(
 
     return NextResponse.json({
       success: sentCount > 0,
-      data: { sent: sentCount, total: contacts.length, errors },
+      data: { sent: sentCount, total: contacts.length, unsubscribed: unsubscribedCount, errors },
     })
   } catch (e) {
     console.error(e)
