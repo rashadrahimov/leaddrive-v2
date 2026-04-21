@@ -13,6 +13,8 @@ const updateLeadSchema = z.object({
   companyName: z.string().nullable().optional(),
   email: z.string().email().optional().or(z.literal("")).nullable(),
   phone: z.string().nullable().optional(),
+  phoneWhatsApp: z.string().nullable().optional(),
+  telegramHandle: z.string().nullable().optional(),
   source: z.string().nullable().optional(),
   brand: z.string().nullable().optional(),
   category: z.string().nullable().optional(),

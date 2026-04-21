@@ -32,6 +32,8 @@ interface Lead {
   companyName: string | null
   email: string | null
   phone: string | null
+  phoneWhatsApp: string | null
+  telegramHandle: string | null
   source: string | null
   brand: string | null
   category: string | null
@@ -236,20 +238,22 @@ export default function LeadDetailPage() {
   // Map the selected Da Vinci text type → inbox channel + destination address.
   // Email is the only channel that uses the `subject` field; all messaging
   // channels (SMS / WhatsApp / Telegram) reuse the same `body` payload.
-  const channelMap: Record<string, { channel: string; destField: "email" | "phone" | "telegramId" }> = {
-    Email:    { channel: "email",    destField: "email" },
-    SMS:      { channel: "sms",      destField: "phone" },
-    WhatsApp: { channel: "whatsapp", destField: "phone" },
-    Telegram: { channel: "telegram", destField: "telegramId" },
+  // Each channel reads from its own dedicated lead field and falls back to
+  // the primary `phone` where that makes sense (WhatsApp on same number).
+  type ChannelKey = "email" | "sms" | "whatsapp" | "telegram"
+  const resolveDestination = (type: string, l: Lead): { channel: ChannelKey; to: string | null } => {
+    switch (type) {
+      case "SMS":      return { channel: "sms",      to: l.phone }
+      case "WhatsApp": return { channel: "whatsapp", to: l.phoneWhatsApp || l.phone }
+      case "Telegram": return { channel: "telegram", to: l.telegramHandle }
+      case "Email":
+      default:         return { channel: "email",    to: l.email }
+    }
   }
 
   const sendGenerated = async () => {
     if (!generatedText || !lead) return
-    const cfg = channelMap[textType] || channelMap.Email
-    const to =
-      cfg.destField === "email"      ? lead.email :
-      cfg.destField === "phone"      ? lead.phone :
-      (lead as any).telegramId || null
+    const { channel, to } = resolveDestination(textType, lead)
     if (!to) return
     setSending(true)
     setSendError("")
@@ -258,9 +262,9 @@ export default function LeadDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
         body: JSON.stringify(
-          cfg.channel === "email"
+          channel === "email"
             ? { channel: "email", to, subject: generatedText.subject, body: generatedText.body }
-            : { channel: cfg.channel, to, body: generatedText.body }
+            : { channel, to, body: generatedText.body }
         ),
       })
       const json = await res.json()
@@ -505,6 +509,28 @@ export default function LeadDetailPage() {
                 )}
               </div>
             )}
+            {lead.phoneWhatsApp && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                <span className="text-muted-foreground">WhatsApp:</span>
+                <a href={`https://wa.me/${lead.phoneWhatsApp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                  {lead.phoneWhatsApp}
+                </a>
+              </div>
+            )}
+            {lead.telegramHandle && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-sky-500 flex-shrink-0" />
+                <span className="text-muted-foreground">Telegram:</span>
+                <a
+                  href={lead.telegramHandle.startsWith("@") ? `https://t.me/${lead.telegramHandle.slice(1)}` : `https://t.me/${lead.telegramHandle}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="font-medium text-primary hover:underline"
+                >
+                  {lead.telegramHandle}
+                </a>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span className="text-muted-foreground">{t("modalSource")}:</span>
@@ -718,11 +744,7 @@ export default function LeadDetailPage() {
                     <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
                   </Button>
                   {(() => {
-                    const cfg = channelMap[textType] || channelMap.Email
-                    const dest =
-                      cfg.destField === "email" ? lead.email :
-                      cfg.destField === "phone" ? lead.phone :
-                      (lead as any).telegramId || null
+                    const { to: dest } = resolveDestination(textType, lead)
                     if (!dest) return null
                     const sendLabel =
                       textType === "SMS"      ? (t("modalSendSMS") || "Send SMS") :

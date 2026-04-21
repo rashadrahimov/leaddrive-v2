@@ -26,6 +26,8 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
     companyName: initialData?.companyName || "",
     email: initialData?.email || "",
     phone: initialData?.phone || "",
+    phoneWhatsApp: initialData?.phoneWhatsApp || "",
+    telegramHandle: initialData?.telegramHandle || "",
     source: initialData?.source || "",
     brand: initialData?.brand || "",
     category: initialData?.category || "",
@@ -44,6 +46,8 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
         companyName: initialData?.companyName || "",
         email: initialData?.email || "",
         phone: initialData?.phone || "",
+        phoneWhatsApp: initialData?.phoneWhatsApp || "",
+        telegramHandle: initialData?.telegramHandle || "",
         source: initialData?.source || "",
         brand: initialData?.brand || "",
         category: initialData?.category || "",
@@ -88,7 +92,20 @@ export function LeadForm({ open, onOpenChange, onSaved, initialData, orgId }: Le
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>{tc("email")}</Label><Input type="email" value={form.email} onChange={e => u("email", e.target.value)} /></div>
-              <div><Label>{tc("phone")}</Label><Input value={form.phone} onChange={e => u("phone", e.target.value)} /></div>
+              <div>
+                <Label>{tc("phone")} <span className="text-muted-foreground text-[11px]">(SMS / voice)</span></Label>
+                <Input value={form.phone} onChange={e => u("phone", e.target.value)} placeholder="+994 ..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>WhatsApp <span className="text-muted-foreground text-[11px]">(если отличается от основного)</span></Label>
+                <Input value={form.phoneWhatsApp} onChange={e => u("phoneWhatsApp", e.target.value)} placeholder="+994 ..." />
+              </div>
+              <div>
+                <Label>Telegram</Label>
+                <Input value={form.telegramHandle} onChange={e => u("telegramHandle", e.target.value)} placeholder="@username или chat id" />
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div><Label>{tc("source")}</Label><Select value={form.source} onChange={e => u("source", e.target.value)}><option value="">{tc("select")}...</option><option value="website">Website</option><option value="referral">Referral</option><option value="cold_call">Cold Call</option><option value="linkedin">LinkedIn</option><option value="sms">SMS</option><option value="social">Social</option></Select></div>

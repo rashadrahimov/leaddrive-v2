@@ -475,7 +475,9 @@ model Lead {
   contactName    String
   companyName    String?
   email          String?
-  phone          String?
+  phone          String?   // primary — used for SMS / voice calls
+  phoneWhatsApp  String?   // dedicated WhatsApp number (may equal `phone`)
+  telegramHandle String?   // Telegram @username or chat id
   source         String?
   brand          String?  // product brand the lead is associated with (TT §3.3)
   category       String?  // lead category: vip, regular, partner, prospect (TT §3.3)
