@@ -580,6 +580,58 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                     >
                       <Link className="h-4 w-4" />
                     </button>
+                    {/* Image upload — opens file picker, uploads to
+                        /api/v1/email-templates/upload-image, inserts <img>
+                        at cursor. Falls back to pasted URL if upload fails
+                        or user prefers to link an external image. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.createElement("input")
+                        input.type = "file"
+                        input.accept = "image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                        input.onchange = async () => {
+                          const file = input.files?.[0]
+                          if (!file) return
+                          try {
+                            const fd = new FormData()
+                            fd.append("file", file)
+                            const res = await fetch("/api/v1/email-templates/upload-image", {
+                              method: "POST",
+                              headers: orgId ? { "x-organization-id": orgId } : undefined,
+                              body: fd,
+                            })
+                            const json = await res.json()
+                            if (!res.ok || !json.success) {
+                              const useUrl = confirm(
+                                `Не удалось загрузить файл: ${json.error || "server error"}.\n\nВставить картинку по URL вместо этого?`
+                              )
+                              if (useUrl) {
+                                const url = prompt("URL картинки (https://…):")
+                                if (url) {
+                                  editorRef.current?.focus()
+                                  document.execCommand("insertHTML", false,
+                                    `<img src="${url.replace(/"/g, "&quot;")}" alt="" style="max-width:100%;height:auto;display:block;margin:12px 0;" />`)
+                                  syncEditorContent()
+                                }
+                              }
+                              return
+                            }
+                            editorRef.current?.focus()
+                            document.execCommand("insertHTML", false,
+                              `<img src="${json.url}" alt="" style="max-width:100%;height:auto;display:block;margin:12px 0;" />`)
+                            syncEditorContent()
+                          } catch (err: any) {
+                            alert(`Ошибка загрузки: ${err.message || err}`)
+                          }
+                        }
+                        input.click()
+                      }}
+                      className="p-1.5 rounded hover:bg-muted"
+                      title="Загрузить картинку"
+                    >
+                      <Image className="h-4 w-4" aria-label="image" />
+                    </button>
                     <span className="w-px h-5 bg-border mx-1" />
                     <button
                       type="button"
