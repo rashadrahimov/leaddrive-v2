@@ -296,9 +296,12 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     }
   }
 
-  // isFullscreen was used for the old Unlayer visual editor. Now we always use
-  // the contentEditable WYSIWYG which fits comfortably in a standard dialog.
-  const isFullscreen = false
+  // Always use a large dialog — email template editing needs breathing room
+  // (toolbar, block palette, contentEditable canvas, preview). The old narrow
+  // dialog was fine for a quick subject/category edit but unusable for actually
+  // composing an email. Previously this was conditional on Unlayer mode; now
+  // it's always on because the block-palette canvas needs the same real estate.
+  const isFullscreen = true
 
   if (!open) return null
 
