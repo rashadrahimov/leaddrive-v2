@@ -729,10 +729,10 @@ export default function LeadDetailPage() {
 
             {generatedText && (
               <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
-                {generatedText.subject && (
+                {textType === "Email" && (
                   <div>
                     <Label className="text-xs text-primary uppercase">{t("modalSubject") || "Subject"}</Label>
-                    <Input value={generatedText.subject} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1 bg-background" />
+                    <Input value={generatedText.subject || ""} onChange={(e: any) => setGeneratedText({ ...generatedText, subject: e.target.value })} className="mt-1 bg-background" />
                   </div>
                 )}
                 <div>
