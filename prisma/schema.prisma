@@ -118,6 +118,7 @@ model Organization {
   surveys                Survey[]
   surveyResponses        SurveyResponse[]
   surveyUnsubscribes     SurveyUnsubscribe[]
+  digestSubscriptions    DigestSubscription[]
 
   @@map("organizations")
 }
@@ -180,6 +181,7 @@ model User {
   taskComments        TaskComment[]   @relation("TaskComments")
   managedProjects     Project[]       @relation("ProjectManager")
   assignedProjectTasks ProjectTask[]  @relation("ProjectTaskAssignee")
+  digestSubscriptions DigestSubscription[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -3702,4 +3704,46 @@ model PushSubscription {
 
   @@index([organizationId, userId])
   @@map("push_subscriptions")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DIGEST SUBSCRIPTIONS — per-user delivery preferences for AI-generated
+// briefings, anomaly alerts and renewal reminders. Replaces the hardcoded
+// "send to all admin/manager users" logic in the cron jobs.
+// ═══════════════════════════════════════════════════════════════════════════
+
+model DigestSubscription {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Digest type — one row per (user, type)
+  type           String       // daily_briefing | anomaly_alert | renewal
+
+  // Cadence — cron job decides whether to actually fire for this user
+  // based on lastSentAt + frequency. "off" short-circuits immediately.
+  frequency      String       @default("daily") // off | daily | every_2_days | weekly | monthly
+
+  // Which channels to deliver through. Empty array = in_app only.
+  channels       String[]     @default(["email", "in_app"]) // email | telegram | slack | in_app
+
+  // Optional override — time of day to send (HH:mm, org timezone).
+  // Null = use job's default cron schedule.
+  timeOfDay      String?
+
+  // For weekly/monthly: 0-6 (Sun-Sat) or 1-31. Null = not applicable.
+  dayOfWeek      Int?
+  dayOfMonth     Int?
+
+  lastSentAt     DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId, type])
+  @@index([organizationId, type, isActive])
+  @@index([organizationId, userId])
+  @@map("digest_subscriptions")
 }

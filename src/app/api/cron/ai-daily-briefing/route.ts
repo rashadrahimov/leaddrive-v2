@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { createNotification } from "@/lib/notifications"
 import { canRunAiAutomation, calculateAiCost } from "@/lib/ai/budget"
 import { PiiMasker } from "@/lib/ai/pii-masker"
+import { getDigestRecipients, markDigestSent } from "@/lib/digest/subscriptions"
 import Anthropic from "@anthropic-ai/sdk"
 
 const FEATURE_NAME = "ai_daily_briefing"
@@ -43,15 +44,18 @@ export async function POST(req: NextRequest) {
       const orgSettings = (org.settings as Record<string, any>) || {}
       const orgLang = orgSettings.language || orgSettings.locale || "ru"
 
-      // Fetch recipients with per-user language preference
-      const recipients = await prisma.user.findMany({
-        where: {
-          organizationId: org.id,
-          role: { in: ["admin", "manager"] },
-          isActive: true,
-        },
-        select: { id: true, email: true, name: true, preferredLanguage: true },
-      })
+      // Fetch recipients honoring DigestSubscription opt-ins (per-user
+      // frequency + channels). Falls back to legacy "all admin + manager"
+      // rule when no subscription rows exist for the org yet.
+      const recipientsRaw = await getDigestRecipients(org.id, "daily_briefing")
+      const recipients = recipientsRaw.map((r) => ({
+        id: r.id,
+        email: r.email,
+        name: r.name,
+        preferredLanguage: r.preferredLanguage,
+        channels: r.channels,
+      }))
+      if (recipients.length === 0) continue
 
       // Group recipients by effective language
       const byLang = new Map<string, typeof recipients>()
@@ -77,18 +81,22 @@ export async function POST(req: NextRequest) {
         if (!narrative) continue
 
         for (const user of users) {
+          const channels = user.channels || ["email", "in_app"]
+
           // In-app notification
-          await createNotification({
-            organizationId: org.id,
-            userId: user.id,
-            type: "info",
-            title: "Daily AI Briefing",
-            message: narrative,
-            entityType: "briefing",
-          })
+          if (channels.includes("in_app")) {
+            await createNotification({
+              organizationId: org.id,
+              userId: user.id,
+              type: "info",
+              title: "Daily AI Briefing",
+              message: narrative,
+              entityType: "briefing",
+            })
+          }
 
           // Email delivery
-          if (user.email) {
+          if (channels.includes("email") && user.email) {
             try {
               const { sendEmail } = await import("@/lib/email")
               await sendEmail({
@@ -99,6 +107,9 @@ export async function POST(req: NextRequest) {
               })
             } catch { /* non-critical — email config may not be set */ }
           }
+
+          // Mark this subscription as sent so the frequency gate works
+          await markDigestSent(org.id, user.id, "daily_briefing")
         }
       }
 

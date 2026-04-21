@@ -17,6 +17,7 @@ import {
 import { useAutoTour, useTour } from "@/components/tour/tour-provider"
 import { TourReplayButton } from "@/components/tour/tour-replay-button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { DigestSubscriptionsPanel } from "@/components/digest-subscriptions-panel"
 
 type Scenario = "acknowledge" | "followup" | "payment" | "renewal" | "hotLead" | "triage" | "stageAdvance" | "sentiment" | "kbClose" | "duplicate" | "creditLimit" | "meetingRecap" | "socialReply" | "socialViral"
 type Mode = "shadow" | "live"
@@ -515,6 +516,12 @@ export default function AiAutomationPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Per-user subscription matrix — who gets which digest, how often,
+          through which channels. Replaces the old hardcoded "everyone with
+          role=admin/manager" rule for daily briefings, anomaly alerts and
+          renewal reminders. */}
+      <DigestSubscriptionsPanel />
 
       {/* Feature Toggles */}
       <div data-tour-id="ai-toggles" className="space-y-6 mb-8">
