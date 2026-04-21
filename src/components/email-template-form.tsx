@@ -7,10 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image, Paintbrush, FileCode } from "lucide-react"
+import { Trash2, Eye, Code, Bold, Italic, Underline, List, ListOrdered, Link, X, Undo, Redo, AlignLeft, AlignCenter, AlignRight, Image } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sanitizeRichHtml } from "@/lib/sanitize"
-import { EmailVisualEditor, type EmailVisualEditorHandle } from "@/components/email-visual-editor"
 
 interface EmailTemplateFormData {
   name: string
@@ -60,7 +59,6 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     designJson: null,
     editorType: "html",
   })
-  const visualEditorRef = useRef<EmailVisualEditorHandle>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<"editor" | "preview" | "split">("editor")
@@ -105,18 +103,6 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     if (!form.name || !form.subject) {
       setError(t("errorNameSubject") || "Name and subject are required")
       return
-    }
-
-    // For visual editor, export HTML reliably via ref
-    if (form.editorType === "visual" && visualEditorRef.current) {
-      try {
-        const { design, html } = await visualEditorRef.current.exportHtml()
-        form.designJson = design
-        form.htmlBody = html
-      } catch {
-        setError("Failed to export design from visual editor")
-        return
-      }
     }
 
     setSaving(true)
@@ -185,8 +171,9 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
     }
   }
 
-  // Use fullscreen dialog for visual editor mode
-  const isFullscreen = form.editorType === "visual"
+  // isFullscreen was used for the old Unlayer visual editor. Now we always use
+  // the contentEditable WYSIWYG which fits comfortably in a standard dialog.
+  const isFullscreen = false
 
   if (!open) return null
 
@@ -286,64 +273,18 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
               </div>
             </div>
 
-            {/* Editor type toggle */}
+            {/* Editor — single contentEditable WYSIWYG with toolbar + merge-tag chips */}
             <div className={cn(isFullscreen && "flex flex-col flex-1 min-h-0")}>
               <Label className="text-xs uppercase text-muted-foreground mb-2 block flex-shrink-0">{tc("content")}</Label>
-              <div className="flex items-center gap-2 mb-3 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => update("editorType", "visual")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
-                    form.editorType === "visual"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  <Paintbrush className="h-3.5 w-3.5" /> {t("visualEditor")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (form.editorType === "visual" && form.designJson) {
-                      // Export HTML from visual editor before switching
-                      window.dispatchEvent(new Event("unlayer-export"))
-                    }
-                    update("editorType", "html")
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
-                    form.editorType === "html"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  )}
-                >
-                  <FileCode className="h-3.5 w-3.5" /> {t("htmlEditor")}
-                </button>
-              </div>
-
-              {form.editorType === "visual" ? (
-                <EmailVisualEditor
-                  ref={visualEditorRef}
-                  designJson={form.designJson}
-                  onExport={(design, html) => {
-                    setForm(f => ({ ...f, designJson: design, htmlBody: html }))
-                  }}
-                  labels={{ title: t("visualEditor"), exportHtml: t("exportHtml") }}
-                  mergeTagNames={{
-                    client_name: t("mergeClientName"),
-                    client_email: t("mergeClientEmail"),
-                    company: t("mergeCompany"),
-                    service: t("mergeService"),
-                    new_services: t("mergeNewServices"),
-                    improvements: t("mergeImprovements"),
-                    upcoming: t("mergeUpcoming"),
-                    date: t("mergeDate"),
-                    month: t("mergeMonth"),
-                    year: t("mergeYear"),
-                  }}
-                />
-              ) : (
+              {/*
+                Previously there was a toggle between "Визуальный редактор" (Unlayer iframe)
+                and "HTML редактор" (contentEditable). The Unlayer editor depended on
+                editor.unlayer.com / api.unlayer.com iframes that ad-blockers and corporate
+                firewalls routinely block, causing an infinite "Loading editor…" spinner.
+                We kept the contentEditable path only — it's already a full WYSIWYG with
+                toolbar (bold/italic/underline/fontSize/color/align/lists/links), merge-tag
+                insert buttons, preview, and a raw-HTML toggle. Zero third-party iframes.
+              */}
               <>
               <p className="text-xs text-muted-foreground mb-2">
                 {t("editorHint")}
@@ -565,7 +506,6 @@ export function EmailTemplateForm({ open, onOpenChange, onSaved, initialData, or
                 </div>
               )}
               </>
-              )}
             </div>
           </div>
         </div>
