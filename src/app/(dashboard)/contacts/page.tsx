@@ -1,21 +1,22 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend,
+  PieChart, Pie, Cell, LineChart, Line,
 } from "recharts"
 import {
-  Sparkles, Users, TrendingUp, TrendingDown, Minus, MessageSquare, Tag, RefreshCw, Download, List,
+  Sparkles, Users, TrendingUp, TrendingDown, MessageSquare, Tag, RefreshCw, Download, List,
 } from "lucide-react"
 
-type Entity = "contacts" | "leads"
-
+// Segment Insights for Contacts only. The leads toggle was removed — leads
+// have their own analytics under /leads, and mixing both entities in one
+// dashboard confused customers who expected /contacts to be about contacts.
 interface ContactsAgg {
   total: number
   active: number
@@ -31,17 +32,6 @@ interface ContactsAgg {
   engagementByCategory: Array<{ category: string; avg_score: number; count: number }>
 }
 
-interface LeadsAgg {
-  total: number
-  avgScore: number
-  growth: { last30: number; prev30: number; pct: number | null }
-  byCategory: Array<{ category: string; count: number }>
-  bySource: Array<{ source: string; count: number }>
-  byStatus: Array<{ status: string; count: number }>
-  topBrands: Array<{ brand: string; count: number }>
-  weekly: Array<{ week: string; count: number }>
-}
-
 const CATEGORY_COLORS: Record<string, string> = {
   vip: "#a855f7",
   partner: "#14b8a6",
@@ -55,17 +45,14 @@ const SOURCE_COLORS = ["#3b82f6", "#22c55e", "#f97316", "#6366f1", "#a855f7", "#
 
 export default function InsightsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
   const headers: Record<string, string> = orgId ? { "x-organization-id": String(orgId) } : {}
   const t = useTranslations("insights")
   const locale = useLocale()
-  const [entity, setEntity] = useState<Entity>(searchParams?.get("entity") === "leads" ? "leads" : "contacts")
-  const entityLabel = entity === "contacts" ? t("contacts") : t("leads")
-  const entitySingular = entity === "contacts" ? t("contacts").replace(/s$|ы$|лар$/i, "") : t("leads").replace(/s$|ы$|лар$/i, "")
+  const entityLabel = t("contacts")
+  const entitySingular = entityLabel.replace(/s$|ы$|лар$/i, "")
 
-  // Translate raw DB values ("vip", "cold_call", "EMAIL" ...) to localized labels.
   const categoryLabel = (v: string): string => {
     const k = String(v || "").toLowerCase()
     const map: Record<string, string> = { vip: "catVip", regular: "catRegular", partner: "catPartner", prospect: "catProspect", inactive: "catInactive", "(none)": "catNone" }
@@ -80,14 +67,14 @@ export default function InsightsPage() {
     }
     return map[k] ? t(map[k]) : v
   }
-  const [data, setData] = useState<ContactsAgg | LeadsAgg | null>(null)
+  const [data, setData] = useState<ContactsAgg | null>(null)
   const [loading, setLoading] = useState(true)
   const [insights, setInsights] = useState<string[]>([])
   const [insightsLoading, setInsightsLoading] = useState(false)
 
   const load = (refresh = false) => {
     setLoading(true)
-    fetch(`/api/v1/analytics/segments?entity=${entity}${refresh ? "&refresh=1" : ""}`, { headers })
+    fetch(`/api/v1/analytics/segments?entity=contacts${refresh ? "&refresh=1" : ""}`, { headers })
       .then(r => r.json())
       .then(json => {
         if (json.success) setData(json.data)
@@ -99,7 +86,7 @@ export default function InsightsPage() {
   useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entity, orgId])
+  }, [orgId])
 
   const fetchInsights = async () => {
     if (!data) return
@@ -109,7 +96,7 @@ export default function InsightsPage() {
       const res = await fetch("/api/v1/analytics/segments/ai-summary", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ entity, aggregate: data, locale }),
+        body: JSON.stringify({ entity: "contacts", aggregate: data, locale }),
       })
       const json = await res.json()
       if (json.success) setInsights(json.data.insights || [])
@@ -119,8 +106,7 @@ export default function InsightsPage() {
   }
 
   const drillTo = (filter: string) => {
-    // /contacts defaults to Insights; drill-through goes to the actual list view
-    router.push(`/${entity}/list?${filter}`)
+    router.push(`/contacts/list?${filter}`)
   }
 
   const exportCsv = () => {
@@ -134,7 +120,7 @@ export default function InsightsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${entity}-segments-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `contacts-segments-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -153,14 +139,10 @@ export default function InsightsPage() {
           <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => router.push(`/${entity}/list`)} className="gap-1.5">
-          <List className="h-4 w-4" /> {entity === "contacts" ? t("contactList") : t("leadList")}
+        <Button variant="outline" size="sm" onClick={() => router.push(`/contacts/list`)} className="gap-1.5">
+          <List className="h-4 w-4" /> {t("contactList")}
         </Button>
         <div className="flex items-center gap-2">
-          <div className="flex p-1 bg-muted rounded-lg">
-            <button onClick={() => setEntity("contacts")} className={`px-3 py-1 text-sm rounded-md ${entity === "contacts" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>{t("contacts")}</button>
-            <button onClick={() => setEntity("leads")} className={`px-3 py-1 text-sm rounded-md ${entity === "leads" ? "bg-background shadow-sm" : "text-muted-foreground"}`}>{t("leads")}</button>
-          </div>
           <Button variant="outline" size="sm" onClick={() => load(true)} className="gap-1.5">
             <RefreshCw className="h-3.5 w-3.5" /> {t("refresh")}
           </Button>
@@ -177,63 +159,61 @@ export default function InsightsPage() {
         </div>
       ) : (
         <>
-          {/* Contacts-specific: SMS + Engagement — pinned to the very top */}
-          {entity === "contacts" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-blue-600" /> {t("smsAttribution")}
-                </h2>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.everReceived}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsEver")}</p>
-                  </div>
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last30}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsLast30")}</p>
-                  </div>
-                  <div className="rounded-md bg-muted p-3">
-                    <p className="text-2xl font-bold">{(data as ContactsAgg).sms.last90}</p>
-                    <p className="text-[11px] text-muted-foreground">{t("smsLast90")}</p>
-                  </div>
+          {/* SMS attribution + Engagement — pinned to the very top */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-blue-600" /> {t("smsAttribution")}
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-md bg-muted p-3">
+                  <p className="text-2xl font-bold">{data.sms.everReceived}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("smsEver")}</p>
                 </div>
-                <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
-                  <div className="h-full bg-blue-500 transition-all" style={{ width: `${(data as ContactsAgg).sms.coverage}%` }} />
+                <div className="rounded-md bg-muted p-3">
+                  <p className="text-2xl font-bold">{data.sms.last30}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("smsLast30")}</p>
                 </div>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  {t("smsCoveragePct", { pct: (data as ContactsAgg).sms.coverage })}
-                </p>
-                {(data as ContactsAgg).sms.everReceived === 0 && (
-                  <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
-                    {t.rich("smsNone", { link: () => <code className="bg-muted px-1 rounded">/campaigns</code> })}
-                  </p>
-                )}
+                <div className="rounded-md bg-muted p-3">
+                  <p className="text-2xl font-bold">{data.sms.last90}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("smsLast90")}</p>
+                </div>
               </div>
+              <div className="mt-3 h-2 bg-muted rounded overflow-hidden">
+                <div className="h-full bg-blue-500 transition-all" style={{ width: `${data.sms.coverage}%` }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {t("smsCoveragePct", { pct: data.sms.coverage })}
+              </p>
+              {data.sms.everReceived === 0 && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-2">
+                  {t.rich("smsNone", { link: () => <code className="bg-muted px-1 rounded">/campaigns</code> })}
+                </p>
+              )}
+            </div>
 
-              <div className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-semibold mb-3">{t("engagementByCategory")}</h2>
-                <div className="space-y-2">
-                  {(data as ContactsAgg).engagementByCategory.map((r, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Badge variant="outline" className="text-[10px] w-24 justify-center">{categoryLabel(r.category)}</Badge>
-                      <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
-                        <div
-                          className="h-full"
-                          style={{
-                            width: `${Math.min(100, r.avg_score)}%`,
-                            backgroundColor: CATEGORY_COLORS[r.category] || "#cbd5e1",
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs tabular-nums w-10 text-right font-medium">{r.avg_score}</span>
-                      <span className="text-[10px] text-muted-foreground w-16 text-right">({r.count})</span>
+            <div className="rounded-lg border bg-card p-4">
+              <h2 className="text-sm font-semibold mb-3">{t("engagementByCategory")}</h2>
+              <div className="space-y-2">
+                {data.engagementByCategory.map((r, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-[10px] w-24 justify-center">{categoryLabel(r.category)}</Badge>
+                    <div className="flex-1 h-3 bg-muted rounded overflow-hidden relative">
+                      <div
+                        className="h-full"
+                        style={{
+                          width: `${Math.min(100, r.avg_score)}%`,
+                          backgroundColor: CATEGORY_COLORS[r.category] || "#cbd5e1",
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
+                    <span className="text-xs tabular-nums w-10 text-right font-medium">{r.avg_score}</span>
+                    <span className="text-[10px] text-muted-foreground w-16 text-right">({r.count})</span>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+          </div>
 
           {/* Stats row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -248,19 +228,15 @@ export default function InsightsPage() {
             <StatTile
               icon={Tag}
               label={t("statWithBrand")}
-              value={(data as any).withBrand ?? (data as any).topBrands.length}
-              sub={t("statWithBrandSub", { count: (data as any).topBrands.length })}
+              value={data.withBrand ?? data.topBrands.length}
+              sub={t("statWithBrandSub", { count: data.topBrands.length })}
             />
-            {entity === "contacts" ? (
-              <StatTile
-                icon={MessageSquare}
-                label={t("statSmsCoverage")}
-                value={`${(data as ContactsAgg).sms.coverage}%`}
-                sub={`${(data as ContactsAgg).sms.everReceived} / ${data.total}`}
-              />
-            ) : (
-              <StatTile icon={Sparkles} label={t("statAvgScore")} value={(data as LeadsAgg).avgScore} />
-            )}
+            <StatTile
+              icon={MessageSquare}
+              label={t("statSmsCoverage")}
+              value={`${data.sms.coverage}%`}
+              sub={`${data.sms.everReceived} / ${data.total}`}
+            />
           </div>
 
           {/* AI insights */}
@@ -292,8 +268,6 @@ export default function InsightsPage() {
             <div className="rounded-lg border bg-card p-4">
               <h2 className="text-sm font-semibold mb-3">{t("byCategory")}</h2>
               {(() => {
-                // Pie shows only CATEGORIZED rows — mixing 585 "(none)" with 1 "vip" makes the
-                // small slice invisible. We surface the "(none)" bucket as a muted footer instead.
                 const categorized = data.byCategory.filter(r => r.category && r.category !== "(none)")
                 const noneRow = data.byCategory.find(r => r.category === "(none)")
                 const categorizedTotal = categorized.reduce((s, r) => s + r.count, 0)
@@ -355,7 +329,7 @@ export default function InsightsPage() {
                         <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                         <Tooltip />
                         <Bar dataKey="count" onClick={(e: any) => e?.source && drillTo(`source=${e.source}`)}>
-                          {sourced.map((r, i) => (
+                          {sourced.map((_r, i) => (
                             <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} style={{ cursor: "pointer" }} />
                           ))}
                         </Bar>
