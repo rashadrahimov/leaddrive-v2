@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -53,10 +53,25 @@ const TRAFFIC_DOTS: Record<TrafficLight, string> = {
 
 export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, rottingDays = 14, onQuickAddTask }: DealCardProps) {
   const t = useTranslations("deals")
-  const [hovered, setHovered] = useState(false)
   const [quickAdd, setQuickAdd] = useState(false)
   const [taskTitle, setTaskTitle] = useState("")
   const [saving, setSaving] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  // Close the quick-add popover when the user clicks anywhere outside it.
+  // Replaces the previous onMouseLeave-on-card reset, which fired the moment
+  // the cursor passed through the gap between the card and the popover
+  // (popover sits at `top-full` — below the card's hit box).
+  useEffect(() => {
+    if (!quickAdd) return
+    function onDocMouseDown(e: MouseEvent) {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setQuickAdd(false)
+      }
+    }
+    document.addEventListener("mousedown", onDocMouseDown)
+    return () => document.removeEventListener("mousedown", onDocMouseDown)
+  }, [quickAdd])
 
   const light = getTrafficLight(deal)
   const rotting = isRotting(deal.stageChangedAt, rottingDays)
@@ -85,9 +100,7 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -1 }}
       transition={{ duration: 0.2 }}
-      className="relative"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setQuickAdd(false) }}
+      className="relative group"
     >
       <div
         className={cn(
@@ -149,21 +162,25 @@ export function DealCard({ deal, onClick, onDragStart, onDragEnd, isDragging, ro
         )}
       </div>
 
-      {/* Quick-add task button on hover */}
-      {hovered && onQuickAddTask && !quickAdd && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium shadow-md hover:shadow-lg transition-shadow"
+      {/* Quick-add task button — always in DOM (when applicable), revealed via
+          CSS group-hover. Using JS `hovered` state failed because the button
+          sits half-outside the card (`-bottom-2`); the cursor's trip across
+          that 0.5rem gap fired onMouseLeave on the card and unmounted the
+          button before the click could land. */}
+      {onQuickAddTask && !quickAdd && (
+        <button
+          type="button"
+          className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary text-primary-foreground text-[10px] font-medium shadow-md hover:shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150"
           onClick={e => { e.stopPropagation(); setQuickAdd(true) }}
         >
           <Plus className="h-3 w-3" /> {t("quickAddTask")}
-        </motion.button>
+        </button>
       )}
 
       {/* Quick-add task popover */}
       {quickAdd && (
         <motion.div
+          ref={popoverRef}
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-full left-0 right-0 z-20 mt-1 p-2 rounded-lg border bg-card shadow-lg"
