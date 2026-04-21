@@ -12,7 +12,7 @@ import {
   TrendingUp, Filter, Workflow, Server, Bell, CalendarDays, Headphones, Package,
   Lock, PiggyBank, FolderKanban, Wallet, MapPin, Route, Camera, AlertTriangle,
   ClipboardList, ShoppingCart, UserCog, GitBranch, Plug, Keyboard, Shield, Phone,
-  Trophy, Activity, FileBarChart, Bot, Sparkles, Inbox, MessageSquareWarning,
+  Trophy, Activity, FileBarChart, Bot, Sparkles, Inbox, MessageSquareWarning, Key,
 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { Logo } from "@/components/logo"
@@ -91,6 +91,7 @@ const navItems: NavItem[] = [
   { module: "core", href: "/settings/smtp-settings", icon: Server, tKey: "smtp", group: "Settings" },
   { module: "deals", href: "/settings/quotas", icon: Target, tKey: "quotas", group: "Settings" },
   { module: "core", href: "/settings/integrations", icon: Plug, tKey: "integrations", group: "Settings" },
+  { module: "core", href: "/settings/api-keys", icon: Key, tKey: "apiKeys", group: "Settings" },
   { module: "core", href: "/settings/macros", icon: Keyboard, tKey: "macros", group: "Settings" },
   { module: "core", href: "/settings/field-permissions", icon: Shield, tKey: "fieldPermissions", group: "Settings" },
   { module: "core", href: "/settings/voip", icon: Phone, tKey: "voip", group: "Settings" },
