@@ -887,6 +887,411 @@ async function main() {
   }
   console.log(`AI shadow actions: ${shadowCount}`)
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // Phase 2 enrichment — makes the sidebar look alive: activities, ticket
+  // comments, task checklists/comments, deal roles, email templates, KB,
+  // journeys, segments, saved reports, notifications.
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // ─── Activities (timeline on companies / contacts / deals) ───
+  const activitySpecs = [
+    // Sales activities
+    { type: "call",    subject: "Discovery call — Metro procurement (Igor Volkov)",          description: "Discussed Q2 almond volume, pricing tier, logistics from Baku to Moscow. Metro needs COA and phytosanitary certs with each shipment.", contactEmail: "igor.volkov@metro-cc.ru",    daysAgo: 14 },
+    { type: "email",   subject: "Sent proposal — Lidl PL listing (olive oil)",                description: "Emailed full proposal + product dossier. Markus will loop in buying committee next Tuesday.",                                                          contactEmail: "markus.schneider@lidl.de",   daysAgo: 11 },
+    { type: "meeting", subject: "Sample tasting — Four Seasons Baku (LECHEQ brandy)",          description: "Chef Jean and sommelier tasted 3 expressions. XO 5yr was the favourite. Follow-up meeting on Monday to discuss exclusive pour rights.",            contactEmail: "jean.martin@fourseasons.com", daysAgo: 4  },
+    { type: "note",    subject: "AZBADAM lot #2026-04 — quality review",                        description: "Internal note: lot passed all lab tests, moisture 5.8%, aflatoxin <0.5 ppb. Cleared for Metro + Ritter shipments.",                                 contactEmail: null,                            daysAgo: 9  },
+    { type: "call",    subject: "Onboarding call — Anadolu Tarım",                             description: "Mehmet asked for expanded product catalog and export-price list. Lost on price later — follow-up in Q3.",                                            contactEmail: "mehmet.demir@anadolutarim.com", daysAgo: 60 },
+    { type: "meeting", subject: "Quarterly business review — Chinar Restaurant Group",         description: "Kamran is very happy. Expanding from 3 to 5 restaurants, will need tea+brandy commitment for 12 more months.",                                        contactEmail: "kamran.rustamov@chinar.az",   daysAgo: 7  },
+    { type: "email",   subject: "Follow-up — Ritter Sport trial shipment status",              description: "Sent BL + inspection report. Peter confirmed Tuesday ETA. QA report due by Friday next week.",                                                      contactEmail: "peter.hoffmann@ritter-sport.com", daysAgo: 2 },
+    { type: "note",    subject: "Internal — AZROSE 2026 harvest forecast",                      description: "Agronomy team estimates 8% higher yield vs 2025 due to favorable spring. Reserve 2kg for Chanel trial.",                                              contactEmail: null,                            daysAgo: 12 },
+    { type: "call",    subject: "Catch-up call — Bravo Supermarket (Orxan)",                   description: "Weekly fresh fruit slot confirmed. Discussed shelf-talker promotion for almonds in Q2.",                                                              contactEmail: "orxan.quliyev@bravomarket.az", daysAgo: 6  },
+    { type: "email",   subject: "Carrefour France — tender docs update",                        description: "Sent allergen declaration + updated HACCP certificates as requested by compliance team.",                                                             contactEmail: "sophie.lefevre@carrefour.fr",  daysAgo: 3  },
+    { type: "meeting", subject: "Strategy review — GRAND AGRO INVITRO expansion",               description: "Internal review with agronomy lead. Pipeline of saplings for 3 wine producers. Capacity increase needed by Q4.",                                      contactEmail: null,                            daysAgo: 10 },
+    { type: "note",    subject: "Metro QA feedback — olive oil replacement lot",                description: "Elena confirmed receipt of replacement shipment. No further cracked units. Investigation report accepted.",                                            contactEmail: "elena.novikova@metro-cc.ru",    daysAgo: 1  },
+    { type: "call",    subject: "Cold outreach — Wildberries wholesale team (Dmitry)",          description: "Introduced tea portfolio and export terms. Dmitry requested sample shipment + wholesale price list.",                                                contactEmail: "dmitry.kozlov@wildberries.ru",  daysAgo: 16 },
+    { type: "email",   subject: "JW Marriott annual supply — renewal terms",                    description: "Oliver asking for 12-month fixed-price contract. Need internal approval on pricing lock.",                                                           contactEmail: "oliver.brown@marriott.com",     daysAgo: 5  },
+    { type: "meeting", subject: "Site visit — Shamkir Agropark",                                description: "Reviewed packhouse, cold storage, and Q2 readiness. HACCP audit scheduled for next week.",                                                          contactEmail: null,                            daysAgo: 8  },
+  ]
+  let actCount = 0
+  for (const a of activitySpecs) {
+    const existing = await prisma.activity.findFirst({ where: { organizationId: orgId, subject: a.subject } })
+    if (existing) continue
+    const ct = a.contactEmail ? contactByEmail(a.contactEmail) : null
+    await prisma.activity.create({
+      data: {
+        organizationId: orgId,
+        type: a.type,
+        subject: a.subject,
+        description: a.description,
+        contactId: ct?.id || null,
+        companyId: ct?.companyId || null,
+        createdBy: admin.id,
+        createdAt: new Date(now - a.daysAgo * DAY),
+      },
+    })
+    actCount++
+  }
+  console.log(`Activities: ${actCount}`)
+
+  // ─── TicketComments (makes tickets look worked on) ───
+  const ticketCommentSpecs = [
+    { num: "AFI-2026-001", comments: [
+      { comment: "Photos received from Metro QA. Confirmed — 12 units with glass cracks. Escalating to production / packaging.", isInternal: false },
+      { comment: "Opened supplier investigation with bottle vendor (Kavkaz Glass). Requesting root-cause by Friday.",              isInternal: true  },
+      { comment: "Replacement shipment dispatched (express freight). ETA Moscow Tuesday.",                                         isInternal: false },
+      { comment: "Internal note — switch to reinforced packaging for next 2 batches until root cause is fixed.",                   isInternal: true  },
+    ]},
+    { num: "AFI-2026-002", comments: [
+      { comment: "Customs hold resolved, waiting for phytosanitary cert delivery to handler in Moscow.",                            isInternal: false },
+      { comment: "ETA to Metro warehouse updated to Wednesday. Penalty waiver requested.",                                          isInternal: false },
+      { comment: "Drafted credit-note for 0.5% late-delivery penalty as goodwill gesture.",                                         isInternal: true  },
+    ]},
+    { num: "AFI-2026-003", comments: [
+      { comment: "Wildberries QA lab report attached. 3/50 samples flagged for musty notes. Storage humidity suspect.",            isInternal: false },
+      { comment: "Pulled retention samples from warehouse — matching musty profile. Likely moisture event during transit.",         isInternal: true  },
+      { comment: "Offering replacement + credit-note. Implementing tighter humidity control on next shipments.",                    isInternal: false },
+    ]},
+    { num: "AFI-2026-005", comments: [
+      { comment: "Container confirmed at Hamburg port. Original phytosanitary cert being couriered overnight.",                    isInternal: false },
+      { comment: "Export desk — going forward, include scanned cert + hard copy in every container as SOP.",                       isInternal: true  },
+    ]},
+    { num: "AFI-2026-006", comments: [
+      { comment: "Invoice reissued with correct currency (USD). Chinar finance team confirmed receipt.",                           isInternal: false },
+    ]},
+    { num: "AFI-2026-008", comments: [
+      { comment: "Duty Free received photos. 6 boxes dented — likely during Baku→airport handling.",                               isInternal: false },
+      { comment: "Replacement 6 boxes dispatched, insurance claim filed with handling agent.",                                     isInternal: true  },
+    ]},
+  ]
+  let tcCount = 0
+  for (const tcs of ticketCommentSpecs) {
+    const ticket = createdTickets.find((t) => t.ticketNumber === tcs.num)
+    if (!ticket) continue
+    const existingCount = await prisma.ticketComment.count({ where: { ticketId: ticket.id } })
+    if (existingCount > 0) continue
+    for (let i = 0; i < tcs.comments.length; i++) {
+      const c = tcs.comments[i]
+      await prisma.ticketComment.create({
+        data: {
+          ticketId: ticket.id,
+          userId: admin.id,
+          comment: c.comment,
+          isInternal: c.isInternal,
+          createdAt: new Date(ticket.createdAt.getTime() + (i + 1) * 60 * 60 * 1000),
+        },
+      })
+      tcCount++
+    }
+  }
+  console.log(`Ticket comments: ${tcCount}`)
+
+  // ─── TaskChecklist + TaskComment (on 5 tasks) ───
+  const checklistSpecs = [
+    { taskIdx: 0, items: [
+      { title: "Pull lab COA from Baku QA",   completed: true  },
+      { title: "Translate COA to EN + RU",    completed: true  },
+      { title: "Upload to Metro sharepoint",  completed: false },
+      { title: "Email Igor confirmation",     completed: false },
+    ]},
+    { taskIdx: 3, items: [
+      { title: "Review Lidl contract red-lines", completed: true  },
+      { title: "Confirm PL trademark use",       completed: true  },
+      { title: "Sign-off pricing with CEO",      completed: false },
+      { title: "Send counter-proposal",          completed: false },
+    ]},
+    { taskIdx: 4, items: [
+      { title: "Nursery capacity check (5000 units)", completed: true  },
+      { title: "Staged delivery schedule — 3 tranches", completed: true },
+      { title: "Phytosanitary docs prepared",           completed: false },
+      { title: "Kick-off call with AzWine agronomist",  completed: false },
+    ]},
+    { taskIdx: 11, items: [
+      { title: "German labelling rules — cross-check",     completed: true  },
+      { title: "Allergen declaration signed",              completed: true  },
+      { title: "Shipment manifest prepared",               completed: false },
+    ]},
+    { taskIdx: 14, items: [
+      { title: "Gulfood card to CRM",                completed: true  },
+      { title: "Send welcome pack + price list",     completed: true  },
+      { title: "Schedule intro call (next week)",    completed: false },
+    ]},
+  ]
+  let tclCount = 0
+  for (const cls of checklistSpecs) {
+    const task = createdTasks[cls.taskIdx]
+    if (!task) continue
+    const existing = await prisma.taskChecklist.count({ where: { taskId: task.id } })
+    if (existing > 0) continue
+    for (let i = 0; i < cls.items.length; i++) {
+      await prisma.taskChecklist.create({
+        data: {
+          organizationId: orgId,
+          taskId: task.id,
+          title: cls.items[i].title,
+          completed: cls.items[i].completed,
+          sortOrder: i,
+        },
+      })
+      tclCount++
+    }
+  }
+  console.log(`Task checklist items: ${tclCount}`)
+
+  const taskCommentSpecs = [
+    { taskIdx: 0, comments: [
+      { content: "Started pulling COA from Baku lab.",                                                           isSystem: false },
+      { content: "Status changed to in_progress",                                                                isSystem: true  },
+      { content: "COA uploaded to drive — EN version in progress.",                                              isSystem: false },
+    ]},
+    { taskIdx: 3, comments: [
+      { content: "Legal flagged 2 clauses in Lidl red-line — discussing with CEO.",                              isSystem: false },
+      { content: "Sign-off meeting scheduled for Friday.",                                                       isSystem: false },
+    ]},
+    { taskIdx: 6, comments: [
+      { content: "Batch delivered on time. Kamran reported tea quality excellent.",                              isSystem: false },
+      { content: "Status changed to completed",                                                                  isSystem: true  },
+    ]},
+  ]
+  let tcmCount = 0
+  for (const cc of taskCommentSpecs) {
+    const task = createdTasks[cc.taskIdx]
+    if (!task) continue
+    const existing = await prisma.taskComment.count({ where: { taskId: task.id } })
+    if (existing > 0) continue
+    for (const c of cc.comments) {
+      await prisma.taskComment.create({
+        data: {
+          organizationId: orgId,
+          taskId: task.id,
+          userId: admin.id,
+          content: c.content,
+          isSystem: c.isSystem,
+          createdAt: new Date(now - Math.floor(Math.random() * 5) * DAY),
+        },
+      })
+      tcmCount++
+    }
+  }
+  console.log(`Task comments: ${tcmCount}`)
+
+  // ─── DealContactRole (deal stakeholders) ───
+  const roleSpecs = [
+    { dealIdx: 6,  contactEmail: "igor.volkov@metro-cc.ru",        role: "Decision Maker",   influence: "High",   isPrimary: true  },
+    { dealIdx: 6,  contactEmail: "elena.novikova@metro-cc.ru",     role: "Influencer",        influence: "Medium", isPrimary: false },
+    { dealIdx: 6,  contactEmail: "yusif.babayev@metro-cc.ru",      role: "User / Champion",   influence: "Low",    isPrimary: false },
+    { dealIdx: 7,  contactEmail: "markus.schneider@lidl.de",       role: "Decision Maker",   influence: "High",   isPrimary: true  },
+    { dealIdx: 7,  contactEmail: "julia.weber@lidl.de",            role: "Quality Gatekeeper",influence: "High",   isPrimary: false },
+    { dealIdx: 8,  contactEmail: "vuqar.karimov@azwine.az",        role: "Decision Maker",   influence: "High",   isPrimary: true  },
+    { dealIdx: 8,  contactEmail: "gunay.rasulova@azwine.az",       role: "Technical Lead",   influence: "Medium", isPrimary: false },
+    { dealIdx: 10, contactEmail: "peter.hoffmann@ritter-sport.com",role: "Decision Maker",   influence: "High",   isPrimary: true  },
+    { dealIdx: 10, contactEmail: "stefan.koch@ritter-sport.com",   role: "Influencer",        influence: "Medium", isPrimary: false },
+    { dealIdx: 15, contactEmail: "kamran.rustamov@chinar.az",      role: "Decision Maker",   influence: "High",   isPrimary: true  },
+    { dealIdx: 15, contactEmail: "nigar.valiyeva@chinar.az",       role: "Ops Manager",       influence: "Medium", isPrimary: false },
+  ]
+  let roleCount = 0
+  for (const r of roleSpecs) {
+    const deal = createdDeals[r.dealIdx]
+    const ct = contactByEmail(r.contactEmail)
+    if (!deal || !ct) continue
+    try {
+      await prisma.dealContactRole.create({
+        data: {
+          dealId: deal.id,
+          contactId: ct.id,
+          role: r.role,
+          influence: r.influence,
+          isPrimary: r.isPrimary,
+        },
+      })
+      roleCount++
+    } catch (_) { /* unique dealId+contactId — skip if already exists */ }
+  }
+  console.log(`Deal contact roles: ${roleCount}`)
+
+  // ─── Email Templates (8) ───
+  const templateSpecs = [
+    { name: "Welcome — Distributor Onboarding", subject: "Welcome to AFI Group — {{contactName}}, let's get started", category: "onboarding", htmlBody: "<h2>Welcome, {{contactName}}</h2><p>Thank you for joining as an AFI distributor. Attached you'll find our full price list, product catalog and export terms.</p><p>Your dedicated account manager is {{managerName}} — available 9am-6pm (GMT+4).</p>", variables: ["contactName","managerName"] },
+    { name: "Quality COA — Attachment Email",   subject: "Certificate of Analysis — {{productName}} / batch {{lotNumber}}", category: "quality",     htmlBody: "<p>Dear {{contactName}},</p><p>Attached: Certificate of Analysis for lot <b>{{lotNumber}}</b> — {{productName}}.</p><p>All parameters within spec. Full lab report available on request.</p>", variables: ["contactName","productName","lotNumber"] },
+    { name: "Follow-up — After Sample Tasting",  subject: "How did the {{productName}} samples go?", category: "sales",        htmlBody: "<p>Hi {{contactName}},</p><p>Hope the {{productName}} samples landed well. Happy to walk through pricing, volumes and delivery terms whenever you're ready.</p><p>Best,<br/>{{senderName}}</p>", variables: ["contactName","productName","senderName"] },
+    { name: "Invoice Reminder",                  subject: "Reminder — Invoice {{invoiceNumber}} due {{dueDate}}",             category: "finance",      htmlBody: "<p>Dear {{contactName}},</p><p>Friendly reminder: invoice <b>{{invoiceNumber}}</b> for <b>{{amount}}</b> is due on <b>{{dueDate}}</b>.</p><p>AFI Finance</p>", variables: ["contactName","invoiceNumber","amount","dueDate"] },
+    { name: "Quality Complaint — Acknowledgement", subject: "We've received your complaint — {{ticketNumber}}",                category: "support",      htmlBody: "<p>Dear {{contactName}},</p><p>We've received your complaint {{ticketNumber}} and opened an internal investigation. First response within 2 hours.</p><p>Thank you for flagging — your feedback helps us improve.</p>", variables: ["contactName","ticketNumber"] },
+    { name: "Seasonal Harvest Update — Summer",  subject: "Summer harvest is live at AFI Group",                                category: "marketing",    htmlBody: "<h2>Summer 2026 — Harvest Update</h2><p>Fresh stone fruits from Zəfər Bağları and premium rose oil from AZROSE are now available for export.</p><p>Ask us for the seasonal price sheet.</p>", variables: [] },
+    { name: "NPS Survey — Retail Partners",       subject: "Quick 2-minute feedback — AFI Group",                                category: "feedback",     htmlBody: "<p>Hi {{contactName}},</p><p>How likely are you to recommend AFI Group to a colleague?</p><p><a href=\"{{surveyLink}}\">Click here to answer →</a></p>", variables: ["contactName","surveyLink"] },
+    { name: "Shipment Dispatched — Notification", subject: "Your shipment has left Baku — {{shipmentRef}}",                       category: "logistics",    htmlBody: "<p>Dear {{contactName}},</p><p>Shipment <b>{{shipmentRef}}</b> dispatched from Baku on {{dispatchDate}}. ETA {{etaDate}}.</p><p>Tracking: {{trackingUrl}}</p>", variables: ["contactName","shipmentRef","dispatchDate","etaDate","trackingUrl"] },
+  ]
+  let tplCount = 0
+  for (const t of templateSpecs) {
+    const existing = await prisma.emailTemplate.findFirst({ where: { organizationId: orgId, name: t.name } })
+    if (existing) continue
+    await prisma.emailTemplate.create({
+      data: { ...t, organizationId: orgId, createdBy: admin.id, isActive: true, language: "en" },
+    })
+    tplCount++
+  }
+  console.log(`Email templates: ${tplCount}`)
+
+  // ─── KB Categories + Articles ───
+  const kbExisting = await prisma.kbCategory.count({ where: { organizationId: orgId } })
+  if (kbExisting === 0) {
+    const categories = [
+      { name: "Product Specifications",  sortOrder: 0 },
+      { name: "Export & Logistics",       sortOrder: 1 },
+      { name: "Quality & Compliance",     sortOrder: 2 },
+      { name: "Distributor Onboarding",   sortOrder: 3 },
+    ]
+    const createdCats = []
+    for (const c of categories) {
+      const cat = await prisma.kbCategory.create({ data: { ...c, organizationId: orgId } })
+      createdCats.push(cat)
+    }
+    const articles = [
+      { title: "AZBADAM Almond — Product Specification",         content: "# AZBADAM Almond Specification\n\n**Origin:** Shamkir region, Azerbaijan\n**Moisture:** ≤ 6%\n**Aflatoxin:** ≤ 2 ppb\n**Grades:** Premium / Standard / Industrial\n**Packaging:** 500g retail / 25kg bulk\n\n## Storage\n- Temperature: 10-18°C\n- Humidity: ≤ 65%\n- Shelf-life: 18 months\n\n## Certifications\nISO 22000, HACCP, Halal, Non-GMO.",                                   categoryId: createdCats[0].id, status: "published", viewCount: 142, helpfulCount: 24 },
+      { title: "GALA Olive Oil — Product Specification",          content: "# GALA Olive Oil Specification\n\n**Variety:** Mediterranean cultivars grown in Absheron\n**Type:** Extra Virgin, cold-pressed\n**Acidity:** ≤ 0.8%\n**Peroxide value:** ≤ 20 meq O2/kg\n**Packaging:** 250ml / 500ml / 1L glass; 5L tin\n\n## Certifications\nIOC member, Halal, ISO 22000.",                                                                                  categoryId: createdCats[0].id, status: "published", viewCount: 95,  helpfulCount: 18 },
+      { title: "ASTARACHAY Tea — Product Range",                  content: "# ASTARACHAY Tea Range\n\n**Region:** Astara (subtropical zone)\n**Grades:** Premium, Standard, Dust\n**Types:** Black, Green, Herbal\n**Packaging:** 100g / 200g retail; 5kg wholesale\n**Caffeine content:** 2.5-4% (black), 1-2% (green)",                                                                                                                                 categoryId: createdCats[0].id, status: "published", viewCount: 78,  helpfulCount: 14 },
+      { title: "Export — Phytosanitary Certificates",             content: "# Phytosanitary Certificates\n\n## Process\n1. Inspection request — 5 days before ship date\n2. Lab samples — retained 6 months\n3. Cert issued by State Phytosanitary Service\n\n## Document checklist\n- Commercial invoice\n- Packing list\n- Certificate of Origin\n- Phytosanitary certificate\n- Health certificate (dairy / animal products)",                                  categoryId: createdCats[1].id, status: "published", viewCount: 56,  helpfulCount: 11 },
+      { title: "Shipping Lanes — AZ to EU / RU / TR",             content: "# Shipping Lanes\n\n## Russia — Metro / Wildberries / Лента\n- Truck: Baku → Moscow, 5-7 days\n- Rail: Baku → Samara → MSK, 8-10 days (cheaper, cold-chain available)\n\n## Europe — Lidl / Ritter / Carrefour\n- Sea: Baku → Poti → Trieste, 14-18 days\n- Air (urgent): Baku → Frankfurt, next-day\n\n## Turkey — Migros / Anadolu\n- Truck: Baku → Istanbul, 3-4 days",                                                    categoryId: createdCats[1].id, status: "published", viewCount: 43,  helpfulCount: 9  },
+      { title: "Quality Complaint — Handling SOP",                content: "# Quality Complaint SOP\n\n## Step 1 — Intake\n- Customer files complaint (portal / email / WhatsApp)\n- Ticket auto-created in CRM\n- SLA: first response 2h, resolution 24-48h\n\n## Step 2 — Triage\n- Assign risk level: high / medium / low\n- Route to Quality or Logistics\n\n## Step 3 — Resolution\n- Replacement shipment / credit note / refund\n- Close ticket, tag with root cause",                          categoryId: createdCats[2].id, status: "published", viewCount: 89,  helpfulCount: 20 },
+      { title: "HACCP & ISO 22000 — Scope Overview",              content: "# HACCP / ISO 22000 Scope\n\nAll AFI production sites operate under ISO 22000 FSMS:\n- GRAND AGRO\n- AZBADAM (Shamkir processing)\n- GALA OLIVES (Absheron)\n- LECHEQ (Gabala distillery)\n\nCertificate renewal: annual audit by SGS Azerbaijan.",                                                                                                                            categoryId: createdCats[2].id, status: "published", viewCount: 62,  helpfulCount: 12 },
+      { title: "New Distributor — Onboarding Checklist",          content: "# Distributor Onboarding\n\n1. Signed distribution agreement\n2. VAT / business registration docs\n3. Credit line approval from AFI Finance\n4. Initial order form submitted\n5. Shipping address + contact persons confirmed\n6. Portal access provisioned\n7. Welcome pack (price list + catalog + COA library) emailed\n8. Kick-off call scheduled within 7 days",                categoryId: createdCats[3].id, status: "published", viewCount: 104, helpfulCount: 21 },
+    ]
+    for (const a of articles) {
+      await prisma.kbArticle.create({
+        data: { ...a, organizationId: orgId, authorId: admin.id, tags: [] },
+      })
+    }
+    console.log(`KB: ${categories.length} categories, ${articles.length} articles`)
+  } else {
+    console.log(`KB: ${kbExisting} categories already exist, skipped`)
+  }
+
+  // ─── Contact Segments ───
+  const segSpecs = [
+    { name: "Retail buyers — Russia",             description: "Contacts at Metro / Wildberries / Лента and other RU retail chains", conditions: { rules: [{ field: "company.country", operator: "eq", value: "Russia" }, { field: "company.category", operator: "eq", value: "client" }] }, contactCount: 5 },
+    { name: "HoReCa — Azerbaijan",                 description: "HoReCa buyers in Azerbaijan (Chinar, Four Seasons, JW Marriott)",    conditions: { rules: [{ field: "company.industry", operator: "eq", value: "HoReCa" }, { field: "company.country", operator: "eq", value: "Azerbaijan" }] }, contactCount: 4 },
+    { name: "EU distributors — high engagement",   description: "EU-based buyers with engagement score ≥ 70",                         conditions: { rules: [{ field: "company.country", operator: "in", value: ["Germany","France"] }, { field: "engagementScore", operator: "gte", value: 70 }] }, contactCount: 3 },
+    { name: "Quality contacts (all)",              description: "All QA / Quality Manager / Compliance roles across buyers",          conditions: { rules: [{ field: "position", operator: "contains", value: "Quality" }] }, contactCount: 4 },
+  ]
+  let segCount = 0
+  for (const s of segSpecs) {
+    const existing = await prisma.contactSegment.findFirst({ where: { organizationId: orgId, name: s.name } })
+    if (existing) continue
+    await prisma.contactSegment.create({
+      data: { ...s, organizationId: orgId, createdBy: admin.id, isDynamic: true },
+    })
+    segCount++
+  }
+  console.log(`Contact segments: ${segCount}`)
+
+  // ─── Journeys (3 automations with steps) ───
+  const journeyExisting = await prisma.journey.count({ where: { organizationId: orgId } })
+  if (journeyExisting === 0) {
+    const journeysData = [
+      {
+        name: "New Distributor Onboarding",
+        description: "Welcome email + onboarding checklist + follow-up call scheduling for new distributors.",
+        status: "active", triggerType: "contact_created",
+        entryCount: 14, activeCount: 4, completedCount: 9, conversionCount: 7,
+        steps: [
+          { stepOrder: 0, stepType: "send_email",    config: { templateName: "Welcome — Distributor Onboarding" } },
+          { stepOrder: 1, stepType: "wait",          config: { days: 2 } },
+          { stepOrder: 2, stepType: "create_task",   config: { title: "Schedule kick-off call with new distributor", assignTo: "owner" } },
+          { stepOrder: 3, stepType: "wait",          config: { days: 5 } },
+          { stepOrder: 4, stepType: "condition",     config: { field: "hasOrders", operator: "eq", value: false } },
+          { stepOrder: 5, stepType: "send_email",    config: { templateName: "Follow-up — After Sample Tasting" } },
+        ],
+      },
+      {
+        name: "Quality Complaint Auto-Response",
+        description: "Auto-acknowledge incoming complaint tickets + internal task + survey after resolution.",
+        status: "active", triggerType: "ticket_created",
+        entryCount: 21, activeCount: 6, completedCount: 13, conversionCount: 11,
+        steps: [
+          { stepOrder: 0, stepType: "send_email",    config: { templateName: "Quality Complaint — Acknowledgement" } },
+          { stepOrder: 1, stepType: "create_task",   config: { title: "Review quality complaint — open investigation", assignTo: "qualityTeam", priority: "high" } },
+          { stepOrder: 2, stepType: "wait",          config: { days: 3 } },
+          { stepOrder: 3, stepType: "condition",     config: { field: "ticketStatus", operator: "eq", value: "resolved" } },
+          { stepOrder: 4, stepType: "send_email",    config: { templateName: "NPS Survey — Retail Partners" } },
+        ],
+      },
+      {
+        name: "Invoice Payment Chain",
+        description: "Automated payment reminders for overdue invoices with escalation to account manager.",
+        status: "active", triggerType: "invoice_overdue",
+        entryCount: 9, activeCount: 3, completedCount: 5, conversionCount: 4,
+        steps: [
+          { stepOrder: 0, stepType: "send_email",    config: { templateName: "Invoice Reminder" } },
+          { stepOrder: 1, stepType: "wait",          config: { days: 7 } },
+          { stepOrder: 2, stepType: "condition",     config: { field: "invoicePaid", operator: "eq", value: false } },
+          { stepOrder: 3, stepType: "send_email",    config: { templateName: "Invoice Reminder", subject: "Second reminder" } },
+          { stepOrder: 4, stepType: "wait",          config: { days: 7 } },
+          { stepOrder: 5, stepType: "create_task",   config: { title: "Call overdue client", assignTo: "accountManager", priority: "high" } },
+        ],
+      },
+    ]
+    for (const j of journeysData) {
+      const { steps, ...jData } = j
+      const journey = await prisma.journey.create({ data: { ...jData, organizationId: orgId, createdBy: admin.id } })
+      for (const s of steps) {
+        await prisma.journeyStep.create({ data: { ...s, journeyId: journey.id } })
+      }
+    }
+    console.log(`Journeys: ${journeysData.length} (with ${journeysData.reduce((a,j) => a + j.steps.length, 0)} steps)`)
+  } else {
+    console.log(`Journeys: ${journeyExisting} already exist, skipped`)
+  }
+
+  // ─── Saved Reports ───
+  const reportSpecs = [
+    { name: "Pipeline by Subsidiary",         entityType: "deals",   columns: [{ field: "salesChannel", label: "Subsidiary" }, { field: "stage", label: "Stage" }, { field: "valueAmount", aggregate: "sum", label: "Sum" }], groupBy: "salesChannel", chartType: "bar" },
+    { name: "Deals by Stage — This Quarter",  entityType: "deals",   columns: [{ field: "stage", label: "Stage" }, { field: "id", aggregate: "count", label: "Count" }], groupBy: "stage", chartType: "funnel" },
+    { name: "Top 10 Retail Clients by Revenue",entityType: "companies", columns: [{ field: "name", label: "Company" }, { field: "deals.valueAmount", aggregate: "sum", label: "Won deals" }], sortBy: "deals.valueAmount", chartType: "bar" },
+    { name: "Complaints by Brand — 90 days",   entityType: "tickets", columns: [{ field: "complaintMeta.brand", label: "Brand" }, { field: "id", aggregate: "count", label: "Complaints" }], groupBy: "complaintMeta.brand", chartType: "pie" },
+    { name: "Open Tasks by Owner",             entityType: "tasks",   columns: [{ field: "assignedTo", label: "Owner" }, { field: "id", aggregate: "count", label: "Open" }], filters: [{ field: "status", op: "ne", value: "completed" }], groupBy: "assignedTo", chartType: "bar" },
+  ]
+  let rptCount = 0
+  for (const r of reportSpecs) {
+    const existing = await prisma.savedReport.findFirst({ where: { organizationId: orgId, name: r.name } })
+    if (existing) continue
+    await prisma.savedReport.create({
+      data: { ...r, organizationId: orgId, createdBy: admin.id, isShared: true },
+    })
+    rptCount++
+  }
+  console.log(`Saved reports: ${rptCount}`)
+
+  // ─── Notifications (for header bell) ───
+  const notifSpecs = [
+    { type: "new_lead",              title: "New lead from Gulfood event",           message: "Aziz Karimov (Dubai Foods Trading) — score 90",                  entityType: "lead",   isRead: false, daysAgo: 0 },
+    { type: "deal_stage_change",     title: "Deal advanced to Negotiation",          message: "AZROSE → Chanel EU supplier — 2kg rose essential",               entityType: "deal",   isRead: false, daysAgo: 0 },
+    { type: "ticket_sla_warning",    title: "Ticket AFI-2026-004 near SLA breach",   message: "Mislabelled rose oil pack sent to Lidl — 30 min to first response", entityType: "ticket", isRead: false, daysAgo: 0 },
+    { type: "task_due",              title: "Task due today — Metro follow-up",      message: "Call Metro Moscow buyer Igor Volkov",                            entityType: "task",   isRead: false, daysAgo: 0 },
+    { type: "complaint_new",         title: "New high-risk complaint — GALA",         message: "Broken glass in olive oil batch GO-2026-031",                    entityType: "ticket", isRead: true,  daysAgo: 2 },
+    { type: "deal_won",              title: "Deal won — $68K",                        message: "AZBADAM → Metro RU Q1 almonds — closed",                         entityType: "deal",   isRead: true,  daysAgo: 3 },
+    { type: "ai_suggestion",         title: "AI suggests follow-up task",             message: "Deal stuck in PROPOSAL 14 days — Metro RU Q2 almonds",           entityType: "deal",   isRead: false, daysAgo: 0 },
+    { type: "invoice_overdue",       title: "Invoice overdue — Chinar",               message: "INV-AFI-2026-018 — 3 days past due",                             entityType: null,     isRead: false, daysAgo: 0 },
+    { type: "nps_response",          title: "New NPS response — detractor",           message: "Dmitry Kozlov (Wildberries) scored 5/10",                         entityType: null,     isRead: true,  daysAgo: 1 },
+    { type: "webhook_integration",   title: "Shipment docs uploaded — Ritter",       message: "Phytosanitary certificate delivered to Hamburg handler",         entityType: null,     isRead: true,  daysAgo: 2 },
+  ]
+  let notifCount = 0
+  for (const n of notifSpecs) {
+    const existing = await prisma.notification.findFirst({ where: { organizationId: orgId, userId: admin.id, title: n.title } })
+    if (existing) continue
+    await prisma.notification.create({
+      data: {
+        organizationId: orgId,
+        userId: admin.id,
+        type: n.type,
+        title: n.title,
+        message: n.message,
+        entityType: n.entityType,
+        isRead: n.isRead,
+        createdAt: new Date(now - n.daysAgo * DAY),
+      },
+    })
+    notifCount++
+  }
+  console.log(`Notifications: ${notifCount}`)
+
   // ─── Summary ───
   console.log("\n" + "═".repeat(60))
   console.log("AFI Group demo data seeded successfully!")
