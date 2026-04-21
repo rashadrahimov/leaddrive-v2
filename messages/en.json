@@ -539,6 +539,7 @@
     "modalText": "Text",
     "modalCopy": "Copy",
     "modalSendEmail": "Send email",
+    "modalSendSMS": "Send SMS",
     "modalSent": "Sent",
     "modalSending": "Sending...",
     "modalAiAnalysis": "Da Vinci Analysis",

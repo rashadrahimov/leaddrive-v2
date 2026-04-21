@@ -96,9 +96,9 @@ export default function LeadDetailPage() {
   const [tone, setTone] = useState("professional")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
-  const [emailSending, setEmailSending] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-  const [emailError, setEmailError] = useState("")
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [sendError, setSendError] = useState("")
   const [scoring, setScoring] = useState(false)
 
   const { isVisible, isEditable } = useFieldPermissions("lead")
@@ -233,19 +233,26 @@ export default function LeadDetailPage() {
     } catch (err) { console.error(err) } finally { setScoring(false) }
   }
 
-  const sendGeneratedEmail = async () => {
-    if (!generatedText || !lead?.email) return
-    setEmailSending(true)
-    setEmailError("")
+  const sendGenerated = async () => {
+    if (!generatedText || !lead) return
+    const isSMS = textType === "SMS"
+    const to = isSMS ? lead.phone : lead.email
+    if (!to) return
+    setSending(true)
+    setSendError("")
     try {
       const res = await fetch("/api/v1/inbox", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
-        body: JSON.stringify({ channel: "email", to: lead.email, subject: generatedText.subject, body: generatedText.body }),
+        body: JSON.stringify(
+          isSMS
+            ? { channel: "sms", to, body: generatedText.body }
+            : { channel: "email", to, subject: generatedText.subject, body: generatedText.body }
+        ),
       })
       const json = await res.json()
-      if (json.success) { setEmailSent(true) } else { setEmailError(json.error || "Failed to send") }
-    } catch (err) { setEmailError("Network error") } finally { setEmailSending(false) }
+      if (json.success) { setSent(true) } else { setSendError(json.error || "Failed to send") }
+    } catch (err) { setSendError("Network error") } finally { setSending(false) }
   }
 
   if (loading) {
@@ -675,7 +682,7 @@ export default function LeadDetailPage() {
                 <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "Extra instructions..."} />
               </div>
             </div>
-            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false) } }} disabled={aiLoading} className="w-full gap-2">
+            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} disabled={aiLoading} className="w-full gap-2">
               {aiLoading ? (t("modalGenerating") || "Generating...") : (t("modalGenerateText") || "Generate Text")}
             </Button>
 
@@ -695,17 +702,17 @@ export default function LeadDetailPage() {
                   <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(generatedText.body)} className="gap-1">
                     <Copy className="h-3 w-3" /> {t("modalCopy") || "Copy"}
                   </Button>
-                  {lead.email && (
-                    <Button size="sm" onClick={sendGeneratedEmail} disabled={emailSending || emailSent} className="gap-1">
-                      <Send className="h-3 w-3" /> {emailSent ? (t("modalSent") || "Sent!") : emailSending ? (t("modalSending") || "Sending...") : (t("modalSendEmail") || "Send Email")}
+                  {(textType === "SMS" ? lead.phone : lead.email) && (
+                    <Button size="sm" onClick={sendGenerated} disabled={sending || sent} className="gap-1">
+                      <Send className="h-3 w-3" /> {sent ? (t("modalSent") || "Sent!") : sending ? (t("modalSending") || "Sending...") : textType === "SMS" ? (t("modalSendSMS") || "Send SMS") : (t("modalSendEmail") || "Send Email")}
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setEmailSent(false); setEmailError("") } }} className="gap-1">
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
                     <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
                   </Button>
                 </div>
-                {emailError && (
-                  <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{emailError}</p>
+                {sendError && (
+                  <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-2 rounded">{sendError}</p>
                 )}
               </div>
             )}
