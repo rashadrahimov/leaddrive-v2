@@ -16,21 +16,13 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true }, // TS passes clean (0 errors) — kept true only for prerender-without-DB builds
   serverExternalPackages: ["@prisma/client", ".prisma/client"],
 
-  // Prisma is declared as an external package (above) — Next.js doesn't trace
-  // its native query engine binaries by default. Without this include, the
-  // standalone build ships without libquery_engine-<platform>.so.node and
-  // Prisma throws `PrismaClientInitializationError: Query Engine not found`
-  // the first time a request hits the DB. This list forces the engine +
-  // schema into the traced-files set for every API route.
-  outputFileTracingIncludes: {
-    "/api/**": [
-      "./node_modules/.prisma/client/libquery_engine-*.so.node",
-      "./node_modules/.prisma/client/schema.prisma",
-      "./node_modules/@prisma/client/**/*.js",
-      "./node_modules/@prisma/client/**/*.d.ts",
-      "./prisma/schema.prisma",
-    ],
-  },
+  // NOTE: do NOT add outputFileTracingIncludes for Prisma here. It makes
+  // Next.js pre-create .next/standalone/node_modules/.prisma/ with a partial
+  // tree during build, and then the deploy workflow's
+  // `cp -r node_modules/.prisma .next/standalone/node_modules/.prisma`
+  // nests everything under .prisma/.prisma/ — leaving Prisma unable to find
+  // the query engine at runtime. The CI workflow copies the full Prisma
+  // client explicitly into the standalone bundle.
 }
 
 export default withSentryConfig(withSerwist(withNextIntl(nextConfig)), {
