@@ -38,6 +38,9 @@ interface ChannelConfigFormData {
   smsSecret: string
   /** True when the form loaded an existing channel — secret field shows a "leave blank to keep" placeholder. */
   smsEditing: boolean
+  // WhatsApp multi-tenant fields (phase 1+)
+  verifyToken: string
+  displayName: string
 }
 
 interface ChannelConfigFormProps {
@@ -84,7 +87,7 @@ function buildChannelPayload(form: ChannelConfigFormData) {
     }
   }
 
-  return {
+  const base = {
     configName: form.configName,
     channelType: form.channelType,
     botToken: form.botToken || undefined,
@@ -100,7 +103,19 @@ function buildChannelPayload(form: ChannelConfigFormData) {
       ...(form.confirmationCode ? { confirmationCode: form.confirmationCode } : {}),
     },
     isActive: form.isActive,
+  } as Record<string, any>
+
+  // For whatsapp, mirror the primary inputs into the new multi-tenant columns
+  // so the library stops reading from the legacy trio after one release cycle.
+  if (form.channelType === "whatsapp") {
+    base.accessToken       = form.apiKey        || undefined
+    base.phoneNumberId     = form.phoneNumber   || undefined
+    base.businessAccountId = form.webhookUrl    || undefined
+    base.verifyToken       = form.verifyToken   || undefined
+    base.displayName       = form.displayName   || undefined
   }
+
+  return base
 }
 
 const channelTypes = [
@@ -140,6 +155,8 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
     vonageFromName: "",
     smsSecret: "",
     smsEditing: false,
+    verifyToken: "",
+    displayName: "",
   })
   const [smsTesting, setSmsTesting] = useState(false)
   const [smsTestResult, setSmsTestResult] = useState<{ success: boolean; message: string } | null>(null)
@@ -182,6 +199,8 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
         vonageFromName: settings.fromName || "",
         smsSecret: "",
         smsEditing: hasExistingSms,
+        verifyToken: (initialData as any)?.verifyToken || "",
+        displayName: (initialData as any)?.displayName || "",
       })
       setSmsTestResult(null)
       setSmsTestNumber("")
@@ -349,7 +368,9 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
               <>
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
                   <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">Meta WhatsApp Business API</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">Data from developers.facebook.com → WhatsApp → API Setup</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Каждый тенант регистрирует свой WABA в Meta Business Manager. Креды из developers.facebook.com → App → WhatsApp → API Setup. После сохранения перейдите в <a href="/settings/channels/whatsapp" className="underline font-medium">WhatsApp Settings</a> чтобы проверить creds и синхронизировать шаблоны.
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="apiKey" className="text-sm font-medium">{tf("whatsappAccessToken")} *</Label>
@@ -380,7 +401,7 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     <p className="text-xs text-muted-foreground mt-1">{tf("whatsappPhoneIdHint")}</p>
                   </div>
                   <div>
-                    <Label htmlFor="webhookUrl" className="text-sm font-medium">Business Account ID</Label>
+                    <Label htmlFor="webhookUrl" className="text-sm font-medium">Business Account ID *</Label>
                     <Input
                       id="webhookUrl"
                       value={form.webhookUrl}
@@ -390,6 +411,42 @@ export function ChannelConfigForm({ open, onOpenChange, onSaved, initialData, or
                     />
                     <p className="text-xs text-muted-foreground mt-1">{tf("whatsappAccountIdHint")}</p>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="verifyToken" className="text-sm font-medium">Webhook Verify Token *</Label>
+                    <Input
+                      id="verifyToken"
+                      value={form.verifyToken}
+                      onChange={(e) => update("verifyToken", e.target.value)}
+                      placeholder="придумайте любую строку"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Тот же токен вбивается в Meta Webhook Configuration. Должен совпадать.</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="appSecret" className="text-sm font-medium">App Secret</Label>
+                    <Input
+                      id="appSecret"
+                      type="password"
+                      value={form.appSecret}
+                      onChange={(e) => update("appSecret", e.target.value)}
+                      placeholder="из App Settings → Basic"
+                      className="mt-1.5 font-mono text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Для HMAC-SHA256 проверки подписи входящих webhook'ов (X-Hub-Signature-256).</p>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    value={form.displayName}
+                    onChange={(e) => update("displayName", e.target.value)}
+                    placeholder="AFI Group WhatsApp"
+                    className="mt-1.5 text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Имя канала в UI (необязательно).</p>
                 </div>
               </>
             )}
