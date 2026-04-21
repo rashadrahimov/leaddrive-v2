@@ -71,6 +71,7 @@
     "recharts": "^3.8.0",
     "serwist": "^9.5.7",
     "sonner": "^2.0.7",
+    "stripe": "^22.0.2",
     "tailwind-merge": "^3.5.0",
     "twilio": "^5.13.1",
     "web-push": "^3.6.7",
