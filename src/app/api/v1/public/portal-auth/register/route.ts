@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     where: { id: contact.organizationId },
     select: { settings: true, name: true },
   }))?.settings as { smtp?: { fromEmail?: string; replyTo?: string } } | null
-  const replyTo = process.env.RESEND_API_KEY
+  const replyTo = (process.env.RESEND_API_KEY || process.env.POSTMARK_SERVER_TOKEN)
     ? buildReplyTo({ kind: "contact", id: contact.id })
     : orgSettings?.smtp?.replyTo || orgSettings?.smtp?.fromEmail
   const unsubscribeUrl = `${baseUrl}/portal/unsubscribe?email=${encodeURIComponent(email)}`

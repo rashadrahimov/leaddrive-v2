@@ -116,6 +116,54 @@ async function sendViaResend(params: {
   }
 }
 
+// Postmark provider — transactional service used as automatic fallback if
+// Resend rejects or errors. Activated when POSTMARK_SERVER_TOKEN is set.
+// Converts our unified shape into Postmark's JSON schema (capitalized fields).
+async function sendViaPostmark(params: {
+  from: string
+  to: string
+  subject: string
+  html: string
+  text?: string
+  replyTo?: string
+  headers?: Record<string, string>
+}): Promise<{ messageId: string } | null> {
+  const token = process.env.POSTMARK_SERVER_TOKEN
+  if (!token) return null
+  try {
+    const res = await fetch("https://api.postmarkapp.com/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-Postmark-Server-Token": token,
+      },
+      body: JSON.stringify({
+        From: params.from,
+        To: params.to,
+        Subject: params.subject,
+        HtmlBody: params.html,
+        ...(params.text ? { TextBody: params.text } : {}),
+        ...(params.replyTo ? { ReplyTo: params.replyTo } : {}),
+        ...(params.headers
+          ? { Headers: Object.entries(params.headers).map(([Name, Value]) => ({ Name, Value })) }
+          : {}),
+        MessageStream: process.env.POSTMARK_MESSAGE_STREAM || "outbound",
+      }),
+    })
+    if (!res.ok) {
+      const t = await res.text()
+      console.error("[email] Postmark failed:", res.status, t)
+      return null
+    }
+    const json = await res.json()
+    return { messageId: json.MessageID || "postmark" }
+  } catch (e) {
+    console.error("[email] Postmark exception:", e)
+    return null
+  }
+}
+
 // Plain-text fallback derived from HTML — reduces spam score: text/html multipart
 // messages that carry both versions are trusted more than HTML-only ones.
 function htmlToPlainText(html: string): string {
@@ -204,18 +252,18 @@ export async function sendEmail({
 
   const config = await getSmtpConfig(organizationId)
 
-  // When Resend is enabled globally (BOTH RESEND_API_KEY and EMAIL_FROM_ADDRESS
-  // are explicitly set in env — not the constants' fallback values), we use a
-  // single technical sender address for ALL tenants and just swap the friendly
-  // name to the organization's display name so recipients still see their
-  // brand. This removes the need for per-tenant SMTP setup.
+  // When at least one transactional provider (Resend or Postmark) is enabled
+  // AND EMAIL_FROM_ADDRESS is explicitly set, we use a single technical sender
+  // address for ALL tenants and swap the friendly name to the organization's
+  // display name. Postmark serves as automatic fallback for Resend.
   //
-  // Both env vars MUST be explicitly set: without EMAIL_FROM_ADDRESS we'd try
-  // to send from the constants default which won't be a verified Resend domain
-  // → every email would 400 from the Resend API.
-  let resendFromStr: string | null = null
+  // EMAIL_FROM_ADDRESS MUST be explicitly set: without it we'd try to send from
+  // the constants default which won't be a verified domain → every email would
+  // 400 from both APIs.
+  let centralFromStr: string | null = null
   const explicitFrom = process.env.EMAIL_FROM_ADDRESS
-  if (process.env.RESEND_API_KEY && explicitFrom) {
+  const hasTransactionalProvider = !!(process.env.RESEND_API_KEY || process.env.POSTMARK_SERVER_TOKEN)
+  if (hasTransactionalProvider && explicitFrom) {
     let orgName = EMAIL_FROM_NAME_FALLBACK
     if (organizationId) {
       const org = await prisma.organization.findUnique({
@@ -224,15 +272,15 @@ export async function sendEmail({
       })
       orgName = org?.name || orgName
     }
-    resendFromStr = `"${orgName}" <${explicitFrom}>`
+    centralFromStr = `"${orgName}" <${explicitFrom}>`
   }
 
-  const fromEmail = resendFromStr
+  const fromEmail = centralFromStr
     ? EMAIL_FROM_ADDRESS
     : config?.fromEmail || NOREPLY_EMAIL
 
   // If neither Resend nor SMTP is configured, log and bail.
-  if (!config && !resendFromStr) {
+  if (!config && !centralFromStr) {
     console.log(`[EMAIL] SMTP not configured | To: ${to} | Subject: ${subject}`)
 
     if (organizationId) {
@@ -264,7 +312,7 @@ export async function sendEmail({
       ? (config.fromName ? `"${config.fromName}" <${config.fromEmail}>` : config.fromEmail)
       : null
     // Resend path gets the centralized sender; SMTP path keeps per-tenant from.
-    const fromStr = resendFromStr || smtpFromStr || NOREPLY_EMAIL
+    const fromStr = centralFromStr || smtpFromStr || NOREPLY_EMAIL
     const textBody = text || htmlToPlainText(html)
 
     // Create log first to get ID for tracking pixel
@@ -308,9 +356,10 @@ export async function sendEmail({
       })
     }
 
-    // Prefer Resend when RESEND_API_KEY is set — transactional service with far
-    // better deliverability than Gmail SMTP. On any failure we drop back to SMTP
-    // (if a per-tenant SMTP config is available).
+    // Provider fallback chain: Resend → Postmark → per-tenant SMTP. First
+    // provider that returns a messageId wins. Postmark only fires if Resend
+    // returned null (= no key OR API rejected). The SMTP branch only fires if
+    // both transactional services are unavailable.
     const resendResult = await sendViaResend({
       from: fromStr,
       to,
@@ -321,9 +370,23 @@ export async function sendEmail({
       headers,
     })
 
+    const postmarkResult = resendResult
+      ? null
+      : await sendViaPostmark({
+          from: fromStr,
+          to,
+          subject,
+          html: finalHtml,
+          text: textBody,
+          replyTo,
+          headers,
+        })
+
     let info: { messageId: string }
     if (resendResult) {
       info = { messageId: resendResult.messageId }
+    } else if (postmarkResult) {
+      info = { messageId: postmarkResult.messageId }
     } else if (transporter) {
       info = await transporter.sendMail({
         from: fromStr,
@@ -336,7 +399,7 @@ export async function sendEmail({
         ...(attachments?.length ? { attachments } : {}),
       })
     } else {
-      throw new Error("Email delivery failed: Resend rejected and no SMTP fallback configured")
+      throw new Error("Email delivery failed: Resend + Postmark rejected and no SMTP fallback configured")
     }
 
     // Update log with success
