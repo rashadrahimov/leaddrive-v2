@@ -95,6 +95,7 @@ export default function LeadDetailPage() {
   const [creatingTasks, setCreatingTasks] = useState(false)
   const [tasksCreated, setTasksCreated] = useState(false)
   const [textType, setTextType] = useState("Email")
+  const [topic, setTopic] = useState("welcome")
   const [tone, setTone] = useState("professional")
   const [instructions, setInstructions] = useState("")
   const [generatedText, setGeneratedText] = useState<any>(null)
@@ -699,9 +700,9 @@ export default function LeadDetailPage() {
       {activeTab === "aitext" && (
         <Card>
           <CardContent className="pt-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
               <div>
-                <Label className="text-xs">{t("modalTextType") || "Type"}</Label>
+                <Label className="text-xs">{t("modalTextType") || "Канал"}</Label>
                 <Select value={textType} onChange={(e: any) => setTextType(e.target.value)}>
                   <option value="Email">Email</option>
                   <option value="SMS">SMS</option>
@@ -710,21 +711,34 @@ export default function LeadDetailPage() {
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">{t("modalTone") || "Tone"}</Label>
-                <Select value={tone} onChange={(e: any) => setTone(e.target.value)}>
-                  <option value="professional">{t("modalProfessional") || "Professional"}</option>
-                  <option value="friendly">{t("modalFriendly") || "Friendly"}</option>
-                  <option value="formal">{t("modalFormal") || "Formal"}</option>
-                  <option value="persuasive">{t("modalPersuasive") || "Persuasive"}</option>
+                <Label className="text-xs">Тема</Label>
+                <Select value={topic} onChange={(e: any) => setTopic(e.target.value)}>
+                  <option value="welcome">Знакомство</option>
+                  <option value="follow_up">Follow-up</option>
+                  <option value="offer">Коммерческое предложение</option>
+                  <option value="meeting_request">Запрос встречи</option>
+                  <option value="reminder">Напоминание</option>
+                  <option value="thank_you">Благодарность</option>
+                  <option value="reengagement">Реактивация</option>
+                  <option value="custom">Свободная тема</option>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">{t("modalExtraInstructions") || "Instructions"}</Label>
-                <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "Extra instructions..."} />
+                <Label className="text-xs">{t("modalTone") || "Тон"}</Label>
+                <Select value={tone} onChange={(e: any) => setTone(e.target.value)}>
+                  <option value="professional">{t("modalProfessional") || "Профессиональный"}</option>
+                  <option value="friendly">{t("modalFriendly") || "Дружелюбный"}</option>
+                  <option value="formal">{t("modalFormal") || "Формальный"}</option>
+                  <option value="persuasive">{t("modalPersuasive") || "Убедительный"}</option>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">{t("modalExtraInstructions") || "Доп. инструкции"}</Label>
+                <Input value={instructions} onChange={(e: any) => setInstructions(e.target.value)} placeholder={t("modalExtraInstructionsPlaceholder") || "например: упомянуть скидку 10%"} />
               </div>
             </div>
-            <Button onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} disabled={aiLoading} className="w-full gap-2">
-              {aiLoading ? (t("modalGenerating") || "Generating...") : (t("modalGenerateText") || "Generate Text")}
+            <Button onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} disabled={aiLoading} className="w-full gap-2">
+              {aiLoading ? (t("modalGenerating") || "Генерирую...") : (t("modalGenerateText") || "Сгенерировать текст")}
             </Button>
 
             {generatedText && (
@@ -757,7 +771,7 @@ export default function LeadDetailPage() {
                       </Button>
                     )
                   })()}
-                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
+                  <Button size="sm" variant="outline" onClick={async () => { const d = await callAI("text", { textType, topic, tone, instructions }); if (d) { setGeneratedText(d); setSent(false); setSendError("") } }} className="gap-1">
                     <RefreshCw className="h-3 w-3" /> {t("modalRegenerate") || "Regenerate"}
                   </Button>
                 </div>

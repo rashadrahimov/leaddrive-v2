@@ -294,25 +294,45 @@ function tasksFallback(contextName: string, contactName: string, contactPhone: s
 
 async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any, langName: string) {
   const textType = options?.textType || "Email"
+  const topic = options?.topic || "welcome"
   const tone = options?.tone || "professional"
   const instructions = options?.instructions || ""
 
   const client = getClient()
-  if (!client) return textFallback(textType, tone, instructions, contextName, contactName, industry, langName)
+  if (!client) return textFallback(textType, topic, tone, instructions, contextName, contactName, industry, langName)
+
+  // Topic gives the AI a purpose beyond the generic "write a business email".
+  // The user picks one in the Da Vinci Text form; we inject a matching goal
+  // description into the prompt so the model writes the right kind of text.
+  const topicGoals: Record<string, string> = {
+    welcome:         "first outreach / introduction. Say who we are and why we're reaching out. Short, friendly, end with an open-ended question.",
+    follow_up:       "follow-up on a previous conversation or proposal. Reference prior contact, move things forward, suggest concrete next step.",
+    offer:           "commercial offer. Highlight key value points, include a clear call-to-action to discuss terms.",
+    meeting_request: "request a short meeting / call. Propose 2 concrete time slots, keep it low-friction.",
+    reminder:        "friendly reminder about an outstanding item (unanswered email, missed deadline, pending document). Non-pushy tone.",
+    thank_you:       "thank-you note after a positive interaction. Warm, appreciative, reinforce the relationship.",
+    reengagement:    "reactivation of a cold lead. Acknowledge gap politely, give a reason to re-engage (new offer, industry news).",
+    custom:          "a business message tailored to the context provided. Pick the most appropriate angle from the context.",
+  }
+  const topicGoal = topicGoals[topic] || topicGoals.custom
 
   // Per-channel prompt adapters. Email is the only one that gets a subject
   // line. SMS is bound to the classic 160-char ceiling. WhatsApp / Telegram
   // are conversational — longer than SMS, shorter than email, emoji OK but
   // never spammy, two short paragraphs max.
+  const instructionsBlock = instructions
+    ? `IMPORTANT — naturally weave this idea (rephrase elegantly, don't copy literally): "${instructions}"\n`
+    : ""
+  const goalLine = `Purpose: ${topicGoal}\n`
   const promptsByType: Record<string, string> = {
     Email:
-      `Write a business email for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — the user wants you to naturally weave this idea into the email (do NOT copy-paste it literally, rephrase it elegantly and make it part of the message flow): "${instructions}"\n` : ""}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject", "body": "email body", "textType": "Email", "tone": "${tone}"}`,
+      `Write a business email for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject aligned with the purpose", "body": "email body", "textType": "Email", "tone": "${tone}"}`,
     SMS:
-      `Write an SMS message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars, no emoji, plain)", "textType": "SMS", "tone": "${tone}"}`,
+      `Write an SMS message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars, no emoji, plain)", "textType": "SMS", "tone": "${tone}"}`,
     WhatsApp:
-      `Write a WhatsApp business message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRules: 2-4 short sentences max, conversational but professional, one relevant emoji is OK (never more than one), no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "WhatsApp message body", "textType": "WhatsApp", "tone": "${tone}"}`,
+      `Write a WhatsApp business message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRules: 2-4 short sentences max, conversational but professional, one relevant emoji is OK (never more than one), no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "WhatsApp message body", "textType": "WhatsApp", "tone": "${tone}"}`,
     Telegram:
-      `Write a Telegram business message for ${contactName} from ${contextName}.\nTone: ${tone}.\n${instructions ? `IMPORTANT — naturally include this idea (rephrase elegantly, don't copy literally): "${instructions}"\n` : ""}\nContext:\n${contextBlock}\n\nRules: 2-4 sentences max, conversational, Telegram-friendly (can use bold via *asterisks* sparingly), one relevant emoji max, no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "Telegram message body", "textType": "Telegram", "tone": "${tone}"}`,
+      `Write a Telegram business message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRules: 2-4 sentences max, conversational, Telegram-friendly (can use bold via *asterisks* sparingly), one relevant emoji max, no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "Telegram message body", "textType": "Telegram", "tone": "${tone}"}`,
   }
   const prompt = promptsByType[textType] || promptsByType.Email
 
@@ -333,15 +353,29 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
     // Strip markdown code fences if Claude wraps response in ```json ... ```
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
     const data = JSON.parse(text)
-    await logAiCall(orgId, `[text-${textType}] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
+    await logAiCall(orgId, `[text-${textType}/${topic}] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude text error:", error)
-    return textFallback(textType, tone, instructions, contextName, contactName, industry, langName)
+    return textFallback(textType, topic, tone, instructions, contextName, contactName, industry, langName)
   }
 }
 
-function textFallback(textType: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string) {
+function textFallback(textType: string, topic: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string) {
+  // Topic-specific subject lines. Body text stays relatively generic —
+  // the fallback is only hit when ANTHROPIC_API_KEY is missing or the
+  // model call fails, and the user is expected to edit in the UI anyway.
+  const subjectsByTopic: Record<string, Record<string, string>> = {
+    welcome:         { Russian: "Знакомство с LeadDrive",              Azerbaijani: "LeadDrive ilə tanışlıq",         English: "Introduction — LeadDrive" },
+    follow_up:       { Russian: "Follow-up по нашему разговору",         Azerbaijani: "Söhbətimiz üzrə follow-up",      English: "Follow-up on our conversation" },
+    offer:           { Russian: "Коммерческое предложение",               Azerbaijani: "Kommersiya təklifi",             English: "Commercial proposal" },
+    meeting_request: { Russian: "Предлагаю короткую встречу",             Azerbaijani: "Qısa görüş təklif edirəm",       English: "Short meeting request" },
+    reminder:        { Russian: "Дружеское напоминание",                   Azerbaijani: "Dostluq xatırlatması",           English: "Friendly reminder" },
+    thank_you:       { Russian: "Спасибо за время",                        Azerbaijani: "Vaxtınız üçün təşəkkür",          English: "Thank you for your time" },
+    reengagement:    { Russian: "Давно не общались",                       Azerbaijani: "Uzun müddətdir əlaqə saxlamırıq", English: "It's been a while" },
+    custom:          { Russian: "Деловое предложение",                     Azerbaijani: "İşgüzar təklif",                  English: "Business proposal" },
+  }
+  const subjectOverride = (subjectsByTopic[topic] || subjectsByTopic.custom)[langName]
   // Fallback copy used when STRIPE/ANTHROPIC key is missing or the model
   // call failed. Messaging channels (WhatsApp / Telegram) reuse the SMS
   // body — it's short and friendly enough to work for all of them.
@@ -366,10 +400,10 @@ function textFallback(textType: string, tone: string, instructions: string, cont
     },
   }
   const l = fb[langName] || fb.Russian
-  const subject = textType === "Email" ? l.subject : ""
+  const subject = textType === "Email" ? (subjectOverride || l.subject) : ""
   const body =
     textType === "Email" ? l.body :
     textType === "SMS"   ? l.sms :
                            l.messenger
-  return NextResponse.json({ success: true, data: { subject, body, textType, tone } })
+  return NextResponse.json({ success: true, data: { subject, body, textType, topic, tone } })
 }
