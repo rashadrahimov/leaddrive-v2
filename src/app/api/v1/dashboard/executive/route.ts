@@ -295,14 +295,33 @@ export async function GET(req: NextRequest) {
       grc: "GRC", projects: "Проекты", helpdesk: "HelpDesk", cloud: "Облако",
     }
 
+    // Revenue fallback for CRM-only tenants:
+    // costSummary.totalRevenue comes from the Cost Model / Profitability
+    // module (part of the separate BudgetPro suite). Tenants that use
+    // LeadDrive purely as a CRM won't have that data — the «Выручка»
+    // stat card shows 0 even when they have WON deals. Fall back to the
+    // sum of WON deals' valueAmount so the card is meaningful out of
+    // the box. If BudgetPro data exists, it wins.
+    let displayedRevenue = costSummary.totalRevenue
+    let displayedMarginPct = costSummary.marginPct
+    if (displayedRevenue === 0) {
+      const wonDealsAgg = await prisma.deal.aggregate({
+        where: { organizationId: orgId, stage: "WON" },
+        _sum: { valueAmount: true },
+      })
+      displayedRevenue = wonDealsAgg._sum.valueAmount || 0
+      // No cost model → we can't compute margin, leave at 0
+      displayedMarginPct = 0
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         financial: {
-          monthlyRevenue: costSummary.totalRevenue,
+          monthlyRevenue: displayedRevenue,
           monthlyCost: costSummary.totalCost,
           monthlyMargin: costSummary.margin,
-          marginPct: costSummary.marginPct,
+          marginPct: displayedMarginPct,
           pipelineValue: pipelineAgg._sum.valueAmount || 0,
           revenueByService: serviceRevenue.map((s: any) => ({
             name: serviceLabels[s.serviceType] || s.serviceType,
