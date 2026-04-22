@@ -24,12 +24,17 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Gather deal context
+    // Gather deal context. Deal links to contacts via DealContactRole (M2M),
+    // there is no singular `contact` relation. Pull the first contact role
+    // for a best-effort main contact — enough for the AI summary block.
     const deal = await prisma.deal.findFirst({
       where: { id: dealId, organizationId: orgId },
       include: {
         company: { select: { name: true } },
-        contact: { select: { fullName: true, email: true } },
+        contactRoles: {
+          take: 1,
+          include: { contact: { select: { fullName: true, email: true } } },
+        },
       },
     })
     if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 })
@@ -73,7 +78,7 @@ export async function GET(req: NextRequest) {
         value: deal.valueAmount,
         probability: deal.probability,
         company: (deal.company as any)?.name,
-        contact: (deal.contact as any)?.fullName,
+        contact: (deal.contactRoles as any)?.[0]?.contact?.fullName,
         dealAgeDays: dealAge,
         daysSinceLastActivity,
         openTasks: taskCount,
