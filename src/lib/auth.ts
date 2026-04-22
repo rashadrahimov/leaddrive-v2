@@ -26,20 +26,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!parsed.success) return null
 
         try {
-          // Real DB lookup
-          const user = await prisma.user.findFirst({
+          // Multi-tenant: the same email can legitimately exist across tenants
+          // (e.g. a consultant who's superadmin on one org and user on another).
+          // findFirst silently picks one row, so if the password matches a
+          // DIFFERENT row than Prisma returned, login fails with a misleading
+          // CredentialsSignin. Instead: fetch every active row, try bcrypt
+          // against each, and take whichever one matches.
+          const candidates = await prisma.user.findMany({
             where: { email: parsed.data.email, isActive: true },
             include: { organization: true },
           })
+
+          if (candidates.length === 0) return null
+
+          let user: typeof candidates[number] | null = null
+          for (const candidate of candidates) {
+            if (!candidate.passwordHash) continue // OAuth-only accounts
+            const matches = await bcrypt.compare(parsed.data.password, candidate.passwordHash)
+            if (matches) { user = candidate; break }
+          }
 
           if (!user) return null
 
           // Check if organization is active (tenant deactivation)
           if (!user.organization.isActive && user.role !== "superadmin") return null
-
-          // Verify password
-          const valid = await bcrypt.compare(parsed.data.password, user.passwordHash)
-          if (!valid) return null
 
           // Update last login
           await prisma.user.update({
