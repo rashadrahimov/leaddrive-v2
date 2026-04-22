@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,6 +15,8 @@ const riskColors: Record<string, string> = {
   medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
   low: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
 }
+
+const localeMap: Record<string, string> = { ru: "ru-RU", en: "en-US", az: "az-AZ" }
 
 type Complaint = {
   id: string
@@ -56,6 +59,9 @@ type Complaint = {
 }
 
 export default function ComplaintDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations("complaints")
+  const locale = useLocale()
+  const dateLocale = localeMap[locale] || "en-US"
   const { id } = use(params)
   const router = useRouter()
   const { data: session } = useSession()
@@ -97,7 +103,6 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
     if (!response.trim()) return
     setPosting(true)
     try {
-      // Reuse tickets comments endpoint — TicketComment is shared
       await fetch(`/api/v1/tickets/${id}/comments`, {
         method: "POST",
         headers: {
@@ -114,7 +119,7 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
   }
 
   async function handleDelete() {
-    if (!confirm("Удалить эту запись безвозвратно?")) return
+    if (!confirm(t("deleteConfirm"))) return
     await fetch(`/api/v1/complaints/${id}`, {
       method: "DELETE",
       headers: orgId ? { "x-organization-id": String(orgId) } : ({} as Record<string, string>),
@@ -122,14 +127,29 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
     router.push("/complaints")
   }
 
-  if (loading) return <div className="container mx-auto p-6">Загрузка…</div>
-  if (!data) return <div className="container mx-auto p-6">Запись не найдена</div>
+  const riskLabel = (lvl: string) => {
+    if (lvl === "high") return t("riskHigh")
+    if (lvl === "medium") return t("riskMedium")
+    if (lvl === "low") return t("riskLow")
+    return lvl
+  }
+
+  const statusLabel = (s: string) => {
+    if (s === "open") return t("statusOpen")
+    if (s === "in_progress") return t("statusInProgress")
+    if (s === "resolved") return t("statusResolved")
+    if (s === "closed") return t("statusClosed")
+    return s
+  }
+
+  if (loading) return <div className="container mx-auto p-6">{t("loading")}</div>
+  if (!data) return <div className="container mx-auto p-6">{t("notFound")}</div>
   const m = data.complaintMeta
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
       <Link href="/complaints" className="text-sm text-muted-foreground flex items-center gap-1 hover:underline">
-        <ArrowLeft className="w-4 h-4" /> К реестру
+        <ArrowLeft className="w-4 h-4" /> {t("backToRegistry")}
       </Link>
 
       <div className="flex justify-between items-start gap-4 flex-wrap">
@@ -139,25 +159,29 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
           </div>
           <h1 className="text-2xl font-bold mt-1">{data.subject}</h1>
           <div className="flex gap-2 mt-2 items-center">
-            <Badge>{data.status}</Badge>
-            {m?.riskLevel && <Badge className={riskColors[m.riskLevel]}>риск: {m.riskLevel}</Badge>}
-            {m?.complaintType === "suggestion" && <Badge variant="outline">предложение</Badge>}
+            <Badge>{statusLabel(data.status)}</Badge>
+            {m?.riskLevel && (
+              <Badge className={riskColors[m.riskLevel]}>
+                {t("badgeRisk", { level: riskLabel(m.riskLevel) })}
+              </Badge>
+            )}
+            {m?.complaintType === "suggestion" && <Badge variant="outline">{t("badgeSuggestion")}</Badge>}
           </div>
         </div>
         <div className="flex gap-2">
           {data.status !== "in_progress" && data.status !== "resolved" && (
             <Button variant="outline" size="sm" onClick={() => changeStatus("in_progress")}>
-              <Play className="w-4 h-4 mr-1" /> В работу
+              <Play className="w-4 h-4 mr-1" /> {t("actionTakeToWork")}
             </Button>
           )}
           {data.status !== "resolved" && (
             <Button size="sm" onClick={() => changeStatus("resolved")}>
-              <CheckCircle className="w-4 h-4 mr-1" /> Закрыть ok
+              <CheckCircle className="w-4 h-4 mr-1" /> {t("actionCloseOk")}
             </Button>
           )}
           {data.status !== "escalated" && (
             <Button variant="outline" size="sm" onClick={() => changeStatus("escalated")}>
-              <AlertCircle className="w-4 h-4 mr-1" /> not ok
+              <AlertCircle className="w-4 h-4 mr-1" /> {t("actionNotOk")}
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={handleDelete}>
@@ -167,45 +191,47 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <InfoCard title="Клиент">
-          <Row label="ФИО" value={data.contact?.fullName} />
-          <Row label="Телефон" value={data.contact?.phone} />
-          <Row label="E-mail" value={data.contact?.email} />
+        <InfoCard title={t("cardCustomer")}>
+          <Row label={t("fieldFullName")} value={data.contact?.fullName} />
+          <Row label={t("fieldPhone")} value={data.contact?.phone} />
+          <Row label={t("fieldEmail")} value={data.contact?.email} />
         </InfoCard>
-        <InfoCard title="Обращение">
-          <Row label="Источник" value={data.source} />
-          <Row label="Дата" value={new Date(data.createdAt).toLocaleString("ru-RU")} />
-          <Row label="Ответственный" value={data.assigneeName} />
+        <InfoCard title={t("cardRequest")}>
+          <Row label={t("fieldSource")} value={data.source} />
+          <Row label={t("fieldDate")} value={new Date(data.createdAt).toLocaleString(dateLocale)} />
+          <Row label={t("fieldAssignee")} value={data.assigneeName} />
         </InfoCard>
-        <InfoCard title="Продукт">
-          <Row label="Бренд" value={m?.brand} />
-          <Row label="Область производства" value={m?.productionArea} />
-          <Row label="Категория" value={m?.productCategory} />
-          <Row label="Объект" value={m?.complaintObject} />
-          <Row label="Объект 2" value={m?.complaintObjectDetail} />
+        <InfoCard title={t("cardProduct")}>
+          <Row label={t("fieldBrand")} value={m?.brand} />
+          <Row label={t("fieldProductionArea")} value={m?.productionArea} />
+          <Row label={t("fieldCategory")} value={m?.productCategory} />
+          <Row label={t("fieldObject")} value={m?.complaintObject} />
+          <Row label={t("fieldObjectDetail")} value={m?.complaintObjectDetail} />
         </InfoCard>
-        <InfoCard title="Распределение">
-          <Row label="Отдел" value={m?.responsibleDepartment} />
-          <Row label="Приоритет" value={data.priority} />
-          <Row label="Риск" value={m?.riskLevel} />
+        <InfoCard title={t("cardAssignment")}>
+          <Row label={t("fieldDepartment")} value={m?.responsibleDepartment} />
+          <Row label={t("fieldPriority")} value={data.priority} />
+          <Row label={t("fieldRiskLevel")} value={m?.riskLevel ? riskLabel(m.riskLevel) : null} />
         </InfoCard>
       </div>
 
-      <InfoCard title="Содержание (Şikayət məzmunu)">
+      <InfoCard title={t("cardContent")}>
         <div className="whitespace-pre-wrap text-sm">{data.description || "—"}</div>
       </InfoCard>
 
       {data.timeline && data.timeline.length > 0 && (
-        <InfoCard title={`История изменений (${data.timeline.length})`}>
+        <InfoCard title={t("cardHistory", { count: data.timeline.length })}>
           <ol className="space-y-2 text-xs">
             {data.timeline.map((ev) => (
               <li key={ev.id} className="flex gap-3 border-l-2 border-muted pl-3">
                 <span className="text-muted-foreground min-w-32">
-                  {new Date(ev.createdAt).toLocaleString("ru-RU")}
+                  {new Date(ev.createdAt).toLocaleString(dateLocale)}
                 </span>
                 <span className="flex-1">
                   <span className="font-medium">{ev.actor}</span>{" "}
-                  <span className="text-muted-foreground">{ev.action === "create" ? "создал" : "обновил"}</span>
+                  <span className="text-muted-foreground">
+                    {ev.action === "create" ? t("timelineCreated") : t("timelineUpdated")}
+                  </span>
                   {ev.action === "update" && ev.newValue && (
                     <TimelineDiff oldValue={ev.oldValue} newValue={ev.newValue} />
                   )}
@@ -216,33 +242,33 @@ export default function ComplaintDetailPage({ params }: { params: Promise<{ id: 
         </InfoCard>
       )}
 
-      <InfoCard title={`Ответ (Cavab) — ${data.comments.filter((c) => !c.isInternal).length}`}>
+      <InfoCard title={t("cardResponse", { count: data.comments.filter((c) => !c.isInternal).length })}>
         <div className="space-y-3">
           {data.comments
             .filter((c) => !c.isInternal)
             .map((c) => (
               <div key={c.id} className="border rounded p-3 text-sm">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>{c.userName || "Система"}</span>
-                  <span>{new Date(c.createdAt).toLocaleString("ru-RU")}</span>
+                  <span>{c.userName || t("timelineSystem")}</span>
+                  <span>{new Date(c.createdAt).toLocaleString(dateLocale)}</span>
                 </div>
                 <div className="whitespace-pre-wrap">{c.comment}</div>
               </div>
             ))}
           {data.comments.filter((c) => !c.isInternal).length === 0 && (
-            <div className="text-sm text-muted-foreground">Пока нет ответов</div>
+            <div className="text-sm text-muted-foreground">{t("noResponses")}</div>
           )}
         </div>
         <div className="mt-4 space-y-2">
           <Textarea
-            placeholder="Написать ответ…"
+            placeholder={t("responsePlaceholder")}
             rows={4}
             value={response}
             onChange={(e) => setResponse(e.target.value)}
           />
           <div className="flex justify-end">
             <Button size="sm" disabled={posting || !response.trim()} onClick={postResponse}>
-              {posting ? "Отправка…" : "Отправить"}
+              {posting ? t("sending") : t("send")}
             </Button>
           </div>
         </div>

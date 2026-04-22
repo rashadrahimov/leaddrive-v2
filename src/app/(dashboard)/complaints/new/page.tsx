@@ -3,22 +3,13 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useTranslations } from "next-intl"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Sparkles } from "lucide-react"
-
-const SOURCES = [
-  { value: "hotline", label: "Горячая линия" },
-  { value: "email", label: "E-mail" },
-  { value: "sales_rep", label: "Торговый представитель" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "instagram", label: "Instagram" },
-  { value: "facebook", label: "Facebook" },
-  { value: "web_chat", label: "Портал/чат" },
-]
 
 type Facets = {
   brands: string[]
@@ -29,6 +20,7 @@ type Facets = {
 }
 
 export default function NewComplaintPage() {
+  const t = useTranslations("complaints")
   const router = useRouter()
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
@@ -42,6 +34,16 @@ export default function NewComplaintPage() {
     complaintObjects: [],
     departments: [],
   })
+
+  const SOURCES = [
+    { value: "hotline", label: t("sourceHotline") },
+    { value: "email", label: t("sourceEmail") },
+    { value: "sales_rep", label: t("sourceSalesRep") },
+    { value: "whatsapp", label: t("sourceWhatsapp") },
+    { value: "instagram", label: t("sourceInstagram") },
+    { value: "facebook", label: t("sourceFacebook") },
+    { value: "web_chat", label: t("sourceWebChat") },
+  ]
 
   const [form, setForm] = useState({
     customerName: "",
@@ -62,7 +64,6 @@ export default function NewComplaintPage() {
     setForm((f) => ({ ...f, [key]: value }))
   }
 
-  // Cascading facets: every time a parent narrows, re-fetch the downstream list.
   useEffect(() => {
     const params = new URLSearchParams()
     if (form.brand) params.set("brand", form.brand)
@@ -135,12 +136,12 @@ export default function NewComplaintPage() {
       })
       const json = await res.json()
       if (!res.ok || !json.success) {
-        setError(json.error || "Не удалось сохранить")
+        setError(json.error || t("errorSave"))
         return
       }
       router.push(`/complaints/${json.data.id}`)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Ошибка сети")
+      setError(err instanceof Error ? err.message : t("errorNetwork"))
     } finally {
       setSubmitting(false)
     }
@@ -149,25 +150,25 @@ export default function NewComplaintPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-3xl">
       <Link href="/complaints" className="text-sm text-muted-foreground flex items-center gap-1 mb-4 hover:underline">
-        <ArrowLeft className="w-4 h-4" /> К реестру
+        <ArrowLeft className="w-4 h-4" /> {t("backToRegistry")}
       </Link>
-      <h1 className="text-2xl font-bold mb-6">Новая жалоба / предложение</h1>
+      <h1 className="text-2xl font-bold mb-6">{t("newTitle")}</h1>
 
       <form onSubmit={submit} className="space-y-6">
-        <Section title="Клиент">
+        <Section title={t("sectionCustomer")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="ФИО">
+            <Field label={t("fieldFullName")}>
               <Input value={form.customerName} onChange={(e) => setField("customerName", e.target.value)} />
             </Field>
-            <Field label="Телефон">
-              <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder="055 XXX XX XX" />
+            <Field label={t("fieldPhone")}>
+              <Input value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder={t("phonePlaceholder")} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Обращение">
+        <Section title={t("sectionRequest")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Источник">
+            <Field label={t("fieldSource")}>
               <select
                 className="h-9 rounded-md border px-3 w-full bg-background text-sm"
                 value={form.source}
@@ -180,24 +181,24 @@ export default function NewComplaintPage() {
                 ))}
               </select>
             </Field>
-            <Field label="Тип">
+            <Field label={t("fieldType")}>
               <select
                 className="h-9 rounded-md border px-3 w-full bg-background text-sm"
                 value={form.complaintType}
                 onChange={(e) => setField("complaintType", e.target.value)}
               >
-                <option value="complaint">Жалоба</option>
-                <option value="suggestion">Предложение</option>
+                <option value="complaint">{t("typeComplaint")}</option>
+                <option value="suggestion">{t("typeSuggestion")}</option>
               </select>
             </Field>
           </div>
-          <Field label="Содержание" required>
+          <Field label={t("fieldContent")} required>
             <Textarea
               required
               rows={5}
               value={form.content}
               onChange={(e) => setField("content", e.target.value)}
-              placeholder="Опишите обращение клиента…"
+              placeholder={t("contentPlaceholder")}
             />
           </Field>
           <div className="flex justify-end">
@@ -207,17 +208,17 @@ export default function NewComplaintPage() {
               size="sm"
               onClick={aiSuggest}
               disabled={aiLoading || form.content.trim().length < 20}
-              title="Автоматически предложить отдел и уровень риска"
+              title={t("aiTooltip")}
             >
               <Sparkles className="w-4 h-4 mr-1" />
-              {aiLoading ? "Анализ…" : "AI-подсказка"}
+              {aiLoading ? t("aiAnalyzing") : t("aiSuggest")}
             </Button>
           </div>
         </Section>
 
-        <Section title="Продукт и объект">
+        <Section title={t("sectionProduct")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Бренд">
+            <Field label={t("fieldBrand")}>
               <InputWithDatalist
                 id="brand-list"
                 options={facets.brands}
@@ -232,7 +233,7 @@ export default function NewComplaintPage() {
                 }}
               />
             </Field>
-            <Field label="Область производства">
+            <Field label={t("fieldProductionArea")}>
               <InputWithDatalist
                 id="area-list"
                 options={facets.productionAreas}
@@ -246,7 +247,7 @@ export default function NewComplaintPage() {
                 }}
               />
             </Field>
-            <Field label="Категория продукта">
+            <Field label={t("fieldProductCategory")}>
               <InputWithDatalist
                 id="cat-list"
                 options={facets.productCategories}
@@ -257,7 +258,7 @@ export default function NewComplaintPage() {
                 }}
               />
             </Field>
-            <Field label="Объект жалобы">
+            <Field label={t("fieldComplaintObject")}>
               <InputWithDatalist
                 id="obj-list"
                 options={facets.complaintObjects}
@@ -265,32 +266,32 @@ export default function NewComplaintPage() {
                 onChange={(v) => setField("complaintObject", v)}
               />
             </Field>
-            <Field label="Объект жалобы 2">
+            <Field label={t("fieldComplaintObjectDetail")}>
               <Input value={form.complaintObjectDetail} onChange={(e) => setField("complaintObjectDetail", e.target.value)} />
             </Field>
           </div>
         </Section>
 
-        <Section title="Ответственный и приоритет">
+        <Section title={t("sectionAssignment")}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Ответственный отдел">
+            <Field label={t("fieldResponsibleDepartment")}>
               <InputWithDatalist
                 id="dept-list"
                 options={facets.departments}
                 value={form.responsibleDepartment}
                 onChange={(v) => setField("responsibleDepartment", v)}
-                placeholder="Marketing departmenti, Keyfiyyət nəzarət şöbəsi…"
+                placeholder={t("departmentPlaceholder")}
               />
             </Field>
-            <Field label="Уровень риска">
+            <Field label={t("fieldRiskLevel")}>
               <select
                 className="h-9 rounded-md border px-3 w-full bg-background text-sm"
                 value={form.riskLevel}
                 onChange={(e) => setField("riskLevel", e.target.value)}
               >
-                <option value="low">Низкий (aşağı riskli)</option>
-                <option value="medium">Средний (orta riskli)</option>
-                <option value="high">Высокий (yüksək riskli)</option>
+                <option value="low">{t("riskLowOption")}</option>
+                <option value="medium">{t("riskMediumOption")}</option>
+                <option value="high">{t("riskHighOption")}</option>
               </select>
             </Field>
           </div>
@@ -301,11 +302,11 @@ export default function NewComplaintPage() {
         <div className="flex gap-2 justify-end">
           <Link href="/complaints">
             <Button type="button" variant="outline">
-              Отмена
+              {t("cancel")}
             </Button>
           </Link>
           <Button type="submit" disabled={submitting || !form.content}>
-            {submitting ? "Сохранение…" : "Создать"}
+            {submitting ? t("saving") : t("create")}
           </Button>
         </div>
       </form>

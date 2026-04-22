@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Upload, FileSpreadsheet, CheckCircle, XCircle } from "lucide-react"
 
@@ -25,7 +26,12 @@ type PreviewResult = {
   preview?: PreviewRow[]
 }
 
+const localeMap: Record<string, string> = { ru: "ru-RU", en: "en-US", az: "az-AZ" }
+
 export default function ImportComplaintsPage() {
+  const t = useTranslations("complaints")
+  const locale = useLocale()
+  const dateLocale = localeMap[locale] || "en-US"
   const router = useRouter()
   const { data: session } = useSession()
   const orgId = session?.user?.organizationId
@@ -85,16 +91,12 @@ export default function ImportComplaintsPage() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl space-y-6">
       <Link href="/complaints" className="text-sm text-muted-foreground flex items-center gap-1 hover:underline">
-        <ArrowLeft className="w-4 h-4" /> К реестру
+        <ArrowLeft className="w-4 h-4" /> {t("backToRegistry")}
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold">Импорт реестра жалоб (xlsx)</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Поддерживается исходный формат клиента (18 колонок на азербайджанском: Sıra, Müştəri,
-          Tarix, Mənbə, Marka, Məhsul, Obyekt, Cavab, Status, Risk…). Номера из колонки «Sıra»
-          сохраняются как historicalNumber.
-        </p>
+        <h1 className="text-2xl font-bold">{t("importTitle")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("importDescription")}</p>
       </div>
 
       <div
@@ -109,8 +111,8 @@ export default function ImportComplaintsPage() {
         }`}
       >
         <FileSpreadsheet className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-        <p className="font-medium">Перетащите xlsx сюда</p>
-        <p className="text-xs text-muted-foreground mb-4">или выберите вручную</p>
+        <p className="font-medium">{t("dropHere")}</p>
+        <p className="text-xs text-muted-foreground mb-4">{t("orSelect")}</p>
         <input
           ref={inputRef}
           type="file"
@@ -122,25 +124,25 @@ export default function ImportComplaintsPage() {
           }}
         />
         <Button variant="outline" onClick={() => inputRef.current?.click()} disabled={running}>
-          <Upload className="w-4 h-4 mr-2" /> Выбрать файл
+          <Upload className="w-4 h-4 mr-2" /> {t("selectFile")}
         </Button>
         {file && <div className="mt-3 text-sm text-muted-foreground">{file.name}</div>}
       </div>
 
-      {running && <div className="text-sm text-muted-foreground">Обработка…</div>}
+      {running && <div className="text-sm text-muted-foreground">{t("processing")}</div>}
 
       {preview && !imported && (
         <div className="border rounded-lg bg-card">
           <div className="p-4 border-b flex justify-between items-center">
             <div>
-              <div className="font-medium">Предпросмотр</div>
+              <div className="font-medium">{t("preview")}</div>
               <div className="text-xs text-muted-foreground">
-                Распарсено: {preview.totalParsed} строк
-                {preview.errors.length > 0 && ` · ошибок: ${preview.errors.length}`}
+                {t("parsedRows", { count: preview.totalParsed })}
+                {preview.errors.length > 0 && ` · ${t("errorsCount", { count: preview.errors.length })}`}
               </div>
             </div>
             <Button disabled={running || preview.totalParsed === 0} onClick={runImport}>
-              Импортировать {preview.totalParsed} записей
+              {t("importRecords", { count: preview.totalParsed })}
             </Button>
           </div>
           {preview.preview && preview.preview.length > 0 && (
@@ -148,13 +150,13 @@ export default function ImportComplaintsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="p-2 text-left text-xs">№</th>
-                    <th className="p-2 text-left text-xs">Sıra</th>
-                    <th className="p-2 text-left text-xs">Клиент</th>
-                    <th className="p-2 text-left text-xs">Дата</th>
-                    <th className="p-2 text-left text-xs">Бренд</th>
-                    <th className="p-2 text-left text-xs">Риск</th>
-                    <th className="p-2 text-left text-xs">Статус</th>
+                    <th className="p-2 text-left text-xs">{t("colRegistryNumber")}</th>
+                    <th className="p-2 text-left text-xs">{t("colOrderNumber")}</th>
+                    <th className="p-2 text-left text-xs">{t("colCustomer")}</th>
+                    <th className="p-2 text-left text-xs">{t("colDate")}</th>
+                    <th className="p-2 text-left text-xs">{t("colBrand")}</th>
+                    <th className="p-2 text-left text-xs">{t("colRisk")}</th>
+                    <th className="p-2 text-left text-xs">{t("colStatus")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -163,7 +165,7 @@ export default function ImportComplaintsPage() {
                       <td className="p-2 font-mono text-xs">{p.row}</td>
                       <td className="p-2">{p.externalRegistryNumber ?? "—"}</td>
                       <td className="p-2">{p.customerName || "—"}</td>
-                      <td className="p-2">{p.requestDate ? new Date(p.requestDate).toLocaleDateString("ru-RU") : "—"}</td>
+                      <td className="p-2">{p.requestDate ? new Date(p.requestDate).toLocaleDateString(dateLocale) : "—"}</td>
                       <td className="p-2">{p.brand || "—"}</td>
                       <td className="p-2">{p.riskLevel || "—"}</td>
                       <td className="p-2">{p.status || "—"}</td>
@@ -173,17 +175,20 @@ export default function ImportComplaintsPage() {
               </table>
               {preview.totalParsed > preview.preview.length && (
                 <div className="p-3 text-xs text-muted-foreground text-center border-t">
-                  + ещё {preview.totalParsed - preview.preview.length} записей (показаны первые {preview.preview.length})
+                  {t("moreRecords", {
+                    count: preview.totalParsed - preview.preview.length,
+                    shown: preview.preview.length,
+                  })}
                 </div>
               )}
             </div>
           )}
           {preview.errors.length > 0 && (
             <div className="p-4 border-t space-y-1">
-              <div className="text-sm font-medium text-red-600 mb-2">Предупреждения</div>
+              <div className="text-sm font-medium text-red-600 mb-2">{t("warnings")}</div>
               {preview.errors.slice(0, 5).map((e, i) => (
                 <div key={i} className="text-xs text-red-600">
-                  Строка {e.row}: {e.error}
+                  {t("rowError", { row: e.row, error: e.error })}
                 </div>
               ))}
             </div>
@@ -200,15 +205,15 @@ export default function ImportComplaintsPage() {
               <XCircle className="w-8 h-8 text-red-600" />
             )}
             <div>
-              <div className="font-medium text-lg">Импорт завершён</div>
+              <div className="font-medium text-lg">{t("importDone")}</div>
               <div className="text-sm text-muted-foreground">
-                Создано записей: {imported.imported ?? 0} из {imported.totalParsed}
-                {imported.errors.length > 0 && ` · ошибок: ${imported.errors.length}`}
+                {t("importSummary", { imported: imported.imported ?? 0, total: imported.totalParsed })}
+                {imported.errors.length > 0 && ` · ${t("errorsCount", { count: imported.errors.length })}`}
               </div>
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <Button onClick={() => router.push("/complaints")}>Открыть реестр</Button>
+            <Button onClick={() => router.push("/complaints")}>{t("openRegistry")}</Button>
             <Button
               variant="outline"
               onClick={() => {
@@ -217,7 +222,7 @@ export default function ImportComplaintsPage() {
                 setFile(null)
               }}
             >
-              Импортировать ещё
+              {t("importMore")}
             </Button>
           </div>
         </div>

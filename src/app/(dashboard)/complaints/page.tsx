@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useLocale, useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -46,7 +47,12 @@ const statusColors: Record<string, string> = {
   escalated: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 }
 
+const localeMap: Record<string, string> = { ru: "ru-RU", en: "en-US", az: "az-AZ" }
+
 export default function ComplaintsPage() {
+  const t = useTranslations("complaints")
+  const locale = useLocale()
+  const dateLocale = localeMap[locale] || "en-US"
   const router = useRouter()
   const { data: session } = useSession()
   const [rows, setRows] = useState<ComplaintRow[]>([])
@@ -90,10 +96,25 @@ export default function ComplaintsPage() {
     URL.revokeObjectURL(url)
   }
 
+  const riskLabel = (lvl: string) => {
+    if (lvl === "high") return t("riskHigh")
+    if (lvl === "medium") return t("riskMedium")
+    if (lvl === "low") return t("riskLow")
+    return lvl
+  }
+
+  const statusLabel = (s: string) => {
+    if (s === "open") return t("statusOpen")
+    if (s === "in_progress") return t("statusInProgress")
+    if (s === "resolved") return t("statusResolved")
+    if (s === "closed") return t("statusClosed")
+    return s
+  }
+
   const columns = [
     {
       key: "registryNumber",
-      label: "№",
+      label: t("colRegistryNumber"),
       render: (r: ComplaintRow) => (
         <span className="font-mono text-xs">
           {r.complaintMeta?.externalRegistryNumber ?? r.ticketNumber}
@@ -102,7 +123,7 @@ export default function ComplaintsPage() {
     },
     {
       key: "customer",
-      label: "Клиент",
+      label: t("colCustomer"),
       render: (r: ComplaintRow) => (
         <div className="text-sm">
           <div>{r.contact?.fullName || "—"}</div>
@@ -112,47 +133,47 @@ export default function ComplaintsPage() {
     },
     {
       key: "createdAt",
-      label: "Дата",
-      render: (r: ComplaintRow) => new Date(r.createdAt).toLocaleDateString("ru-RU"),
+      label: t("colDate"),
+      render: (r: ComplaintRow) => new Date(r.createdAt).toLocaleDateString(dateLocale),
     },
     {
       key: "source",
-      label: "Источник",
+      label: t("colSource"),
       render: (r: ComplaintRow) => <span className="text-xs">{r.source || "—"}</span>,
     },
     {
       key: "brand",
-      label: "Бренд",
+      label: t("colBrand"),
       render: (r: ComplaintRow) => r.complaintMeta?.brand || "—",
     },
     {
       key: "product",
-      label: "Продукт",
+      label: t("colProduct"),
       render: (r: ComplaintRow) => r.complaintMeta?.productCategory || "—",
     },
     {
       key: "object",
-      label: "Объект",
+      label: t("colObject"),
       render: (r: ComplaintRow) => r.complaintMeta?.complaintObject || "—",
     },
     {
       key: "department",
-      label: "Отдел",
+      label: t("colDepartment"),
       render: (r: ComplaintRow) => r.complaintMeta?.responsibleDepartment || "—",
     },
     {
       key: "risk",
-      label: "Риск",
+      label: t("colRisk"),
       render: (r: ComplaintRow) => {
         const lvl = r.complaintMeta?.riskLevel
         if (!lvl) return <span className="text-muted-foreground">—</span>
-        return <Badge className={riskColors[lvl]}>{lvl}</Badge>
+        return <Badge className={riskColors[lvl]}>{riskLabel(lvl)}</Badge>
       },
     },
     {
       key: "status",
-      label: "Статус",
-      render: (r: ComplaintRow) => <Badge className={statusColors[r.status] || ""}>{r.status}</Badge>,
+      label: t("colStatus"),
+      render: (r: ComplaintRow) => <Badge className={statusColors[r.status] || ""}>{statusLabel(r.status)}</Badge>,
     },
   ]
 
@@ -165,33 +186,33 @@ export default function ComplaintsPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <MessageSquareWarning className="w-7 h-7" />
-            Реестр жалоб и предложений
+            {t("title")}
           </h1>
-          <PageDescription text="Регистрация обращений клиентов — жалобы, предложения, источник, ответственный отдел, уровень риска. Импорт/экспорт xlsx совместим со старым журналом клиента." />
+          <PageDescription text={t("pageDescription")} />
         </div>
         <div className="flex gap-2">
           <Link href="/complaints/import">
             <Button variant="outline">
-              <Upload className="w-4 h-4 mr-2" /> Импорт xlsx
+              <Upload className="w-4 h-4 mr-2" /> {t("importXlsx")}
             </Button>
           </Link>
           <Button variant="outline" onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" /> Экспорт xlsx
+            <Download className="w-4 h-4 mr-2" /> {t("exportXlsx")}
           </Button>
           <Link href="/complaints/new">
             <Button>
-              <Plus className="w-4 h-4 mr-2" /> Новая жалоба
+              <Plus className="w-4 h-4 mr-2" /> {t("newComplaint")}
             </Button>
           </Link>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Всего" value={rows.length} />
-        <StatCard label="Открыто" value={open} tone="amber" />
-        <StatCard label="Высокий риск" value={highRisk} tone="red" icon={<AlertTriangle className="w-4 h-4" />} />
+        <StatCard label={t("statTotal")} value={rows.length} />
+        <StatCard label={t("statOpen")} value={open} tone="amber" />
+        <StatCard label={t("statHighRisk")} value={highRisk} tone="red" icon={<AlertTriangle className="w-4 h-4" />} />
         <StatCard
-          label="Решено"
+          label={t("statResolved")}
           value={rows.filter((r) => r.status === "resolved").length}
           tone="green"
         />
@@ -199,13 +220,13 @@ export default function ComplaintsPage() {
 
       <div className="flex gap-3 flex-wrap">
         <Input
-          placeholder="Бренд"
+          placeholder={t("filterBrand")}
           value={filters.brand}
           onChange={(e) => setFilters((f) => ({ ...f, brand: e.target.value }))}
           className="w-40"
         />
         <Input
-          placeholder="Продукт"
+          placeholder={t("filterProduct")}
           value={filters.productCategory}
           onChange={(e) => setFilters((f) => ({ ...f, productCategory: e.target.value }))}
           className="w-40"
@@ -215,42 +236,40 @@ export default function ComplaintsPage() {
           value={filters.riskLevel}
           onChange={(e) => setFilters((f) => ({ ...f, riskLevel: e.target.value }))}
         >
-          <option value="">Все риски</option>
-          <option value="high">Высокий</option>
-          <option value="medium">Средний</option>
-          <option value="low">Низкий</option>
+          <option value="">{t("filterAllRisks")}</option>
+          <option value="high">{t("riskHigh")}</option>
+          <option value="medium">{t("riskMedium")}</option>
+          <option value="low">{t("riskLow")}</option>
         </select>
         <select
           className="h-9 rounded-md border px-3 text-sm bg-background"
           value={filters.status}
           onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
         >
-          <option value="">Все статусы</option>
-          <option value="open">Открыто</option>
-          <option value="in_progress">В работе</option>
-          <option value="resolved">Решено</option>
-          <option value="closed">Закрыто</option>
+          <option value="">{t("filterAllStatuses")}</option>
+          <option value="open">{t("statusOpen")}</option>
+          <option value="in_progress">{t("statusInProgress")}</option>
+          <option value="resolved">{t("statusResolved")}</option>
+          <option value="closed">{t("statusClosed")}</option>
         </select>
       </div>
 
       {loading ? (
-        <div className="text-center text-muted-foreground py-12">Загрузка…</div>
+        <div className="text-center text-muted-foreground py-12">{t("loading")}</div>
       ) : rows.length === 0 ? (
         <div className="text-center py-12 border rounded-lg">
           <MessageSquareWarning className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <p className="text-lg font-medium">Пока нет записей</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Импортируйте xlsx-журнал клиента или создайте новую запись
-          </p>
+          <p className="text-lg font-medium">{t("emptyTitle")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("emptyHint")}</p>
           <div className="mt-4 flex justify-center gap-2">
             <Link href="/complaints/import">
               <Button variant="outline" size="sm">
-                <Upload className="w-4 h-4 mr-2" /> Импорт
+                <Upload className="w-4 h-4 mr-2" /> {t("importShort")}
               </Button>
             </Link>
             <Link href="/complaints/new">
               <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" /> Создать
+                <Plus className="w-4 h-4 mr-2" /> {t("createShort")}
               </Button>
             </Link>
           </div>
@@ -259,7 +278,7 @@ export default function ComplaintsPage() {
         <DataTable<Record<string, unknown>>
           columns={columns as unknown as Parameters<typeof DataTable<Record<string, unknown>>>[0]["columns"]}
           data={rows as unknown as Record<string, unknown>[]}
-          searchPlaceholder="Поиск по теме…"
+          searchPlaceholder={t("searchPlaceholder")}
           searchKey="subject"
           onRowClick={(r) => router.push(`/complaints/${(r as unknown as ComplaintRow).id}`)}
         />
