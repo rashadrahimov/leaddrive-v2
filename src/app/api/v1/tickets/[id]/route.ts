@@ -150,13 +150,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       include: { comments: { orderBy: { createdAt: "desc" } } },  // TicketComment has no organizationId — safe (FK-scoped child)
     })
 
-    // Send WhatsApp notification on status change for WhatsApp tickets
+    // Send WhatsApp notification on status change for WhatsApp tickets.
+    // The resolved-path also merges the active survey link into the same
+    // message (customer gets ONE ping instead of two), and returns a flag
+    // so the survey trigger below skips the whatsapp channel to avoid
+    // sending the link twice.
     const newStatus = parsed.data.status
-    if (newStatus && newStatus !== oldStatus && (original.tags as string[])?.includes("whatsapp")) {
-      sendWhatsAppStatusNotification(orgId, original, newStatus).catch(err =>
-        console.error("[Ticket WA] Status notification error:", err)
-      )
-    }
+    const waTicket = (original.tags as string[])?.includes("whatsapp")
+    const waNotifyPromise = newStatus && newStatus !== oldStatus && waTicket
+      ? sendWhatsAppStatusNotification(orgId, original, newStatus).catch(err => {
+          console.error("[Ticket WA] Status notification error:", err)
+          return undefined
+        })
+      : Promise.resolve(undefined)
 
     logAudit(orgId, "update", "ticket", id, original.subject, { newValue: parsed.data })
     if (updated) {
@@ -165,15 +171,19 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const webhookEvent = updated.status === "resolved" ? "ticket.resolved" : "ticket.updated"
       fireWebhooks(orgId, webhookEvent, { id: updated.id, ticketNumber: updated.ticketNumber, subject: updated.subject, status: updated.status }).catch(() => {})
 
-      // Fire survey triggers when ticket transitions to resolved (§8 trigger)
+      // Fire survey triggers when ticket transitions to resolved (§8 trigger).
+      // Wait for the WhatsApp status-notification to finish so we can tell
+      // the survey trigger whether it already embedded the survey link.
       if (oldStatus !== "resolved" && updated.status === "resolved") {
-        triggerSurveysOnTicketResolved(orgId, {
-          id: updated.id,
-          contactId: updated.contactId,
-          ticketNumber: updated.ticketNumber,
-          source: updated.source,
-          sourceMeta: updated.sourceMeta,
-        }).catch(err => console.error("[survey-trigger] ticket.resolved:", err))
+        waNotifyPromise
+          .then(waResult => triggerSurveysOnTicketResolved(orgId, {
+            id: updated.id,
+            contactId: updated.contactId,
+            ticketNumber: updated.ticketNumber,
+            source: updated.source,
+            sourceMeta: updated.sourceMeta,
+          }, { skipWhatsAppChannel: !!(waResult as any)?.surveyHandled }))
+          .catch(err => console.error("[survey-trigger] ticket.resolved:", err))
       }
     }
 
@@ -316,7 +326,32 @@ async function sendWhatsAppStatusNotification(
     return
   }
 
+  // When the ticket transitions into "resolved" and the tenant has an
+  // active survey wired to afterTicketResolve, merge the survey invite
+  // into this same WhatsApp message. Customer gets ONE message with
+  // "ticket resolved + please rate us: <link>" instead of two separate
+  // pings arriving seconds apart. triggerSurveysOnTicketResolved sees
+  // the "handledChannels" flag we return and skips the whatsapp path
+  // for this ticket to avoid duplicates.
+  let surveyAppendix = ""
+  let surveyHandled = false
+  if (newStatus === "resolved") {
+    const activeSurvey = await prisma.survey.findFirst({
+      where: { organizationId: orgId, status: "active" },
+      select: { id: true, name: true, publicSlug: true, triggers: true },
+    })
+    const triggers = (activeSurvey?.triggers as any) || {}
+    if (activeSurvey && triggers.afterTicketResolve) {
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").replace(/\/$/, "")
+      const qs = new URLSearchParams({ p: waPhone }).toString()
+      const link = `${appUrl}/s/${activeSurvey.publicSlug}?${qs}`
+      surveyAppendix = `\n\n${activeSurvey.name}\n${link}`
+      surveyHandled = true
+    }
+  }
+
   const fallbackText = fallbackTextByStatus[newStatus]
+  const fallbackWithSurvey = fallbackText ? fallbackText + surveyAppendix : fallbackText
 
   const result = templateName
     ? await sendWhatsAppMessage({
@@ -327,14 +362,16 @@ async function sendWhatsAppStatusNotification(
         organizationId: orgId,
         contactId: ticket.contactId || undefined,
       })
-    : fallbackText
+    : fallbackWithSurvey
     ? await sendWhatsAppMessage({
         to: waPhone,
-        message: fallbackText,
+        message: fallbackWithSurvey,
         organizationId: orgId,
         contactId: ticket.contactId || undefined,
       })
     : { success: false, error: "no-template-no-fallback" }
 
-  console.log(`[Ticket WA] Status "${newStatus}" notification to ${waPhone}: ${result.success ? "OK" : result.error}${templateName ? " (template)" : " (fallback-text)"}`)
+  console.log(`[Ticket WA] Status "${newStatus}" notification to ${waPhone}: ${result.success ? "OK" : result.error}${templateName ? " (template)" : " (fallback-text)"}${surveyHandled ? " +survey" : ""}`)
+
+  return { surveyHandled: surveyHandled && result.success }
 }

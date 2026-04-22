@@ -208,6 +208,7 @@ export async function sendSurveyInvite({
 export async function triggerSurveysOnTicketResolved(
   orgId: string,
   ticket: { id: string; contactId: string | null; ticketNumber: string; source?: string | null; sourceMeta?: any },
+  opts: { skipWhatsAppChannel?: boolean } = {},
 ): Promise<void> {
   if (!ticket.contactId) return
 
@@ -218,12 +219,15 @@ export async function triggerSurveysOnTicketResolved(
   if (!contact || (!contact.email && !contact.phone && !ticket.source)) return
 
   // Pick the best channel based on ticket origin — closed-loop: if the
-  // customer wrote in WhatsApp, the survey goes back via WhatsApp.
+  // customer wrote in WhatsApp, the survey goes back via WhatsApp. The
+  // skipWhatsAppChannel flag is set when the ticket's resolve-notification
+  // already embedded the survey link into the same WhatsApp message, so
+  // we don't send a duplicate.
   const source = ticket.source
   let preferredChannel: "email" | "whatsapp" | "web_chat" | "sms" = "email"
   let webChatSessionId: string | null = null
 
-  if (source === "whatsapp" && contact.phone) {
+  if (source === "whatsapp" && contact.phone && !opts.skipWhatsAppChannel) {
     preferredChannel = "whatsapp"
   } else if (source === "web_chat" && ticket.sourceMeta?.sessionId) {
     preferredChannel = "web_chat"
