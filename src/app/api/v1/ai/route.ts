@@ -60,6 +60,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "action and (companyId or leadId) required" }, { status: 400 })
   }
 
+  // Pull the tenant's display name so AI-generated copy signs off as the
+  // tenant ("Best regards, Agro Food Investment") instead of pitching
+  // LeadDrive's product to the tenant's own customers.
+  const orgRow = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: { name: true },
+  })
+  const senderOrgName = orgRow?.name || "the team"
+
   try {
     // Build context from either company or lead
     let contextName = ""
@@ -141,7 +150,7 @@ export async function POST(req: NextRequest) {
         return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website, langName)
 
       case "text":
-        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, langName)
+        return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, langName, senderOrgName)
 
       case "whatsapp_fill_template":
         return handleWhatsAppFillTemplate(orgId, contextBlock, contextName, mainContactName, options, langName)
@@ -295,14 +304,14 @@ function tasksFallback(contextName: string, contactName: string, contactPhone: s
 
 // ── TEXT GENERATION ────────────────────────────────────────
 
-async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any, langName: string) {
+async function handleText(orgId: string, contextBlock: string, contextName: string, contactName: string, industry: string, options: any, langName: string, senderOrgName: string = "the team") {
   const textType = options?.textType || "Email"
   const topic = options?.topic || "welcome"
   const tone = options?.tone || "professional"
   const instructions = options?.instructions || ""
 
   const client = getClient()
-  if (!client) return textFallback(textType, topic, tone, instructions, contextName, contactName, industry, langName)
+  if (!client) return textFallback(textType, topic, tone, instructions, contextName, contactName, industry, langName, senderOrgName)
 
   // Topic gives the AI a purpose beyond the generic "write a business email".
   // The user picks one in the Da Vinci Text form; we inject a matching goal
@@ -327,15 +336,20 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
     ? `IMPORTANT — naturally weave this idea (rephrase elegantly, don't copy literally): "${instructions}"\n`
     : ""
   const goalLine = `Purpose: ${topicGoal}\n`
+  // senderBlock makes it explicit WHO is writing. Without this the model
+  // tends to invent a sender identity (or default to "LeadDrive") — for
+  // multi-tenant use that's wrong: AFI writing to a partner must sign off
+  // as AFI, not as the CRM vendor.
+  const senderBlock = `You are writing on behalf of the company "${senderOrgName}". Sign every message as ${senderOrgName}. Never mention LeadDrive, CRM software, or the platform you are using — the reader is a customer of ${senderOrgName}, not of a CRM vendor.\n`
   const promptsByType: Record<string, string> = {
     Email:
-      `Write a business email for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nClient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject aligned with the purpose", "body": "email body", "textType": "Email", "tone": "${tone}"}`,
+      `Write a business email to ${contactName} at ${contextName} on behalf of ${senderOrgName}.\n${goalLine}Tone: ${tone}.\n${senderBlock}${instructionsBlock}\nRecipient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "email subject aligned with the purpose", "body": "email body — sign off as ${senderOrgName}", "textType": "Email", "tone": "${tone}"}`,
     SMS:
-      `Write an SMS message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars, no emoji, plain)", "textType": "SMS", "tone": "${tone}"}`,
+      `Write an SMS message to ${contactName} at ${contextName} on behalf of ${senderOrgName}.\n${goalLine}Tone: ${tone}.\n${senderBlock}${instructionsBlock}\nRecipient context:\n${contextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "SMS text (up to 160 chars, no emoji, plain) — include the name ${senderOrgName}", "textType": "SMS", "tone": "${tone}"}`,
     WhatsApp:
-      `Write a WhatsApp business message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRules: 2-4 short sentences max, conversational but professional, one relevant emoji is OK (never more than one), no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "WhatsApp message body", "textType": "WhatsApp", "tone": "${tone}"}`,
+      `Write a WhatsApp business message to ${contactName} at ${contextName} on behalf of ${senderOrgName}.\n${goalLine}Tone: ${tone}.\n${senderBlock}${instructionsBlock}\nRecipient context:\n${contextBlock}\n\nRules: 2-4 short sentences max, conversational but professional, one relevant emoji is OK (never more than one), no subject line, sign off with first name or ${senderOrgName}.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "WhatsApp message body", "textType": "WhatsApp", "tone": "${tone}"}`,
     Telegram:
-      `Write a Telegram business message for ${contactName} from ${contextName}.\n${goalLine}Tone: ${tone}.\n${instructionsBlock}\nContext:\n${contextBlock}\n\nRules: 2-4 sentences max, conversational, Telegram-friendly (can use bold via *asterisks* sparingly), one relevant emoji max, no subject line, sign off with first name only.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "Telegram message body", "textType": "Telegram", "tone": "${tone}"}`,
+      `Write a Telegram business message to ${contactName} at ${contextName} on behalf of ${senderOrgName}.\n${goalLine}Tone: ${tone}.\n${senderBlock}${instructionsBlock}\nRecipient context:\n${contextBlock}\n\nRules: 2-4 sentences max, conversational, Telegram-friendly (can use bold via *asterisks* sparingly), one relevant emoji max, no subject line, sign off with first name or ${senderOrgName}.\n\nRespond with JSON (all text values in ${langName}):\n{"subject": "", "body": "Telegram message body", "textType": "Telegram", "tone": "${tone}"}`,
   }
   const prompt = promptsByType[textType] || promptsByType.Email
 
@@ -347,7 +361,7 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1500,
       temperature: 0.7,
-      system: `You are an Da Vinci copywriter for LeadDrive CRM. Write professional texts for business communications. Respond ONLY with valid JSON, no markdown. Signature: LeadDrive Inc. All text content MUST be in ${langName}.`,
+      system: `You are an AI copywriter helping a business draft outbound messages to its customers. Respond ONLY with valid JSON, no markdown. Signature: ${senderOrgName}. All text content MUST be in ${langName}. Never refer to the CRM, the platform, or any vendor in the text — the sender is ${senderOrgName}.`,
       messages: [{ role: "user", content: maskedPrompt }],
     })
 
@@ -448,42 +462,47 @@ Respond with JSON only (all text values in ${langName}):
   }
 }
 
-function textFallback(textType: string, topic: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string) {
+function textFallback(textType: string, topic: string, tone: string, instructions: string, contextName: string, contactName: string, industry: string, langName: string, senderOrgName: string = "") {
   // Topic-specific subject lines. Body text stays relatively generic —
   // the fallback is only hit when ANTHROPIC_API_KEY is missing or the
   // model call fails, and the user is expected to edit in the UI anyway.
+  const senderRef = senderOrgName || "наша компания"
+  const senderRefAz = senderOrgName || "şirkətimiz"
+  const senderRefEn = senderOrgName || "our company"
   const subjectsByTopic: Record<string, Record<string, string>> = {
-    welcome:         { Russian: "Знакомство с LeadDrive",              Azerbaijani: "LeadDrive ilə tanışlıq",         English: "Introduction — LeadDrive" },
-    follow_up:       { Russian: "Follow-up по нашему разговору",         Azerbaijani: "Söhbətimiz üzrə follow-up",      English: "Follow-up on our conversation" },
-    offer:           { Russian: "Коммерческое предложение",               Azerbaijani: "Kommersiya təklifi",             English: "Commercial proposal" },
-    meeting_request: { Russian: "Предлагаю короткую встречу",             Azerbaijani: "Qısa görüş təklif edirəm",       English: "Short meeting request" },
-    reminder:        { Russian: "Дружеское напоминание",                   Azerbaijani: "Dostluq xatırlatması",           English: "Friendly reminder" },
-    thank_you:       { Russian: "Спасибо за время",                        Azerbaijani: "Vaxtınız üçün təşəkkür",          English: "Thank you for your time" },
-    reengagement:    { Russian: "Давно не общались",                       Azerbaijani: "Uzun müddətdir əlaqə saxlamırıq", English: "It's been a while" },
-    custom:          { Russian: "Деловое предложение",                     Azerbaijani: "İşgüzar təklif",                  English: "Business proposal" },
+    welcome:         { Russian: `Знакомство с ${senderRef}`,            Azerbaijani: `${senderRefAz} ilə tanışlıq`,     English: `Introduction — ${senderRefEn}` },
+    follow_up:       { Russian: "Follow-up по нашему разговору",        Azerbaijani: "Söhbətimiz üzrə follow-up",       English: "Follow-up on our conversation" },
+    offer:           { Russian: "Коммерческое предложение",             Azerbaijani: "Kommersiya təklifi",              English: "Commercial proposal" },
+    meeting_request: { Russian: "Предлагаю короткую встречу",           Azerbaijani: "Qısa görüş təklif edirəm",        English: "Short meeting request" },
+    reminder:        { Russian: "Дружеское напоминание",                Azerbaijani: "Dostluq xatırlatması",            English: "Friendly reminder" },
+    thank_you:       { Russian: "Спасибо за время",                     Azerbaijani: "Vaxtınız üçün təşəkkür",          English: "Thank you for your time" },
+    reengagement:    { Russian: "Давно не общались",                    Azerbaijani: "Uzun müddətdir əlaqə saxlamırıq", English: "It's been a while" },
+    custom:          { Russian: "Деловое предложение",                  Azerbaijani: "İşgüzar təklif",                  English: "Business proposal" },
   }
   const subjectOverride = (subjectsByTopic[topic] || subjectsByTopic.custom)[langName]
-  // Fallback copy used when STRIPE/ANTHROPIC key is missing or the model
-  // call failed. Messaging channels (WhatsApp / Telegram) reuse the SMS
-  // body — it's short and friendly enough to work for all of them.
+  // Fallback copy used when the AI key is missing or the model call fails.
+  // Messaging channels (WhatsApp / Telegram) reuse the SMS body — short and
+  // friendly enough to work for all of them. Signature is the tenant name
+  // (e.g. Agro Food Investment) so out-of-the-box the drafts don't leak
+  // LeadDrive vendor branding into the tenant's outbound.
   const fb: Record<string, { subject: string; body: string; sms: string; messenger: string }> = {
     Russian: {
-      subject: "Деловое предложение от нашей компании",
-      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. Наша компания предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\nLeadDrive Inc.`,
-      sms: `Здравствуйте, ${contactName}! LeadDrive предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
-      messenger: `Здравствуйте, ${contactName}! 👋\n\nLeadDrive предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. ${instructions ? instructions + " " : ""}Удобно коротко созвониться на этой неделе?\n\n— Rashad`,
+      subject: "Деловое предложение",
+      body: `Уважаемый(ая) ${contactName},\n\nНадеюсь, что это письмо застает вас в добром здравии.\n\nМы с интересом следим за деятельностью ${contextName} и были бы рады установить деловые отношения. ${senderRef} предоставляет решения${industry ? ` в области ${industry}` : ""}.${instructions ? `\n\nТакже хотим отметить: ${instructions}.` : ""}\n\nС уважением,\n${senderRef}`,
+      sms: `Здравствуйте, ${contactName}! ${senderRef} предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. Удобно перезвонить? ${instructions || ""}`,
+      messenger: `Здравствуйте, ${contactName}! 👋\n\n${senderRef} предлагает сотрудничество${industry ? ` в сфере ${industry}` : ""}. ${instructions ? instructions + " " : ""}Удобно коротко созвониться на этой неделе?\n\n— ${senderRef}`,
     },
     Azerbaijani: {
-      subject: "Şirkətimizdən işgüzar təklif",
-      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. Şirkətimiz ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\nLeadDrive Inc.`,
-      sms: `Salam, ${contactName}! LeadDrive ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
-      messenger: `Salam, ${contactName}! 👋\n\nLeadDrive ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. ${instructions ? instructions + " " : ""}Bu həftə qısa zəng üçün münasib vaxtınız olarmı?\n\n— Rashad`,
+      subject: "İşgüzar təklif",
+      body: `Hörmətli ${contactName},\n\nÜmid edirik ki, bu məktub sizi yaxşı vəziyyətdə tapır.\n\n${contextName} şirkətinin fəaliyyətini maraqla izləyirik və işgüzar əlaqələr qurmaqdan məmnun olarıq. ${senderRefAz} ${industry ? `${industry} sahəsində ` : ""}həllər təqdim edir.${instructions ? `\n\nHəmçinin qeyd etmək istərdik: ${instructions}.` : ""}\n\nHörmətlə,\n${senderOrgName || "hörmətlə"}`,
+      sms: `Salam, ${contactName}! ${senderRefAz} ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. Geri zəng etmək münasibdir? ${instructions || ""}`,
+      messenger: `Salam, ${contactName}! 👋\n\n${senderRefAz} ${industry ? `${industry} sahəsində ` : ""}əməkdaşlıq təklif edir. ${instructions ? instructions + " " : ""}Bu həftə qısa zəng üçün münasib vaxtınız olarmı?\n\n— ${senderOrgName || ""}`,
     },
     English: {
-      subject: "Business proposal from our company",
-      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. Our company provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\nLeadDrive Inc.`,
-      sms: `Hello, ${contactName}! LeadDrive offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
-      messenger: `Hi ${contactName}! 👋\n\nLeadDrive offers collaboration${industry ? ` in ${industry}` : ""}. ${instructions ? instructions + " " : ""}Any chance of a short call this week?\n\n— Rashad`,
+      subject: "Business proposal",
+      body: `Dear ${contactName},\n\nI hope this email finds you well.\n\nWe have been following ${contextName}'s activities with great interest and would be glad to establish a business relationship. ${senderRefEn} provides solutions${industry ? ` in ${industry}` : ""}.${instructions ? `\n\nWe would also like to mention: ${instructions}.` : ""}\n\nBest regards,\n${senderOrgName || "The team"}`,
+      sms: `Hello, ${contactName}! ${senderRefEn} offers collaboration${industry ? ` in ${industry}` : ""}. Good time to call back? ${instructions || ""}`,
+      messenger: `Hi ${contactName}! 👋\n\n${senderRefEn} offers collaboration${industry ? ` in ${industry}` : ""}. ${instructions ? instructions + " " : ""}Any chance of a short call this week?\n\n— ${senderOrgName || ""}`,
     },
   }
   const l = fb[langName] || fb.Russian

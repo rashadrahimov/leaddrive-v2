@@ -409,9 +409,15 @@ const authMiddleware = auth(async (req) => {
     return withCspHeaders(NextResponse.redirect(new URL("/login/setup-2fa", req.url)), nonce)
   }
 
-  // Redirect root to dashboard to avoid Next.js 16 standalone InvariantError on "/"
+  // Redirect root to dashboard to avoid Next.js 16 standalone InvariantError on "/".
+  // On tenant subdomains, req.url is normalised by NextAuth to NEXTAUTH_URL
+  // (=app.leaddrivecrm.org), which would bounce authed tenant users off their
+  // own subdomain onto the main app host. Rebuild the base URL from the Host
+  // header so the client stays on {tenant}.leaddrivecrm.org/dashboard.
   if (pathname === "/") {
-    return withCspHeaders(NextResponse.redirect(new URL("/dashboard", req.url)), nonce)
+    const proto = req.headers.get("x-forwarded-proto") || "https"
+    const baseUrl = isTenantSubdomain ? `${proto}://${host}` : req.url
+    return withCspHeaders(NextResponse.redirect(new URL("/dashboard", baseUrl)), nonce)
   }
 
   // Inject organization context + nonce into headers for server components
