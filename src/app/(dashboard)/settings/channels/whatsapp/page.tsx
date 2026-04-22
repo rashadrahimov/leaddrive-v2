@@ -6,9 +6,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { Select } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import {
   MessageCircle, CheckCircle2, AlertTriangle, RefreshCw, FileText,
-  ExternalLink, Copy, Check, ChevronDown, ChevronUp,
+  ExternalLink, Copy, Check, ChevronDown, ChevronUp, Bell, Save,
 } from "lucide-react"
 import { PageDescription } from "@/components/page-description"
 
@@ -58,6 +60,14 @@ export default function WhatsAppSettingsPage() {
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
+  // Notification template settings (per-status ticket, survey, journey default)
+  const [ticketStatuses, setTicketStatuses] = useState<string[]>([])
+  const [statusTemplates, setStatusTemplates] = useState<Record<string, string>>({})
+  const [surveyTemplate, setSurveyTemplate] = useState("")
+  const [journeyTemplate, setJourneyTemplate] = useState("")
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsMsg, setSettingsMsg] = useState<string | null>(null)
+
   const webhookUrl = typeof window !== "undefined"
     ? `${window.location.origin}/api/v1/webhooks/whatsapp?t=${orgSlug}`
     : `/api/v1/webhooks/whatsapp?t=${orgSlug}`
@@ -77,9 +87,57 @@ export default function WhatsAppSettingsPage() {
     }
   }, [orgId])
 
+  const fetchNotificationSettings = useCallback(async () => {
+    try {
+      const res = await fetch("/api/v1/whatsapp/notification-settings", {
+        headers: orgId ? { "x-organization-id": String(orgId) } : {},
+      })
+      const json = await res.json()
+      if (json.success) {
+        setTicketStatuses(json.ticketStatuses || [])
+        setStatusTemplates(json.data?.whatsappTicketStatusTemplates || {})
+        setSurveyTemplate(json.data?.whatsappSurveyTemplate || "")
+        setJourneyTemplate(json.data?.whatsappJourneyDefaultTemplate || "")
+      } else if (json.error === "WhatsApp not configured") {
+        // Tenant hasn't set up the channel yet — we still show the section
+        // disabled so they know it's there.
+        setTicketStatuses(["new","open","in_progress","waiting","resolved","closed","escalated"])
+      }
+    } catch { /* ignore */ }
+  }, [orgId])
+
   useEffect(() => {
-    if (orgId) void fetchTemplates()
-  }, [orgId, fetchTemplates])
+    if (orgId) {
+      void fetchTemplates()
+      void fetchNotificationSettings()
+    }
+  }, [orgId, fetchTemplates, fetchNotificationSettings])
+
+  async function saveNotificationSettings() {
+    setSavingSettings(true)
+    setSettingsMsg(null)
+    try {
+      const res = await fetch("/api/v1/whatsapp/notification-settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(orgId ? { "x-organization-id": String(orgId) } : {}),
+        },
+        body: JSON.stringify({
+          whatsappTicketStatusTemplates: statusTemplates,
+          whatsappSurveyTemplate: surveyTemplate,
+          whatsappJourneyDefaultTemplate: journeyTemplate,
+        }),
+      })
+      const json = await res.json()
+      setSettingsMsg(json.success ? "Настройки сохранены" : (json.error || "Ошибка"))
+    } catch (e) {
+      setSettingsMsg(e instanceof Error ? e.message : "network error")
+    } finally {
+      setSavingSettings(false)
+      setTimeout(() => setSettingsMsg(null), 3000)
+    }
+  }
 
   async function runValidate() {
     setValidating(true)
@@ -232,6 +290,122 @@ export default function WhatsAppSettingsPage() {
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
           </Button>
         </div>
+      </Card>
+
+      {/* Notification template mappings */}
+      <Card className="p-6 space-y-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Bell className="w-5 h-5" /> Автоматические уведомления
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Выбери какие approved шаблоны использовать для системных событий. Если не выбрать — уведомление просто не будет отправлено (без ошибок для клиента).
+            </p>
+          </div>
+          <Button onClick={saveNotificationSettings} disabled={savingSettings || !meta?.hasConfig} className="gap-1.5">
+            <Save className="w-4 h-4" />
+            {savingSettings ? "Сохраняю…" : "Сохранить"}
+          </Button>
+        </div>
+
+        {!meta?.hasConfig && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 p-3">
+            <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
+            <p className="text-sm text-amber-900 dark:text-amber-200">
+              Сначала настройте WhatsApp credentials в <Link href="/settings/channels" className="underline font-medium">/settings/channels</Link>, потом возвращайтесь сюда.
+            </p>
+          </div>
+        )}
+
+        {settingsMsg && (
+          <p className="text-xs text-muted-foreground">{settingsMsg}</p>
+        )}
+
+        {/* Ticket status notifications */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Уведомления при смене статуса тикета</Label>
+          <p className="text-xs text-muted-foreground">
+            Для каждого статуса — свой шаблон. Пустой выбор = не слать. Переменные шаблона: <code className="text-[10px] bg-muted px-1 rounded">ticketNumber</code>, <code className="text-[10px] bg-muted px-1 rounded">status</code>, <code className="text-[10px] bg-muted px-1 rounded">agentName</code>.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {ticketStatuses.map((status) => (
+              <div key={status} className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] w-24 justify-center shrink-0">{status}</Badge>
+                <Select
+                  value={statusTemplates[status] || ""}
+                  onChange={(e: any) => {
+                    const v = e.target.value
+                    setStatusTemplates(prev => {
+                      const next = { ...prev }
+                      if (v) next[status] = v
+                      else delete next[status]
+                      return next
+                    })
+                  }}
+                  disabled={!meta?.hasConfig}
+                  className="flex-1 text-sm"
+                >
+                  <option value="">— не слать —</option>
+                  {templates
+                    .filter(t => t.status === "APPROVED")
+                    .map(t => (
+                      <option key={t.id} value={t.name}>{t.name} ({t.language})</option>
+                    ))}
+                </Select>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Survey + Journey single dropdowns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">Survey invite шаблон</Label>
+            <p className="text-xs text-muted-foreground">
+              Отправляется когда survey-trigger стреляет с каналом WhatsApp.
+            </p>
+            <Select
+              value={surveyTemplate}
+              onChange={(e: any) => setSurveyTemplate(e.target.value)}
+              disabled={!meta?.hasConfig}
+              className="text-sm"
+            >
+              <option value="">— не слать —</option>
+              {templates
+                .filter(t => t.status === "APPROVED")
+                .map(t => (
+                  <option key={t.id} value={t.name}>{t.name} ({t.language})</option>
+                ))}
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">Journey default шаблон</Label>
+            <p className="text-xs text-muted-foreground">
+              Fallback для <code className="text-[10px] bg-muted px-1 rounded">send_whatsapp</code> шага, если сам шаг не указывает template.
+            </p>
+            <Select
+              value={journeyTemplate}
+              onChange={(e: any) => setJourneyTemplate(e.target.value)}
+              disabled={!meta?.hasConfig}
+              className="text-sm"
+            >
+              <option value="">— не слать —</option>
+              {templates
+                .filter(t => t.status === "APPROVED")
+                .map(t => (
+                  <option key={t.id} value={t.name}>{t.name} ({t.language})</option>
+                ))}
+            </Select>
+          </div>
+        </div>
+
+        {templates.filter(t => t.status === "APPROVED").length === 0 && meta?.hasConfig && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            Нет approved шаблонов — сначала нажмите «Синхронизировать с Meta» ниже.
+          </p>
+        )}
       </Card>
 
       {/* Templates */}
