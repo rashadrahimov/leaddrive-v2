@@ -270,12 +270,23 @@ async function sendWhatsAppStatusNotification(
   })
   const tmplMap = (waConfig?.settings as any)?.whatsappTicketStatusTemplates || {}
   const templateName: string | undefined = tmplMap[newStatus]
-  if (!templateName) {
-    console.log(`[Ticket WA] No status template configured for "${newStatus}" — skip`)
-    return
-  }
 
   const ticketNumber = ticket.ticketNumber || ticket.id.slice(0, 8)
+
+  // Plain-text fallback messages. Used only when no template is configured
+  // AND the customer messaged us within the 23h session window (the
+  // whatsapp library blocks text outside the window). This keeps ticket
+  // notifications useful out-of-the-box for tenants who haven't set up
+  // Meta templates yet. Keep the wording generic and neutral so the fact
+  // that it's not a Meta-approved template isn't a policy issue.
+  const fallbackTextByStatus: Record<string, string> = {
+    in_progress: `Your ticket #${ticketNumber} is now being processed.`,
+    waiting:     `We need more info on your ticket #${ticketNumber}. Please reply with details.`,
+    resolved:    `Your ticket #${ticketNumber} has been resolved. Thank you for contacting us.`,
+    closed:      `Your ticket #${ticketNumber} has been closed.`,
+    escalated:   `Your ticket #${ticketNumber} has been escalated to a specialist.`,
+    reopened:    `Your ticket #${ticketNumber} has been reopened.`,
+  }
 
   // Extract phone — same heuristics as before.
   let waPhone: string | undefined
@@ -305,14 +316,25 @@ async function sendWhatsAppStatusNotification(
     return
   }
 
-  const result = await sendWhatsAppMessage({
-    to: waPhone,
-    message: `[template:${templateName}]`,
-    templateName,
-    templateVariables: { "1": ticketNumber, ticketNumber },
-    organizationId: orgId,
-    contactId: ticket.contactId || undefined,
-  })
+  const fallbackText = fallbackTextByStatus[newStatus]
 
-  console.log(`[Ticket WA] Status "${newStatus}" notification to ${waPhone}: ${result.success ? "OK" : result.error}`)
+  const result = templateName
+    ? await sendWhatsAppMessage({
+        to: waPhone,
+        message: `[template:${templateName}]`,
+        templateName,
+        templateVariables: { "1": ticketNumber, ticketNumber },
+        organizationId: orgId,
+        contactId: ticket.contactId || undefined,
+      })
+    : fallbackText
+    ? await sendWhatsAppMessage({
+        to: waPhone,
+        message: fallbackText,
+        organizationId: orgId,
+        contactId: ticket.contactId || undefined,
+      })
+    : { success: false, error: "no-template-no-fallback" }
+
+  console.log(`[Ticket WA] Status "${newStatus}" notification to ${waPhone}: ${result.success ? "OK" : result.error}${templateName ? " (template)" : " (fallback-text)"}`)
 }
