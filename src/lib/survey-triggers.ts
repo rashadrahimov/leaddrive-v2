@@ -70,32 +70,42 @@ export async function sendSurveyInvite({
   if (channel === "whatsapp") {
     if (!phone) return { ok: false, error: "no phone" }
     try {
-      // Survey invites go out via a pre-approved Meta template. The tenant
-      // configures it in ChannelConfig.settings.whatsappSurveyTemplate; if
-      // missing we silently skip rather than sending a wrong-brand template.
+      // Survey invites go out via a pre-approved Meta template when the
+      // tenant has configured ChannelConfig.settings.whatsappSurveyTemplate.
+      // Without a template, fall back to plain text inside the 23h session
+      // window — the library itself blocks free-form text outside the
+      // window, so this is safe (no policy violation).
       const waConfig = await prisma.channelConfig.findFirst({
         where: { organizationId, channelType: "whatsapp", isActive: true },
         select: { settings: true },
       })
       const templateName = (waConfig?.settings as any)?.whatsappSurveyTemplate
-      if (!templateName) {
-        return { ok: false, error: "no survey template configured (ChannelConfig.settings.whatsappSurveyTemplate)" }
-      }
       const { sendWhatsAppMessage } = await import("@/lib/whatsapp")
-      const r = await sendWhatsAppMessage({
-        to: phone,
-        message: `[template:${templateName}]`,
-        templateName,
-        templateVariables: {
-          "1": survey.name,
-          "2": link,
-          survey_name: survey.name,
-          survey_link: link,
-        },
-        organizationId,
-        contactId: contactId || undefined,
-      })
-      if (!(r as { success?: boolean }).success) return { ok: false, error: "whatsapp send failed" }
+
+      const fallbackText = `${survey.name}\n${link}`
+
+      const r = templateName
+        ? await sendWhatsAppMessage({
+            to: phone,
+            message: `[template:${templateName}]`,
+            templateName,
+            templateVariables: {
+              "1": survey.name,
+              "2": link,
+              survey_name: survey.name,
+              survey_link: link,
+            },
+            organizationId,
+            contactId: contactId || undefined,
+          })
+        : await sendWhatsAppMessage({
+            to: phone,
+            message: fallbackText,
+            organizationId,
+            contactId: contactId || undefined,
+          })
+
+      if (!(r as { success?: boolean }).success) return { ok: false, error: (r as { error?: string })?.error || "whatsapp send failed" }
       await prisma.survey.update({ where: { id: survey.id }, data: { totalSent: { increment: 1 } } })
       return { ok: true }
     } catch (e: any) {
