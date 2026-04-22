@@ -284,6 +284,36 @@ export default function LeadDetailPage() {
     setWaVariables(Object.fromEntries(tpl.variables.map(v => [v, ""])))
   }, [waSelectedTemplate, waTemplates])
 
+  const [waAiSuggesting, setWaAiSuggesting] = useState(false)
+  const suggestWaVariables = async () => {
+    if (!lead || !waSelectedTemplate) return
+    const tpl = waTemplates.find(t => t.id === waSelectedTemplate)
+    if (!tpl || tpl.variables.length === 0) return
+    setWaAiSuggesting(true)
+    try {
+      const res = await fetch("/api/v1/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(orgId ? { "x-organization-id": String(orgId) } : {} as Record<string, string>) },
+        body: JSON.stringify({
+          action: "whatsapp_fill_template",
+          leadId: lead.id,
+          locale: "ru",
+          options: {
+            variables: tpl.variables,
+            templateName: tpl.name,
+            templateBody: tpl.bodyText || "",
+          },
+        }),
+      })
+      const json = await res.json()
+      if (json?.success && json.data?.variables) {
+        setWaVariables(prev => ({ ...prev, ...json.data.variables }))
+      }
+    } catch { /* silent */ } finally {
+      setWaAiSuggesting(false)
+    }
+  }
+
   const sendWaTemplate = async () => {
     if (!lead) return
     const tpl = waTemplates.find(t => t.id === waSelectedTemplate)
@@ -827,7 +857,20 @@ export default function LeadDetailPage() {
                         <>
                           {tpl.variables.length > 0 && (
                             <div className="space-y-2">
-                              <Label className="text-xs">Параметры</Label>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs">Параметры</Label>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={suggestWaVariables}
+                                  disabled={waAiSuggesting}
+                                  className="h-7 text-xs gap-1"
+                                >
+                                  <Sparkles className="h-3 w-3" />
+                                  {waAiSuggesting ? "AI думает…" : "AI suggest"}
+                                </Button>
+                              </div>
                               {tpl.variables.map((v) => (
                                 <div key={v} className="flex items-center gap-2">
                                   <code className="text-[11px] font-mono w-24 text-muted-foreground">{`{{${v}}}`}</code>

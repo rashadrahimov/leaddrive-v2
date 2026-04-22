@@ -143,6 +143,9 @@ export async function POST(req: NextRequest) {
       case "text":
         return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, langName)
 
+      case "whatsapp_fill_template":
+        return handleWhatsAppFillTemplate(orgId, contextBlock, contextName, mainContactName, options, langName)
+
       default:
         return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
     }
@@ -358,6 +361,90 @@ async function handleText(orgId: string, contextBlock: string, contextName: stri
   } catch (error) {
     console.error("Claude text error:", error)
     return textFallback(textType, topic, tone, instructions, contextName, contactName, industry, langName)
+  }
+}
+
+// ── WHATSAPP TEMPLATE VARIABLE FILL ─────────────────────────
+//
+// Input: options.variables (string[]) — list of variable names from the
+// stored WhatsAppTemplate row (either positional "1","2"... or named like
+// "customer_name"). Optionally options.templateBody for better context.
+// Output: data.variables as a map { varName: suggestedValue } so the UI
+// can plug them straight into the form.
+async function handleWhatsAppFillTemplate(
+  orgId: string,
+  contextBlock: string,
+  contextName: string,
+  contactName: string,
+  options: any,
+  langName: string,
+) {
+  const variables: string[] = Array.isArray(options?.variables) ? options.variables : []
+  const templateBody: string = options?.templateBody || ""
+  const templateName: string = options?.templateName || "template"
+
+  if (variables.length === 0) {
+    return NextResponse.json({ success: true, data: { variables: {} } })
+  }
+
+  const client = getClient()
+  if (!client) {
+    // No AI — return best-effort heuristic fills from context.
+    const fallback: Record<string, string> = {}
+    for (const v of variables) {
+      const low = v.toLowerCase()
+      if (/name|contact|client/.test(low)) fallback[v] = contactName
+      else if (/company|org|business/.test(low)) fallback[v] = contextName
+      else fallback[v] = ""
+    }
+    return NextResponse.json({ success: true, data: { variables: fallback } })
+  }
+
+  const prompt = `You are filling variables for a WhatsApp business template.
+
+Template name: ${templateName}
+${templateBody ? `Template body:\n${templateBody}\n` : ""}
+Variables to fill: ${variables.join(", ")}
+
+Client context:
+${contextBlock}
+
+For each variable name, suggest a concrete value to plug in, inferring from the client context. Keep values short (1-4 words for names/titles, numbers for amounts/dates). If the context doesn't give enough info, pick a reasonable default (e.g. "there" for a missing name). Never leave values empty.
+
+Respond with JSON only (all text values in ${langName}):
+{"variables": {${variables.map(v => `"${v}": "suggested value"`).join(", ")}}}`
+
+  try {
+    const piiMasker = new PiiMasker()
+    const maskedPrompt = piiMasker.mask(prompt)
+    const t0 = Date.now()
+    const response = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 512,
+      temperature: 0.3,
+      system: `You are a careful assistant filling structured form fields for LeadDrive CRM. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      messages: [{ role: "user", content: maskedPrompt }],
+    })
+
+    let text = response.content.filter(b => b.type === "text").map(b => b.text).join("")
+    text = piiMasker.unmask(text)
+    text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim()
+    const data = JSON.parse(text)
+    await logAiCall(orgId, `[wa-fill/${templateName}] ${contextName}`, text.slice(0, 500), Date.now() - t0, "claude-haiku-4-5-20251001", response.usage)
+    // Ensure every requested variable is present in the response.
+    const safe: Record<string, string> = {}
+    for (const v of variables) safe[v] = String(data?.variables?.[v] ?? "")
+    return NextResponse.json({ success: true, data: { variables: safe } })
+  } catch (error) {
+    console.error("Claude wa-fill error:", error)
+    const fallback: Record<string, string> = {}
+    for (const v of variables) {
+      const low = v.toLowerCase()
+      if (/name|contact|client/.test(low)) fallback[v] = contactName
+      else if (/company|org|business/.test(low)) fallback[v] = contextName
+      else fallback[v] = ""
+    }
+    return NextResponse.json({ success: true, data: { variables: fallback } })
   }
 }
 

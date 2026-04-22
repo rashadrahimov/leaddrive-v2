@@ -17,9 +17,28 @@ export async function GET(req: NextRequest) {
   const language = searchParams.get("language") || undefined
   const category = searchParams.get("category") || undefined
 
+  // Summary of the channel config for the admin UI — stale sync/validate
+  // timestamps are useful to spot tenants that haven't pulled Meta changes.
+  const cfg = await prisma.channelConfig.findFirst({
+    where: { organizationId: orgId, channelType: "whatsapp", isActive: true },
+    select: {
+      accessToken: true, apiKey: true,
+      phoneNumberId: true, phoneNumber: true,
+      displayName: true,
+      lastValidatedAt: true, lastTemplateSyncAt: true,
+    },
+  })
+  const meta = {
+    hasConfig: !!(cfg && (cfg.accessToken || cfg.apiKey) && (cfg.phoneNumberId || cfg.phoneNumber)),
+    phoneNumberId: cfg?.phoneNumberId || cfg?.phoneNumber || null,
+    displayName: cfg?.displayName || null,
+    lastValidatedAt: cfg?.lastValidatedAt?.toISOString() || null,
+    lastTemplateSyncAt: cfg?.lastTemplateSyncAt?.toISOString() || null,
+  }
+
   if (status === "APPROVED") {
     const data = await listApprovedTemplates(orgId, { language, category })
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ success: true, data, meta })
   }
 
   const data = await prisma.whatsAppTemplate.findMany({
@@ -31,7 +50,7 @@ export async function GET(req: NextRequest) {
     },
     orderBy: [{ status: "asc" }, { category: "asc" }, { name: "asc" }],
   })
-  return NextResponse.json({ success: true, data })
+  return NextResponse.json({ success: true, data, meta })
 }
 
 // POST /api/v1/whatsapp/templates

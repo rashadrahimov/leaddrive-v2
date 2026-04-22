@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import {
   MessageCircle, CheckCircle2, AlertTriangle, RefreshCw, FileText,
-  ExternalLink, Copy, Check,
+  ExternalLink, Copy, Check, ChevronDown, ChevronUp,
 } from "lucide-react"
 import { PageDescription } from "@/components/page-description"
 
@@ -19,8 +19,21 @@ type Template = {
   category: string
   status: string
   bodyText: string | null
+  headerText: string | null
+  headerType: string | null
+  footerText: string | null
+  buttons: any
   variables: string[]
   lastSyncAt: string
+  metaTemplateId: string | null
+}
+
+type ChannelMeta = {
+  hasConfig: boolean
+  phoneNumberId: string | null
+  displayName: string | null
+  lastValidatedAt: string | null
+  lastTemplateSyncAt: string | null
 }
 
 type ValidateResult = {
@@ -36,12 +49,14 @@ export default function WhatsAppSettingsPage() {
   const orgId = session?.user?.organizationId
 
   const [templates, setTemplates] = useState<Template[]>([])
+  const [meta, setMeta] = useState<ChannelMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [validating, setValidating] = useState(false)
   const [validateResult, setValidateResult] = useState<ValidateResult | null>(null)
   const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   const webhookUrl = typeof window !== "undefined"
     ? `${window.location.origin}/api/v1/webhooks/whatsapp?t=${orgSlug}`
@@ -53,7 +68,10 @@ export default function WhatsAppSettingsPage() {
         headers: orgId ? { "x-organization-id": String(orgId) } : {},
       })
       const json = await res.json()
-      if (json.success) setTemplates(json.data)
+      if (json.success) {
+        setTemplates(json.data)
+        if (json.meta) setMeta(json.meta)
+      }
     } finally {
       setLoading(false)
     }
@@ -119,6 +137,19 @@ export default function WhatsAppSettingsPage() {
     return <Badge variant="outline" className={`text-[10px] ${e.cls}`}>{e.label}</Badge>
   }
 
+  function formatRelative(iso: string | null): string {
+    if (!iso) return "никогда"
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 1) return "только что"
+    if (m < 60) return `${m} мин назад`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h} ч назад`
+    const d = Math.floor(h / 24)
+    if (d < 30) return `${d} дн назад`
+    return new Date(iso).toLocaleDateString()
+  }
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
       <div>
@@ -137,6 +168,19 @@ export default function WhatsAppSettingsPage() {
             <p className="text-sm text-muted-foreground">
               Проверяет что access token и phone number ID работают и возвращает verified name из Meta.
             </p>
+            {meta && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {meta.hasConfig ? (
+                  <>
+                    {meta.displayName && <>Настроен: <span className="font-medium">{meta.displayName}</span> · </>}
+                    {meta.phoneNumberId && <>Phone ID: <code className="text-[10px] bg-muted px-1 py-0.5 rounded">{meta.phoneNumberId}</code> · </>}
+                    Последняя проверка: {formatRelative(meta.lastValidatedAt)}
+                  </>
+                ) : (
+                  <span className="text-amber-600">WhatsApp не настроен — заполните creds в /settings/channels</span>
+                )}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
@@ -200,6 +244,11 @@ export default function WhatsAppSettingsPage() {
             <p className="text-sm text-muted-foreground">
               Шаблоны создаются и проходят модерацию в Meta Business Manager. Здесь только чтение + синхронизация. Approved шаблоны используются для outbound outreach вне 24-часового сервисного окна.
             </p>
+            {meta && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Последняя синхронизация: {formatRelative(meta.lastTemplateSyncAt)}
+              </p>
+            )}
           </div>
           <Button onClick={runSync} disabled={syncing} className="gap-1.5">
             <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
@@ -222,30 +271,81 @@ export default function WhatsAppSettingsPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {templates.map((t) => (
-              <div key={t.id} className="border rounded-lg p-3 hover:bg-muted/30 transition-colors">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <code className="font-mono text-sm font-medium">{t.name}</code>
-                      <span className="text-xs text-muted-foreground">· {t.language}</span>
-                      <Badge variant="outline" className="text-[10px]">
-                        {t.category}
-                      </Badge>
-                      {statusBadge(t.status)}
+            {templates.map((t) => {
+              const isOpen = expanded === t.id
+              return (
+                <div key={t.id} className="border rounded-lg hover:bg-muted/30 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(isOpen ? null : t.id)}
+                    className="w-full text-left p-3 flex items-start justify-between gap-3 flex-wrap"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <code className="font-mono text-sm font-medium">{t.name}</code>
+                        <span className="text-xs text-muted-foreground">· {t.language}</span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {t.category}
+                        </Badge>
+                        {statusBadge(t.status)}
+                        {t.variables.length > 0 && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {t.variables.length} {t.variables.length === 1 ? "переменная" : "переменных"}
+                          </span>
+                        )}
+                      </div>
+                      {t.bodyText && !isOpen && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.bodyText}</p>
+                      )}
                     </div>
-                    {t.bodyText && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.bodyText}</p>
-                    )}
-                    {t.variables.length > 0 && (
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Переменные: {t.variables.map((v) => `{{${v}}}`).join(", ")}
+                    {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-3 pb-3 space-y-2 border-t bg-muted/20">
+                      {t.headerText && (
+                        <div>
+                          <p className="text-[10px] uppercase text-muted-foreground tracking-wide mt-2">Header{t.headerType ? ` · ${t.headerType}` : ""}</p>
+                          <p className="text-sm font-medium">{t.headerText}</p>
+                        </div>
+                      )}
+                      {t.bodyText && (
+                        <div>
+                          <p className="text-[10px] uppercase text-muted-foreground tracking-wide mt-2">Body</p>
+                          <p className="text-sm whitespace-pre-wrap">{t.bodyText}</p>
+                        </div>
+                      )}
+                      {t.footerText && (
+                        <div>
+                          <p className="text-[10px] uppercase text-muted-foreground tracking-wide mt-2">Footer</p>
+                          <p className="text-xs text-muted-foreground">{t.footerText}</p>
+                        </div>
+                      )}
+                      {t.variables.length > 0 && (
+                        <div>
+                          <p className="text-[10px] uppercase text-muted-foreground tracking-wide mt-2">Переменные</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {t.variables.map((v) => (
+                              <code key={v} className="text-[11px] font-mono bg-muted px-2 py-0.5 rounded">{`{{${v}}}`}</code>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {t.buttons && (
+                        <div>
+                          <p className="text-[10px] uppercase text-muted-foreground tracking-wide mt-2">Кнопки</p>
+                          <pre className="text-[10px] bg-background border rounded p-2 overflow-auto">{JSON.stringify(t.buttons, null, 2)}</pre>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-muted-foreground pt-2 border-t">
+                        {t.metaTemplateId && <>Meta template ID: <code>{t.metaTemplateId}</code> · </>}
+                        Last sync: {formatRelative(t.lastSyncAt)}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </Card>
