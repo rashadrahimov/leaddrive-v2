@@ -505,7 +505,15 @@ const WA_SYSTEM_PROMPT = `Ты — Da Vinci, интеллектуальный д
 11. Если клиент ЯВНО просит создать тикет ("открой тикет", "ticket aç", "заведи обращение") — добавь [CREATE_TICKET] в ответ, даже если это первое сообщение.
 12. ВАЖНО: НЕ здоровайся повторно! Если в истории чата уже есть сообщения — продолжай разговор БЕЗ приветствия. "Salam" только в ПЕРВОМ сообщении.
 13. ВАЖНО: Ты НЕ МОЖЕШЬ выполнять действия с тикетами (открывать, закрывать, переоткрывать, менять статус). Если клиент недоволен решением тикета — скажи что передаёшь обращение менеджеру и добавь [ESCALATE]. НИКОГДА не говори клиенту что ты "открыл тикет", "переоткрыл тикет" или "изменил статус" — у тебя нет такой возможности.
-14. ПРИОРИТЕТ МАРКЕРА: если клиент ЖАЛУЕТСЯ на качество товара/услуги, сервис, задержку, брак, или явно пишет любое из слов: "жалоба/жалуюсь/пожаловаться/şikayət/shikayet/sikayet/complaint/complain/недоволен/narazı/naraziyam/некачественный/возмущён" (даже в транслите и с опечатками) — ОБЯЗАТЕЛЬНО добавь ОБА маркера: [CREATE_TICKET] И [COMPLAINT]. Маркер [COMPLAINT] ВАЖНЕЕ [ESCALATE] — если сомневаешься, ставь [COMPLAINT]. Не ограничивайся одним [ESCALATE] — иначе обращение НЕ попадёт в реестр жалоб. В тексте ответа клиенту просто вежливо подтверди, что жалоба принята и передана ответственным — НЕ упоминай слова "тикет" или "реестр".`
+14. ПРИОРИТЕТ МАРКЕРА: если клиент ЖАЛУЕТСЯ на качество товара/услуги, сервис, задержку, брак, или явно пишет любое из слов: "жалоба/жалуюсь/пожаловаться/şikayət/shikayet/sikayet/complaint/complain/недоволен/narazı/naraziyam/некачественный/возмущён" (даже в транслите и с опечатками) — ОБЯЗАТЕЛЬНО добавь ОБА маркера: [CREATE_TICKET] И [COMPLAINT]. Маркер [COMPLAINT] ВАЖНЕЕ [ESCALATE] — если сомневаешься, ставь [COMPLAINT]. Не ограничивайся одним [ESCALATE] — иначе обращение НЕ попадёт в реестр жалоб. В тексте ответа клиенту просто вежливо подтверди, что жалоба принята и передана ответственным — НЕ упоминай слова "тикет" или "реестр".
+15. НЕЯВНЫЕ ЖАЛОБЫ И ФРУСТРАЦИЯ: если клиент выражает недовольство процессом обслуживания без явного слова "жалоба" — ВСЁ РАВНО ставь [CREATE_TICKET]. Примеры: "никто не связался", "никто не перезвонил", "никто не ответил", "жду уже сколько дней", "обещали и не сделали", "прошла неделя никого нет", "heç kim zəng etmədi", "heç kim cavab vermədi", "nobody called back", "no one contacted me". Такие фразы — сигнал упавшего SLA, тикет обязателен чтобы менеджер вернулся к клиенту.
+16. ТЕХНИЧЕСКИЕ ПРОБЛЕМЫ: если клиент пишет что что-то "не работает", "сломалось", "ошибка", "не открывается", "не могу войти", "xarabdır", "işləmi", "giriş edə bilmirəm", "broken", "crash", "error" — это жалоба на продукт → ставь [CREATE_TICKET] и передавай технической команде. В ответе подтверди что передаёшь специалисту.
+17. ФИНАНСЫ/ОПЛАТА/ВОЗВРАТЫ: если клиент пишет про счета, оплату, возврат денег, отмену подписки, "refund", "верните деньги", "ödəniş", "hesab-faktura", "qaytarın" — ставь [CREATE_TICKET]. Эти обращения всегда идут через финансовый отдел, AI не может решить сам.
+18. СРОЧНОСТЬ: если клиент пишет "срочно", "аварийно", "немедленно", "təcili", "urgent", "ASAP", "emergency" — ставь [CREATE_TICKET] и дополнительно [ESCALATE]. Это высокий приоритет.
+19. ЦЕНЫ И ПРОДАЖИ: если клиент спрашивает цену, стоимость, тариф, "сколько стоит", "qiymət", "price" — НЕ отвечай сам, ставь [CREATE_TICKET] — пусть менеджер свяжется и предложит персонализированно.
+20. ЕСЛИ ТЫ САМ ОБЕЩАЕШЬ СВЯЗЬ: когда в твоём ответе есть фразы "передам менеджеру", "свяжемся", "наш специалист позвонит", "мы перезвоним" — ОБЯЗАТЕЛЬНО добавь [ESCALATE] или [CREATE_TICKET]. Без маркера обещание повиснет — клиент ждёт, менеджер не знает.
+21. ЕСЛИ ТЫ НЕ ЗНАЕШЬ ОТВЕТ: не отвечай "не знаю" и уходить. Ставь [CREATE_TICKET] — пусть менеджер ответит. AI без ответа = потерянный лид.
+22. КОНТАКТ-ПОПЫТКИ: если клиент упоминает что уже "звонил", "писал", "пытался связаться", "zəng etdim", "I tried to reach" — это сигнал что предыдущая попытка не сработала, ставь [CREATE_TICKET] высоким приоритетом.`
 
 async function handleAiAutoReply(
   organizationId: string,
@@ -656,21 +664,115 @@ async function handleAiAutoReply(
       .map(block => block.text)
       .join(""))
 
-    // Check for escalation/ticket markers BEFORE cleaning
-    // Only use explicit Da Vinci markers — no regex guessing (was too aggressive, created tickets on every message)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Escalation analyser — decides whether the AI chat should spin off a
+    // ticket, what category it belongs to (routing to the right team later),
+    // and how urgent it is. Multi-layered:
+    //
+    //  1. Explicit AI markers    — highest trust, AI itself flagged it.
+    //  2. Customer keywords      — reliable patterns in the customer's text
+    //                              (complaint, technical issue, refund, etc).
+    //  3. Implicit frustration   — SLA-breach patterns ("никто не связался",
+    //                              "обещали и не сделали") without literal
+    //                              "complaint" word.
+    //  4. AI-reply meta-trigger  — AI itself promised to forward to a human
+    //                              or admitted it can't answer → that's an
+    //                              escalation even without explicit marker.
+    //  5. Session-length trigger — a long chat (8+ turns) with no resolution
+    //                              means the bot is stuck; hand off.
+    //
+    // The category picks which team picks up the ticket (complaint / technical
+    // / billing / sales / ai_escalation / general). Urgency drives SLA priority.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // 1. Explicit AI markers
     const shouldEscalate = rawReply.includes("[ESCALATE]")
     const shouldCreateTicketMarker = rawReply.includes("[CREATE_TICKET]")
     const shouldMarkComplaintMarker = rawReply.includes("[COMPLAINT]")
 
-    // Keyword fallback — fires even if Da Vinci missed the marker. Customer language matters,
-    // not the AI reply, so match against userMessage. Covers Russian, Azerbaijani (native
-    // and Latin transliteration), and English.
-    const complaintKeywordRegex = /(жалоб|пожалов|недоволен|недовольств|некачеств|возмущ|shikay[aeə]t|şikay[aeə]t|sikay[aeə]t|şikaeət|naraz[iıoı]|complain|complaint|grievance|unhappy\s+with|dissatisf)/i
-    const keywordComplaint = complaintKeywordRegex.test(userMessage)
-    const isComplaint = shouldMarkComplaintMarker || keywordComplaint
+    // 2. Customer-text keywords — RU + AZ (native + Latin transliteration) + EN
+    const complaintRe    = /(жалоб|пожалов|недоволен|недовольств|некачеств|возмущ|возмутит|shikay[aeə]t|şikay[aeə]t|sikay[aeə]t|naraz[iıoı]|complain|complaint|grievance|unhappy\s+with|dissatisf)/i
+    const technicalRe    = /(не\s+работает|сломал|поломал|не\s+запуска|не\s+открыва|не\s+загруж|ошибк|глюч|вылета|крэш|crash|broken|doesn'?t\s+work|not\s+working|error|bug|xarab|işləmi|işlamir|giriş\s+ed[əe]\s+bilm|problem)/i
+    const billingRe      = /(счет|счёт|фактур|оплат|платеж|платёж|invoice|payment|billing|hesab-fakt|ödəniş|ödənis|odenis)/i
+    const refundRe       = /(верн[иу]те\s+(деньги|средства|оплату)|вернуть|возврат\s+средств|refund|money\s+back|qaytar[ıi]n|geri\s+al[ıi]n|geri\s+qaytar)/i
+    const cancelRe       = /(отмен(и|ите|ить)|отказ(аться|ываюсь)\s+от|cancel|unsubscribe|ləğv\s+(et|olunmaq)|imtina\s+et)/i
+    const pricingRe      = /(сколько\s+стоит|цена|стоимост|тариф|прайс|price|qiym[əe]t|neç[əe]y[əe]|cost\s+of|how\s+much)/i
+    const urgencyRe      = /(срочно|аварий|авариян|экстренн|немедленно|asap|emergency|urgent|t[əe]cili|t[əe]xirs[ıi]z|hazır\s+olaraq|right\s+now)/i
+    const frustrationRe  = /(никто\s+(так\s+и\s+)?не\s+(связа|перезвон|ответ|отпис|написа))|(жду\s+(уже\s+)?(несколько|который\s+день|долго|давно|(\d+)\s+(ч|час|день|ден|дн|недел|нед)))|(обещали\s+и\s+не)|(heç\s+kim\s+(zəng|cavab|əlaqə|yaz))|(hec\s+kim\s+(zeng|cavab|elaqe))|(no\s*(one|body)\s+(call|reach|respond|contact|got\s+back|answer))|(still\s+waiting\s+for)|(been\s+waiting\s+(for\s+)?(days|weeks|hours))/i
+    const contactAttemptRe = /(звонил|звонила|писал|писала|пытался|пыталась|обращал|tried\s+(to\s+(call|reach|contact))|zəng\s+etdim|yazdım)/i
 
-    // A complaint always implies a ticket, even when AI forgot [CREATE_TICKET]
-    const shouldCreateTicket = shouldCreateTicketMarker || isComplaint
+    const keywordComplaint     = complaintRe.test(userMessage)
+    const keywordTechnical     = technicalRe.test(userMessage)
+    const keywordBilling       = billingRe.test(userMessage)
+    const keywordRefund        = refundRe.test(userMessage)
+    const keywordCancel        = cancelRe.test(userMessage)
+    const keywordPricing       = pricingRe.test(userMessage)
+    const keywordUrgent        = urgencyRe.test(userMessage)
+    const keywordFrustration   = frustrationRe.test(userMessage)
+    const keywordContactTried  = contactAttemptRe.test(userMessage)
+
+    // 3. AI-reply meta-trigger — if the bot already said "I'll forward to a
+    // manager / someone will contact you" then the client expects a human
+    // touchpoint. Without a ticket that human never shows up.
+    const aiPromisedHumanRe = /(передам\s+(менедже|специалист|коллег))|(свяжется\s+с\s+вами)|(перезвон(им|ит))|(наш\s+менеджер\s+(свяж|перезвон))|(menecer[eə]\s+(yönl[eə]ndir|ötür))|(sizinl[eə]\s+[eə]laq[eə]\s+(saxlan|yarad))|(will\s+(contact|get\s+back|reach\s+out))|(our\s+(team|manager)\s+will)/i
+    const aiAdmittedUnknownRe = /(не\s+знаю|не\s+имею\s+(инф|данн))|(не\s+могу\s+(ответ|помочь))|(bilmirəm|m[əe]lumat(ım)?\s+yoxdur)|(i\s+don'?t\s+know|i\s+can'?t\s+(help|answer))/i
+    const aiPromisedHuman = aiPromisedHumanRe.test(rawReply)
+    const aiAdmittedUnknown = aiAdmittedUnknownRe.test(rawReply)
+
+    // 4. Session-length trigger — >= 10 messages (5 turns) without resolution
+    // means the bot is stuck. Don't trap the customer in an endless loop.
+    // `messagesCount` on the session is kept in sync by the increment call a
+    // few lines up; add 2 because that bump hasn't materialised in the in-
+    // memory `session` object yet.
+    const sessionMsgCount = (session.messagesCount || 0) + 2
+    const sessionTooLong = sessionMsgCount >= 10 && !shouldEscalate && !shouldCreateTicketMarker
+
+    // ── Decide category ────────────────────────────────────────────────────
+    // Order matters — complaint wins, then refund, then technical, etc.
+    const isComplaint = shouldMarkComplaintMarker || keywordComplaint
+    let ticketCategoryResolved:
+      | "complaint" | "technical" | "billing" | "sales" | "ai_escalation" | "general"
+    if (isComplaint) {
+      ticketCategoryResolved = "complaint"
+    } else if (keywordRefund || keywordCancel) {
+      ticketCategoryResolved = "billing"
+    } else if (keywordBilling) {
+      ticketCategoryResolved = "billing"
+    } else if (keywordTechnical) {
+      ticketCategoryResolved = "technical"
+    } else if (keywordPricing) {
+      ticketCategoryResolved = "sales"
+    } else if (shouldEscalate) {
+      ticketCategoryResolved = "ai_escalation"
+    } else {
+      ticketCategoryResolved = "general"
+    }
+
+    // ── Decide urgency ─────────────────────────────────────────────────────
+    const ticketUrgency: "low" | "normal" | "high" | "critical" =
+      keywordUrgent || isComplaint ? "critical"
+      : keywordFrustration || keywordContactTried ? "high"
+      : keywordRefund ? "high"
+      : keywordTechnical ? "normal"
+      : "normal"
+
+    // ── Final verdict: create ticket? ──────────────────────────────────────
+    // Any of these paths triggers ticket creation. Very deliberately permissive
+    // — we'd rather create an extra low-priority ticket than let a real
+    // customer question drop.
+    const shouldCreateTicket =
+      shouldCreateTicketMarker ||
+      isComplaint ||
+      keywordFrustration ||
+      keywordRefund ||
+      keywordCancel ||
+      keywordTechnical ||
+      keywordBilling ||
+      keywordUrgent ||
+      keywordContactTried ||
+      aiPromisedHuman ||
+      aiAdmittedUnknown ||
+      sessionTooLong
 
     const aiReply = rawReply
       .replace(/\[ESCALATE\]/g, "")
@@ -720,31 +822,57 @@ async function handleAiAutoReply(
         const ticketCount = await prisma.ticket.count({ where: { organizationId } })
         const ticketNumber = `DV-${String(ticketCount + 1).padStart(4, "0")}`
 
-        const subjectPrefix = isComplaint
-          ? "Жалоба WhatsApp"
-          : shouldEscalate
-            ? "WhatsApp Эскалация"
-            : "WhatsApp Тикет"
-        const ticketCategory = isComplaint ? "complaint" : "ai_escalation"
-        const secondaryTag = isComplaint
+        // Subject prefix follows resolved category — so when a ticket lands
+        // in /tickets the department can tell at a glance what it's about
+        // without opening the description.
+        const subjectPrefixByCat: Record<typeof ticketCategoryResolved, string> = {
+          complaint:       "Жалоба WhatsApp",
+          technical:       "Техподдержка WhatsApp",
+          billing:         "Финансы/Оплата WhatsApp",
+          sales:           "Продажи/Запрос WhatsApp",
+          ai_escalation:   "WhatsApp Эскалация",
+          general:         "WhatsApp Тикет",
+        }
+        const subjectPrefix = subjectPrefixByCat[ticketCategoryResolved]
+
+        // Collect all detected reasons so the description tells the operator
+        // WHY the ticket was auto-created — debuggable + audit trail.
+        const reasons: string[] = []
+        if (shouldCreateTicketMarker)  reasons.push("AI marker [CREATE_TICKET]")
+        if (shouldEscalate)            reasons.push("AI marker [ESCALATE]")
+        if (shouldMarkComplaintMarker) reasons.push("AI marker [COMPLAINT]")
+        if (keywordComplaint)          reasons.push("keyword:complaint")
+        if (keywordFrustration)        reasons.push("keyword:frustration/SLA-breach")
+        if (keywordRefund)             reasons.push("keyword:refund")
+        if (keywordCancel)             reasons.push("keyword:cancel")
+        if (keywordTechnical)          reasons.push("keyword:technical")
+        if (keywordBilling)            reasons.push("keyword:billing")
+        if (keywordPricing)            reasons.push("keyword:pricing")
+        if (keywordUrgent)             reasons.push("keyword:urgent")
+        if (keywordContactTried)       reasons.push("keyword:contact-attempt")
+        if (aiPromisedHuman)           reasons.push("AI promised human follow-up")
+        if (aiAdmittedUnknown)         reasons.push("AI admitted it doesn't know")
+        if (sessionTooLong)            reasons.push(`session length ${sessionMsgCount} messages`)
+
+        const secondaryTag = ticketCategoryResolved === "complaint"
           ? "complaint"
-          : shouldEscalate
+          : ticketCategoryResolved === "ai_escalation"
             ? "ai_escalation"
-            : "ai_ticket"
+            : `ai_ticket_${ticketCategoryResolved}`
 
         const ticket = await prisma.ticket.create({
           data: {
             organizationId,
             ticketNumber,
             subject: `[${subjectPrefix}] ${userMessage.slice(0, 80)}`,
-            description: `Создан из WhatsApp чата.\nКлиент: ${senderName} (+${waPhone})\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
-            priority: "high",
+            description: `Создан из WhatsApp чата.\nКлиент: ${senderName} (+${waPhone})\nКатегория: ${ticketCategoryResolved} · Срочность: ${ticketUrgency}\nТриггеры: ${reasons.join(", ") || "—"}\n\n--- ИСТОРИЯ ЧАТА ---\n${chatHistory}`,
+            priority: ticketUrgency,
             status: "open",
-            category: ticketCategory,
+            category: ticketCategoryResolved,
             contactId: contactId || null,
             tags: ["whatsapp", secondaryTag, "auto_created"],
             source: "whatsapp",
-            sourceMeta: { phone: waPhone },
+            sourceMeta: { phone: waPhone, urgency: ticketUrgency, reasons },
           },
         })
 
