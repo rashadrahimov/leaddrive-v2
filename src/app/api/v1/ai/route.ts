@@ -178,7 +178,7 @@ async function handleSentiment(orgId: string, contextBlock: string, contextName:
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       temperature: 0.3,
-      system: `You are an Da Vinci analyst for LeadDrive CRM. Analyze client data and provide a sentiment assessment. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      system: `You are an AI analyst. Analyze client data and provide a sentiment assessment — focus on the client-vendor relationship, never reference the CRM software or any platform. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
         content: `Analyze the sentiment of the relationship with the client based on data:\n\n${maskedContextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"score": number 0-100, "sentiment": "POSITIVE"|"NEUTRAL"|"NEGATIVE", "emoji": "😊"|"😐"|"😟", "trend": "improving"|"stable"|"declining"|"unknown", "risk": "LOW"|"MEDIUM"|"HIGH", "confidence": number 0-100, "summary": "detailed analysis in ${langName} (2-3 sentences)"}`,
@@ -448,7 +448,7 @@ Respond with JSON only (all text values in ${langName}):
       model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
       temperature: 0.3,
-      system: `You are a careful assistant filling structured form fields for LeadDrive CRM. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      system: `You are a careful assistant filling structured form fields for a sales CRM. Never mention any CRM product, vendor, or platform in the generated values — every text value must read as if the tenant's own sales team wrote it. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{ role: "user", content: maskedPrompt }],
     })
 
