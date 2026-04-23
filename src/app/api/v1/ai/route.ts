@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
         return handleSentiment(orgId, contextBlock, contextName, contactNames, activitiesList, langName)
 
       case "tasks":
-        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website, langName)
+        return handleTasks(orgId, contextBlock, contextName, mainContactName, mainContactPhone, mainContactEmail, industry, website, langName, senderOrgName)
 
       case "text":
         return handleText(orgId, contextBlock, contextName, mainContactName, industry, options, langName, senderOrgName)
@@ -212,9 +212,9 @@ function sentimentFallback(contextName: string, contactNames: string, activities
 
 // ── TASKS ──────────────────────────────────────────────────
 
-async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string, langName: string) {
+async function handleTasks(orgId: string, contextBlock: string, contextName: string, contactName: string, contactPhone: string, contactEmail: string, industry: string, website: string, langName: string, senderOrgName: string = "the team") {
   const client = getClient()
-  if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website, langName)
+  if (!client) return tasksFallback(contextName, contactName, contactPhone, industry, website, langName, senderOrgName)
 
   try {
     const piiMasker = new PiiMasker()
@@ -224,10 +224,14 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
       model: "claude-haiku-4-5-20251001",
       max_tokens: 2048,
       temperature: 0.5,
-      system: `You are an Da Vinci assistant for LeadDrive CRM. Generate smart tasks for sales managers. Consider client context. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
+      // Multi-tenant: the sales manager works FOR ${senderOrgName} and is
+      // building the relationship with their own customer. The task copy
+      // must never pitch the CRM or suggest selling CRM software to the
+      // lead — it's about ${senderOrgName}'s own products/services.
+      system: `You are an AI assistant helping a sales manager at "${senderOrgName}" work with their leads. Generate smart, specific tasks that move the relationship toward a deal for ${senderOrgName}. Never mention CRM, LeadDrive, or any software platform — the tasks are about ${senderOrgName}'s own products and services. Respond ONLY with valid JSON, no markdown. All text content MUST be in ${langName}.`,
       messages: [{
         role: "user",
-        content: `Based on the client data, generate 4 tasks for the manager:\n\n${maskedContextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences)", "tasks": [{"title": "title", "description": "detailed description", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
+        content: `You work as a sales manager at "${senderOrgName}". Generate 4 concrete next-step tasks for the following lead/customer. The tasks should help move this relationship forward for ${senderOrgName}.\n\nLead/customer data:\n${maskedContextBlock}\n\nRespond with JSON (all text values in ${langName}):\n{"strategy": "brief strategy description (1-2 sentences) from ${senderOrgName}'s perspective", "tasks": [{"title": "title", "description": "detailed description — never mention CRM software, only ${senderOrgName}'s business", "priority": "HIGH"|"MEDIUM"|"LOW", "type": "email"|"call"|"meeting"|"general", "dueDate": "YYYY-MM-DD", "reasoning": "why this task is important for ${senderOrgName}"}]}\n\nDates should start from ${new Date().toISOString().split("T")[0]}. All text content must be in ${langName}.`,
       }],
     })
 
@@ -239,57 +243,65 @@ async function handleTasks(orgId: string, contextBlock: string, contextName: str
     return NextResponse.json({ success: true, data })
   } catch (error) {
     console.error("Claude tasks error:", error)
-    return tasksFallback(contextName, contactName, contactPhone, industry, website, langName)
+    return tasksFallback(contextName, contactName, contactPhone, industry, website, langName, senderOrgName)
   }
 }
 
-function tasksFallback(contextName: string, contactName: string, contactPhone: string, industry: string, website: string, langName: string) {
+function tasksFallback(contextName: string, contactName: string, contactPhone: string, industry: string, website: string, langName: string, senderOrgName: string = "") {
   const now = new Date()
+  // Industry is a descriptor for the CUSTOMER's business — not an assumption
+  // that we (senderOrgName) sell IT. Fallback copy is vendor-neutral: no
+  // "IT-услуг", no hardcoded category. The real AI path (handleTasks) has a
+  // much better prompt anyway; this only fires when ANTHROPIC_API_KEY is
+  // missing or the model call fails.
+  const senderRu = senderOrgName || "наша компания"
+  const senderAz = senderOrgName || "şirkətimiz"
+  const senderEn = senderOrgName || "our company"
   const fb: Record<string, any> = {
     Russian: {
       t1: `Первоначальный контакт с ${contactName}`,
-      d1: `Отправить приветственное письмо ${contactName} с представлением компании${industry ? ` в сфере ${industry}` : ""}.`,
+      d1: `Отправить приветственное письмо ${contactName} с представлением ${senderRu}${industry ? ` — интересует ${industry}` : ""}.`,
       r1: `Необходимо установить первоначальный контакт.`,
       t2: `Исследование компании ${contextName}`,
-      d2: `Провести анализ потребностей ${contextName}${website ? ` (${website})` : ""} в области IT-услуг.`,
-      r2: `Понимание бизнеса клиента позволит подготовить предложение.`,
+      d2: `Изучить бизнес ${contextName}${website ? ` (${website})` : ""}${industry ? ` — сфера ${industry}` : ""} и определить точки соприкосновения с ${senderRu}.`,
+      r2: `Понимание бизнеса клиента позволит подготовить персонализированное предложение.`,
       t3: `Телефонный звонок ${contactName}`,
       d3: `Позвонить по номеру ${contactPhone} для установления контакта.`,
       r3: `Прямой контакт ускорит процесс.`,
       t4: `Запланировать встречу или демонстрацию`,
-      d4: `Предложить встречу или демонстрацию решений для ${contextName}.`,
+      d4: `Предложить встречу или демонстрацию продуктов ${senderRu} для ${contextName}.`,
       r4: `Встреча увеличит вероятность сделки.`,
-      strategy: `Стратегия: многоканальный подход к ${contactName} из ${contextName} — email, исследование, звонок, встреча.`,
+      strategy: `Стратегия: многоканальный подход от ${senderRu} к ${contactName} из ${contextName} — email, исследование, звонок, встреча.`,
     },
     Azerbaijani: {
       t1: `${contactName} ilə ilkin əlaqə`,
-      d1: `${contactName}-a şirkətin təqdimatı ilə salamlama məktubu göndərin${industry ? ` ${industry} sahəsində` : ""}.`,
+      d1: `${contactName}-a ${senderAz} adından salamlama məktubu göndərin${industry ? `, ${industry} sahəsinə uyğun` : ""}.`,
       r1: `İlkin əlaqə qurmaq lazımdır.`,
       t2: `${contextName} şirkətinin araşdırılması`,
-      d2: `${contextName}${website ? ` (${website})` : ""} IT xidmətləri sahəsində ehtiyaclarının təhlili.`,
-      r2: `Müştərinin biznesini anlamaq təklif hazırlamağa imkan verəcək.`,
+      d2: `${contextName}${website ? ` (${website})` : ""}${industry ? ` (${industry})` : ""} işini öyrənin və ${senderAz} ilə toxunma nöqtələrini müəyyənləşdirin.`,
+      r2: `Müştərinin biznesini anlamaq fərdi təklif hazırlamağa imkan verəcək.`,
       t3: `${contactName}-a telefon zəngi`,
       d3: `Əlaqə qurmaq üçün ${contactPhone} nömrəsinə zəng edin.`,
       r3: `Birbaşa əlaqə prosesi sürətləndirəcək.`,
       t4: `Görüş və ya nümayiş planlaşdırın`,
-      d4: `${contextName} üçün həllərin görüşü və ya nümayişi təklif edin.`,
+      d4: `${senderAz} məhsullarının ${contextName} üçün görüşü və ya nümayişi təklif edin.`,
       r4: `Görüş sövdələşmə ehtimalını artıracaq.`,
-      strategy: `Strategiya: ${contactName} (${contextName}) ilə çoxkanallı yanaşma — email, araşdırma, zəng, görüş.`,
+      strategy: `Strategiya: ${senderAz} tərəfindən ${contactName} (${contextName}) ilə çoxkanallı yanaşma — email, araşdırma, zəng, görüş.`,
     },
     English: {
       t1: `Initial contact with ${contactName}`,
-      d1: `Send a welcome email to ${contactName} introducing the company${industry ? ` in ${industry}` : ""}.`,
+      d1: `Send a welcome email to ${contactName} introducing ${senderEn}${industry ? ` — relevant to ${industry}` : ""}.`,
       r1: `Need to establish initial contact.`,
       t2: `Research ${contextName}`,
-      d2: `Analyze ${contextName}'s${website ? ` (${website})` : ""} needs in IT services.`,
-      r2: `Understanding the client's business will help prepare a proposal.`,
+      d2: `Analyze ${contextName}${website ? ` (${website})` : ""}${industry ? ` in ${industry}` : ""} and identify points of alignment with ${senderEn}.`,
+      r2: `Understanding the customer's business will help prepare a tailored proposal.`,
       t3: `Phone call to ${contactName}`,
       d3: `Call ${contactPhone} to establish contact.`,
       r3: `Direct contact will speed up the process.`,
       t4: `Schedule a meeting or demo`,
-      d4: `Offer a meeting or solution demo for ${contextName}.`,
+      d4: `Offer a meeting or product demo from ${senderEn} for ${contextName}.`,
       r4: `A meeting will increase the chance of a deal.`,
-      strategy: `Strategy: multi-channel approach to ${contactName} from ${contextName} — email, research, call, meeting.`,
+      strategy: `Strategy: multi-channel approach from ${senderEn} to ${contactName} at ${contextName} — email, research, call, meeting.`,
     },
   }
   const l = fb[langName] || fb.Russian
