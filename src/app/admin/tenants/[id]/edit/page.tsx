@@ -390,14 +390,25 @@ export default function TenantEditPage() {
               </div>
             </div>
 
+            {/* Sections: hide the whole card when every toggleable module in
+                 it is off. "Core-only" groups (like Settings) have no
+                 toggleables and always render. Hidden categories surface as
+                 compact chips below the list — clicking re-enables everything
+                 in that group. */}
+            {(() => {
+              const annotated = SIDEBAR_SECTIONS.map((section) => {
+                const ids = [...new Set(section.items.map((i) => i.moduleId).filter((id) => id !== "core"))]
+                const active = ids.filter((id) => form.features.includes(id)).length
+                return { section, ids, active, total: ids.length }
+              })
+              const visible = annotated.filter(({ active, total }) => total === 0 || active > 0)
+              const hidden = annotated.filter(({ active, total }) => total > 0 && active === 0)
+              return (
+                <>
             <div className="space-y-4">
-              {SIDEBAR_SECTIONS.map((section) => {
+              {visible.map(({ section, ids: sectionModuleIds, active: activeCount, total: totalToggleable }) => {
                 const style = GROUP_STYLE[section.group] || GROUP_STYLE.Settings
                 const GroupIcon = style.icon
-                // Unique moduleIds in this section (excluding core)
-                const sectionModuleIds = [...new Set(section.items.map((i) => i.moduleId).filter((id) => id !== "core"))]
-                const activeCount = sectionModuleIds.filter((id) => form.features.includes(id)).length
-                const totalToggleable = sectionModuleIds.length
 
                 return (
                   <div key={section.group} className={`rounded-xl border ${style.border} ${style.bg} overflow-hidden`}>
@@ -462,6 +473,34 @@ export default function TenantEditPage() {
                 )
               })}
             </div>
+
+            {hidden.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-zinc-200">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-muted-foreground">Скрытые категории:</span>
+                  {hidden.map(({ section, ids }) => {
+                    const style = GROUP_STYLE[section.group] || GROUP_STYLE.Settings
+                    const GroupIcon = style.icon
+                    return (
+                      <button
+                        key={section.group}
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, features: [...new Set([...f.features, ...ids])] }))}
+                        className={`inline-flex items-center gap-1.5 rounded-full border border-dashed ${style.border} px-2.5 py-1 text-xs ${style.color} hover:bg-muted/40 transition-colors`}
+                        title={`Включить все модули раздела «${section.group}»`}
+                      >
+                        <GroupIcon className="w-3 h-3" />
+                        {section.group}
+                        <span className="text-muted-foreground">+</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+                </>
+              )
+            })()}
           </Card>
 
           {/* AI Automation — per-scenario shadow/live toggles */}
