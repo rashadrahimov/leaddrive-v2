@@ -97,3 +97,84 @@ This project has a graphify knowledge graph at `graphify-out/`.
 1. ALWAYS query the knowledge graph first
 2. Only read raw files if the user explicitly says so
 3. Use `graphify-out/wiki/index.md`
+
+## Roles & workflow (read before acting)
+
+Four roles operate on this codebase; a new Claude session MUST understand
+them before writing code. Both developer and architect are Claude
+instances in the same Claude Code environment — there is no external model.
+
+| Role | Identity | Tools | Does | Does NOT |
+|---|---|---|---|---|
+| **User** | Human (Rashad) | N/A | Strategic scope, ship/cut decisions, real-world context, approves deferrals | Write code |
+| **Developer** | Main Claude in the session | Full (Read/Write/Edit/Bash/...) | Writes code, runs tests / tsc / migrations / deploy scripts, makes tactical architecture calls autonomously, announces next step, never votes | Decide ship/cut unilaterally; silently defer promised work |
+| **Architect subagent** | Claude via `Agent` tool with `subagent_type: "architect"` | Read-only (Read/Grep/Glob/Bash) | Reviews changes: scope audit vs declared TurnGoal + quality review (Проблемы/Предложения). Catches drift, silent deferrals, security regressions, architectural gaps | Write or edit files |
+| **Explore subagent** | Claude via `Agent` tool with `subagent_type: "Explore"` | Read-only | On-demand codebase searches, honest audits spanning many files | Write or edit files |
+
+### Turn flow
+
+1. User gives direction OR developer continues per agreed plan.
+2. Developer declares **TurnGoal** at start of any substantive turn
+   (substantive = produces any git diff OR writes to `memory/`; TodoWrite
+   alone doesn't count). Pure Q&A / planning turns are exempt.
+3. Developer executes, runs the usual local checks (`npx tsc --noEmit`,
+   `npm run test`, `npx prisma migrate dev`, etc.).
+4. **Stop hook** (`.claude/hooks/architect-gate.sh`, triggered only when
+   `.claude/hooks/mark-dirty.sh` marked the turn) blocks turn close and
+   forces the developer to invoke the architect subagent. Non-substantive
+   turns (no Edit/Write/MultiEdit use) pass through without review.
+5. Architect prompt has two required sections:
+   - **Scope check:** TurnGoal verbatim → architect verifies each goal
+     landed in diff, flags silent drops / undeclared deferrals /
+     retro-scope-creep.
+   - **Quality review:** Проблемы / Предложения on what was built.
+6. Architect's reply — both sections — is quoted **verbatim** in the final
+   user-facing message (pass-through identical whether scope is clean or
+   not; user always sees the audit happened).
+7. Any Problem from either section triggers **fix-before-build** (see
+   `memory/feedback_fix_before_build.md`) — turn cannot close until the
+   issue is resolved or the developer explicitly escalates to the user
+   for cut/defer approval (in the final assistant message, not in a
+   ROADMAP comment).
+8. Turn ends with developer announcing the next step as a fact, not a
+   question (see `memory/feedback_decide_next_step.md`).
+
+### How developer invokes subagents
+
+```
+Agent(subagent_type="architect", description="...", prompt="...")
+Agent(subagent_type="Explore",   description="...", prompt="...")
+```
+
+Architect runs after every substantive turn (mechanically via stop hook).
+Explore is on-demand for cross-file audits. Neither can write files.
+
+### Durable protocol files
+
+Persisted in `memory/` and auto-loaded at session start. `memory/MEMORY.md`
+is the index — each line is a markdown link pointing at a feedback /
+project / reference memory file. A new Claude traverses those links when
+the topic comes up, not up-front.
+
+Core protocol files (must exist; if absent, re-copy from the protocol
+template or from any other project that has them — they are intentionally
+project-agnostic):
+
+- `feedback_fix_before_build.md` — close review findings before new work
+- `feedback_decide_next_step.md` — don't ask, announce
+- `feedback_architect_scope_audit.md` — TurnGoal + double-audit protocol
+
+LeadDrive-specific feedback / project memories are enumerated in
+`MEMORY.md` (deploy, multi-client, branding, i18n, etc. — keep as-is).
+
+### Operational gotchas
+
+- **Start Claude sessions from the repo root.** The stop / dirty hooks in
+  `.claude/settings.json` use relative paths (`.claude/hooks/...`); if the
+  session CWD is a sub-directory, the hooks fire-and-fail silently and the
+  architect-gate is effectively disabled.
+- **Architect subagent should consult `graphify-out/`.** Before wading into
+  the codebase, architect reads `graphify-out/GRAPH_REPORT.md` (god nodes,
+  community structure) and `graphify-out/wiki/index.md` if present —
+  cheaper than blind grep on a large project. The subagent definition in
+  `.claude/agents/architect.md` already carries this instruction.
