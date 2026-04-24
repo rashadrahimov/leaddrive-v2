@@ -18,6 +18,33 @@ import { findViralMentions, filterNewViralCandidates, writeViralShadowAction } f
  * Each action checks its own feature flag.
  * New automations start in shadow mode (write to AiShadowAction, don't execute).
  */
+
+/**
+ * Race-safe create for `aiShadowAction`. The partial unique index
+ * `ai_shadow_actions_pending_uniq` enforces at-most-one pending row per
+ * (organizationId, entityType, entityId, featureName). Two overlapping cron
+ * runs may both pass their in-memory dedup check and attempt create; the
+ * second hit gets P2002, which is expected and benign — we swallow it and let
+ * the caller continue. Returns true if the row was inserted, false on conflict.
+ * Any non-P2002 error is re-thrown.
+ */
+async function createShadowActionSafe(
+  data: Parameters<typeof prisma.aiShadowAction.create>[0]["data"],
+): Promise<boolean> {
+  try {
+    await prisma.aiShadowAction.create({ data })
+    return true
+  } catch (e: unknown) {
+    if (e && typeof e === "object" && "code" in e && (e as { code?: string }).code === "P2002") {
+      console.warn(
+        `[ai-auto-actions] P2002 conflict on aiShadowAction (${data.featureName} / ${data.entityType}:${data.entityId}) — concurrent cron race, skipping`,
+      )
+      return false
+    }
+    throw e
+  }
+}
+
 export async function POST(req: NextRequest) {
   const cronSecret =
     req.headers.get("x-cron-secret") ||
@@ -186,21 +213,20 @@ async function runAutoAcknowledge(orgId: string, now: Date, shadow: boolean): Pr
     const templateMessage = `We have received your request ${ticket.ticketNumber}. A specialist will respond within ${hoursRemaining}h. Thank you for your patience.`
 
     if (shadow) {
-      await prisma.aiShadowAction.create({
-        data: {
-          organizationId: orgId,
-          featureName: "ai_auto_acknowledge",
-          entityType: "ticket",
-          entityId: ticket.id,
-          actionType: "send_template",
-          payload: {
-            ticketNumber: ticket.ticketNumber,
-            message: templateMessage,
-            hoursRemaining,
-            percentElapsed: Math.round(percentElapsed * 100),
-          },
+      const inserted = await createShadowActionSafe({
+        organizationId: orgId,
+        featureName: "ai_auto_acknowledge",
+        entityType: "ticket",
+        entityId: ticket.id,
+        actionType: "send_template",
+        payload: {
+          ticketNumber: ticket.ticketNumber,
+          message: templateMessage,
+          hoursRemaining,
+          percentElapsed: Math.round(percentElapsed * 100),
         },
       })
+      if (!inserted) continue
     } else {
       // Create a comment on the ticket (public, no userId = system)
       await prisma.ticketComment.create({
@@ -262,8 +288,29 @@ async function runAutoFollowUp(orgId: string, now: Date, shadow: boolean): Promi
       company: { select: { name: true } },
     },
   })
+  if (activeDeals.length === 0) return 0
+
+  // Dedup: skip deals that already have a pending or recently-reviewed shadow
+  // action for this feature (mirrors runHotLeadEscalation pattern). Query both
+  // legacy and `_shadow`-suffixed featureName variants so older rows still count.
+  const recent = new Date(now.getTime() - 7 * 86400000)
+  const existingShadow = await prisma.aiShadowAction.findMany({
+    where: {
+      organizationId: orgId,
+      featureName: { in: ["ai_auto_followup", "ai_auto_followup_shadow"] },
+      entityType: "deal",
+      entityId: { in: activeDeals.map((d) => d.id) },
+      OR: [{ approved: null }, { reviewedAt: { gte: recent } }],
+    },
+    select: { entityId: true },
+  })
+  const skipShadow = new Set(existingShadow.map((e) => e.entityId))
 
   for (const deal of activeDeals) {
+    // Skip regardless of mode — if a pending shadow already exists, don't
+    // auto-approve it by writing a live Task behind the reviewer's back.
+    if (skipShadow.has(deal.id)) continue
+
     // Check last activity
     const lastActivity = await prisma.activity.findFirst({
       where: { organizationId: orgId, relatedType: "deal", relatedId: deal.id },
@@ -293,21 +340,20 @@ async function runAutoFollowUp(orgId: string, now: Date, shadow: boolean): Promi
     const taskDescription = `No activity for ${daysSinceActivity} days. Consider reaching out to keep the deal moving.`
 
     if (shadow) {
-      await prisma.aiShadowAction.create({
-        data: {
-          organizationId: orgId,
-          featureName: "ai_auto_followup",
-          entityType: "deal",
-          entityId: deal.id,
-          actionType: "create_task",
-          payload: {
-            title: taskTitle,
-            description: taskDescription,
-            assignedTo: deal.assignedTo,
-            daysSinceActivity,
-          },
+      const inserted = await createShadowActionSafe({
+        organizationId: orgId,
+        featureName: "ai_auto_followup",
+        entityType: "deal",
+        entityId: deal.id,
+        actionType: "create_task",
+        payload: {
+          title: taskTitle,
+          description: taskDescription,
+          assignedTo: deal.assignedTo,
+          daysSinceActivity,
         },
       })
+      if (!inserted) continue
     } else {
       await prisma.task.create({
         data: {
@@ -405,22 +451,21 @@ async function runAutoPaymentReminder(orgId: string, now: Date, shadow: boolean)
       const companyName = (invoice.company as any)?.name || ""
 
       if (shadow) {
-        await prisma.aiShadowAction.create({
-          data: {
-            organizationId: orgId,
-            featureName: "ai_auto_payment_reminder",
-            entityType: "invoice",
-            entityId: invoice.id,
-            actionType: "enroll_journey",
-            payload: {
-              invoiceNumber: invoice.invoiceNumber,
-              amount: invoice.totalAmount,
-              daysOverdue,
-              contactId: invoice.contactId,
-              companyName,
-            },
+        const inserted = await createShadowActionSafe({
+          organizationId: orgId,
+          featureName: "ai_auto_payment_reminder",
+          entityType: "invoice",
+          entityId: invoice.id,
+          actionType: "enroll_journey",
+          payload: {
+            invoiceNumber: invoice.invoiceNumber,
+            amount: invoice.totalAmount,
+            daysOverdue,
+            contactId: invoice.contactId,
+            companyName,
           },
         })
+        if (!inserted) continue
       } else {
         // Find payment reminder journey
         const journey = await prisma.journey.findFirst({
@@ -516,28 +561,27 @@ async function runHotLeadEscalation(orgId: string, now: Date, shadow: boolean): 
     if (lead.assignedTo && seniorIds.has(lead.assignedTo)) continue
 
     const senior = seniors[count % seniors.length]
-    await prisma.aiShadowAction.create({
-      data: {
-        organizationId: orgId,
-        featureName: shadow ? "ai_auto_hot_lead_shadow" : "ai_auto_hot_lead",
-        entityType: "lead",
-        entityId: lead.id,
-        actionType: "reassign_lead",
-        payload: {
-          leadName: lead.contactName,
-          companyName: lead.companyName,
-          email: lead.email,
-          score: lead.score,
-          currentAssignee: lead.assignedTo,
-          suggestedAssigneeId: senior.id,
-          suggestedAssigneeName: senior.name || senior.email,
-          reasoning: `Score ${lead.score} exceeded escalation threshold (${HOT_SCORE_THRESHOLD})`,
-        },
-        approved: shadow ? null : true,
-        reviewedAt: shadow ? null : now,
-        reviewedBy: shadow ? null : "system",
+    const inserted = await createShadowActionSafe({
+      organizationId: orgId,
+      featureName: shadow ? "ai_auto_hot_lead_shadow" : "ai_auto_hot_lead",
+      entityType: "lead",
+      entityId: lead.id,
+      actionType: "reassign_lead",
+      payload: {
+        leadName: lead.contactName,
+        companyName: lead.companyName,
+        email: lead.email,
+        score: lead.score,
+        currentAssignee: lead.assignedTo,
+        suggestedAssigneeId: senior.id,
+        suggestedAssigneeName: senior.name || senior.email,
+        reasoning: `Score ${lead.score} exceeded escalation threshold (${HOT_SCORE_THRESHOLD})`,
       },
+      approved: shadow ? null : true,
+      reviewedAt: shadow ? null : now,
+      reviewedBy: shadow ? null : "system",
     })
+    if (!inserted) continue
     count++
   }
   return count
@@ -621,28 +665,27 @@ async function runStageAdvance(orgId: string, now: Date, shadow: boolean): Promi
     const stageStart = deal.stageChangedAt || deal.createdAt
     const daysInStage = stageStart ? Math.floor((now.getTime() - stageStart.getTime()) / 86400000) : 0
 
-    await prisma.aiShadowAction.create({
-      data: {
-        organizationId: orgId,
-        featureName: shadow ? "ai_auto_stage_advance_shadow" : "ai_auto_stage_advance",
-        entityType: "deal",
-        entityId: deal.id,
-        actionType: "advance_deal_stage",
-        payload: {
-          dealName: deal.name,
-          currentStage: deal.stage,
-          suggestedStage: nextStage,
-          probability: deal.probability,
-          valueAmount: deal.valueAmount || 0,
-          currency: deal.currency || "USD",
-          daysInStage,
-          reasoning: `Stuck in ${deal.stage} for ${daysInStage} days with ${deal.probability}% probability`,
-        },
-        approved: shadow ? null : true,
-        reviewedAt: shadow ? null : now,
-        reviewedBy: shadow ? null : "system",
+    const inserted = await createShadowActionSafe({
+      organizationId: orgId,
+      featureName: shadow ? "ai_auto_stage_advance_shadow" : "ai_auto_stage_advance",
+      entityType: "deal",
+      entityId: deal.id,
+      actionType: "advance_deal_stage",
+      payload: {
+        dealName: deal.name,
+        currentStage: deal.stage,
+        suggestedStage: nextStage,
+        probability: deal.probability,
+        valueAmount: deal.valueAmount || 0,
+        currency: deal.currency || "USD",
+        daysInStage,
+        reasoning: `Stuck in ${deal.stage} for ${daysInStage} days with ${deal.probability}% probability`,
       },
+      approved: shadow ? null : true,
+      reviewedAt: shadow ? null : now,
+      reviewedBy: shadow ? null : "system",
     })
+    if (!inserted) continue
     count++
   }
   return count
