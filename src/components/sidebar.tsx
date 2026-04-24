@@ -232,9 +232,14 @@ export function Sidebar({ org }: SidebarProps) {
     return () => { cancelled = true; clearInterval(id); clearInterval(aiId) }
   }, [])
 
-  // Filter sidebar items based on org modules/features/plan
-  // Superadmin and enterprise plans see everything
-  const showAll = org.role === "superadmin" || org.plan === "enterprise"
+  // Filter sidebar items based on org modules/features/plan.
+  //
+  // Only superadmin sees every item unconditionally. Enterprise tenants are
+  // subject to the same feature-toggle gate as everyone else: `hasModule`
+  // consults `org.modules` (populated from `Organization.features` in the
+  // auth callback) so the admin's "Field Teams (MTM) = OFF" toggle actually
+  // hides MTM items from the tenant's sidebar.
+  const showAll = org.role === "superadmin"
   const featureEnabled = (f?: string) => !f || org.modules?.[f] === true
   const accessibleItems = showAll
     ? navItems.filter((item) => featureEnabled(item.feature))
