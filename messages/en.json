@@ -7639,6 +7639,8 @@
       "modules": "Modules",
       "activeModules": "Active Modules",
       "modulesCount": "{count} of {total} modules enabled",
+      "hiddenCategories": "Hidden categories:",
+      "enableAllInGroup": "Enable all modules in {group}",
       "branding": "Branding",
       "primaryColor": "Primary Color",
       "logoUrl": "Logo URL",

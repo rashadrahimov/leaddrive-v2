@@ -475,23 +475,25 @@ export default function TenantEditPage() {
             </div>
 
             {hidden.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-zinc-200">
+              <div className="mt-4 pt-4 border-t border-zinc-200" role="group" aria-label={t("tenants.hiddenCategories")}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-muted-foreground">Скрытые категории:</span>
+                  <span className="text-xs text-muted-foreground">{t("tenants.hiddenCategories")}</span>
                   {hidden.map(({ section, ids }) => {
                     const style = GROUP_STYLE[section.group] || GROUP_STYLE.Settings
                     const GroupIcon = style.icon
+                    const label = t("tenants.enableAllInGroup", { group: section.group })
                     return (
                       <button
                         key={section.group}
                         type="button"
                         onClick={() => setForm((f) => ({ ...f, features: [...new Set([...f.features, ...ids])] }))}
                         className={`inline-flex items-center gap-1.5 rounded-full border border-dashed ${style.border} px-2.5 py-1 text-xs ${style.color} hover:bg-muted/40 transition-colors`}
-                        title={`Включить все модули раздела «${section.group}»`}
+                        aria-label={label}
+                        title={label}
                       >
-                        <GroupIcon className="w-3 h-3" />
+                        <GroupIcon className="w-3 h-3" aria-hidden="true" />
                         {section.group}
-                        <span className="text-muted-foreground">+</span>
+                        <span className="text-muted-foreground" aria-hidden="true">+</span>
                       </button>
                     )
                   })}

@@ -7639,6 +7639,8 @@
       "modules": "Модули",
       "activeModules": "Активные модули",
       "modulesCount": "{count} из {total} модулей включено",
+      "hiddenCategories": "Скрытые категории:",
+      "enableAllInGroup": "Включить все модули раздела «{group}»",
       "branding": "Брендинг",
       "primaryColor": "Основной цвет",
       "logoUrl": "URL логотипа",

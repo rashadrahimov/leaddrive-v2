@@ -7639,6 +7639,8 @@
       "modules": "Modullar",
       "activeModules": "Aktiv modullar",
       "modulesCount": "{total} moduldan {count} aktivdir",
+      "hiddenCategories": "Gizlənmiş kateqoriyalar:",
+      "enableAllInGroup": "«{group}» bölməsindəki bütün modulları aktivləşdir",
       "branding": "Brendinq",
       "primaryColor": "Əsas rəng",
       "logoUrl": "Loqo URL",
