@@ -23,6 +23,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 GRAPH = REPO / "graphify-out" / "graph.json"
 
+if not GRAPH.exists():
+    sys.exit(f"error: {GRAPH} not found — run /graphify <path> first to build the graph")
+
 # Next.js convention filenames whose stems collide across directories.
 NEXT_STEMS = {"route", "page", "layout", "loading", "error", "not-found", "default", "template", "head"}
 
@@ -78,7 +81,10 @@ def main():
             n_copy["id"] = new_id
             n_copy["source_file"] = str(rel)
             new_nodes[new_id] = n_copy
-            rewrites[(old_id, str(rel))] = new_id
+            key = (old_id, str(rel))
+            if key in rewrites:
+                print(f"  [warn] duplicate (collapsed_id, file) key — same name twice in {rel}: {old_id}")
+            rewrites[key] = new_id
 
         if i % 50 == 0 or i == len(files):
             print(f"  Re-extracted {i}/{len(files)}")
@@ -106,6 +112,7 @@ def main():
     # that file's parent), rewire to the namespaced id derived from that file.
     edges_to_add: list[tuple[str, str, dict]] = []
     edges_to_remove: list[tuple[str, str]] = []
+    unresolved = 0  # edge touched a collapsed node but resolve() couldn't find a target
 
     for u, v, data in G.edges(data=True):
         u_collapsed = u in collapsed
@@ -135,8 +142,11 @@ def main():
         if new_u and new_v and (new_u != u or new_v != v):
             edges_to_add.append((new_u, new_v, data))
             edges_to_remove.append((u, v))
+        elif (u_collapsed and not new_u) or (v_collapsed and not new_v):
+            unresolved += 1
 
-    print(f"Rewiring {len(edges_to_add)} edges; removing {len(edges_to_remove)} originals")
+    print(f"Rewiring {len(edges_to_add)} edges; removing {len(edges_to_remove)} originals "
+          f"(unresolved collapsed-touching edges left in place: {unresolved})")
     G.remove_edges_from(edges_to_remove)
     for u, v, data in edges_to_add:
         G.add_edge(u, v, **data)

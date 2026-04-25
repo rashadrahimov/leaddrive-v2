@@ -89,8 +89,10 @@ This project has a graphify knowledge graph at `graphify-out/`.
 - If `graphify-out/wiki/index.md` exists, navigate it instead of reading raw files
 - After modifying code files in this session, run:
   ```bash
-  python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+  python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))" \
+    && python3 scripts/graphify-fix-collapsed-handlers.py
   ```
+  The fix-script splits Next.js convention handlers (`route.ts`, `page.tsx`, `layout.tsx`) that graphify's AST extractor otherwise collapses into single god nodes (POST/GET/etc with hundreds of false-bridge edges). Required after every rebuild until graphify upstream namespaces by parent dir.
 
 ## Context Navigation
 
