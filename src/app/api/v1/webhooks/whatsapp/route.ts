@@ -807,7 +807,10 @@ async function handleAiAutoReply(
     // try/catch and may leave `contactId` undefined. Prisma drops
     // `field: undefined` from the where clause entirely, which used to make
     // the guard match ANY open WA ticket in the org and silently block
-    // legitimate new tickets.
+    // legitimate new tickets. NB: the same trap fires for `null` and `""` if
+    // the value is coerced via `x || undefined` — anywhere you'd write a
+    // partial filter like that, prefer an explicit `if (x) { … }` branch or a
+    // sentinel value.
     const existingTicket = await prisma.ticket.findFirst({
       where: {
         organizationId,
