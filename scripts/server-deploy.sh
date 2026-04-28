@@ -98,21 +98,38 @@ elif [ -f "$MIG_SCRIPT_ROOT" ]; then
   node "$MIG_SCRIPT_ROOT" 2>&1 || log "WARNING: wa-migrate returned non-zero (non-fatal)"
 fi
 
-# ── Step 3c: Backfill missing plan-default features into Organization.features ──
+# ── Step 3c: One-shot backfill — re-attach plan-default features per tenant ──
 # Fixes regression from commit 560bf202 where the sidebar's enterprise-plan
 # bypass was removed: tenants that pre-date a feature (e.g. complaints_register)
 # never had it written into their Organization.features row, so the sidebar item
-# silently disappeared. The script reads scripts/backfill-plan-features.mjs,
-# adds only the *plan-tier defaults* the org is missing, and is idempotent.
-# TODO: remove this step once one full deploy cycle has run on every active
-# server (LeadDrive shared + each per-client box). After that, no org will be
-# missing plan-tier defaults and the script becomes a noop on every run.
+# silently disappeared.
+#
+# IMPORTANT: gated by a sentinel file so it runs exactly ONCE per server. After
+# the first successful run, an admin's intentional OFF-toggle in the per-tenant
+# edit UI (`/admin/tenants/<id>/edit` → "Complaints Register: off") survives
+# subsequent deploys. Without the sentinel, every deploy would re-add the
+# plan-default features and silently undo the admin's choice.
+#
+# To force a re-run (e.g. after adding a new entry to TENANT_PLANS.features in
+# src/lib/tenant-plans.ts) bump the sentinel version: change the path below to
+# `.backfill-plan-features-v2-done`, etc.
+PF_SENTINEL="$APP_DIR/.backfill-plan-features-v1-done"
 PF_SCRIPT_STANDALONE="$APP_DIR/.next/standalone/scripts/backfill-plan-features.mjs"
 PF_SCRIPT_ROOT="$APP_DIR/scripts/backfill-plan-features.mjs"
-if [ -f "$PF_SCRIPT_STANDALONE" ]; then
-  node "$PF_SCRIPT_STANDALONE" --execute 2>&1 || log "WARNING: plan-features backfill returned non-zero (non-fatal)"
+if [ -f "$PF_SENTINEL" ]; then
+  log "plan-features backfill: sentinel present, skipping"
+elif [ -f "$PF_SCRIPT_STANDALONE" ]; then
+  if node "$PF_SCRIPT_STANDALONE" --execute 2>&1; then
+    touch "$PF_SENTINEL" && log "plan-features backfill: done, sentinel set"
+  else
+    log "WARNING: plan-features backfill returned non-zero (non-fatal); sentinel NOT set, will retry next deploy"
+  fi
 elif [ -f "$PF_SCRIPT_ROOT" ]; then
-  node "$PF_SCRIPT_ROOT" --execute 2>&1 || log "WARNING: plan-features backfill returned non-zero (non-fatal)"
+  if node "$PF_SCRIPT_ROOT" --execute 2>&1; then
+    touch "$PF_SENTINEL" && log "plan-features backfill: done, sentinel set"
+  else
+    log "WARNING: plan-features backfill returned non-zero (non-fatal); sentinel NOT set, will retry next deploy"
+  fi
 fi
 
 # ── Step 4: Copy ecosystem config ──────────────────────────

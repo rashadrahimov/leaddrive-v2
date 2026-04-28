@@ -50,7 +50,7 @@ async function main() {
 
   console.log(`[backfill-plan-features] scanning ${orgs.length} organization(s)`)
 
-  let touched = 0
+  let wouldPatch = 0
   let alreadyOk = 0
   let unknownPlan = 0
 
@@ -82,14 +82,15 @@ async function main() {
         data: { features: merged },
       })
     }
-    touched++
+    wouldPatch++
   }
 
+  const verb = execute ? "patched" : "wouldPatch"
   console.log(
-    `[backfill-plan-features] done. touched=${touched} alreadyOk=${alreadyOk} unknownPlan=${unknownPlan}`,
+    `[backfill-plan-features] done. ${verb}=${wouldPatch} alreadyOk=${alreadyOk} unknownPlan=${unknownPlan}`,
   )
-  if (!execute && touched > 0) {
-    console.log(`[backfill-plan-features] re-run with --execute to write ${touched} update(s)`)
+  if (!execute && wouldPatch > 0) {
+    console.log(`[backfill-plan-features] re-run with --execute to write ${wouldPatch} update(s)`)
   }
 }
 
