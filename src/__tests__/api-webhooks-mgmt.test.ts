@@ -533,32 +533,61 @@ describe("POST /api/v1/webhooks/whatsapp", () => {
     // Pre-fix: the guard's `contactId: undefined` was silently dropped by
     // Prisma → matched any org-wide WA ticket → silently blocked. Post-fix:
     // guard scopes by `sourceMeta.phone`, which is unaffected by contactId.
+    //
+    // To make this a *behavioural* test (not just shape-assertion), we mock
+    // `prisma.ticket.findFirst` to simulate Prisma's actual filtering: there
+    // exists a stale unrelated WA ticket from a DIFFERENT phone in the org.
+    //   - Pre-fix where-clause omits the phone scope → mock returns the stale
+    //     ticket → guard sets hasRecentTicket=true → ticket.create NOT called.
+    //   - Post-fix where-clause includes `sourceMeta.phone === waPhone` → mock
+    //     sees phones don't match → returns null → ticket.create IS called.
     delete process.env.WHATSAPP_APP_SECRET
     process.env.ANTHROPIC_API_KEY = "test-key"
 
     setupHappyPathMocks()
-    // Simulate the failure mode that triggers the bug
     vi.mocked(prisma.contact.create).mockRejectedValue(new Error("simulated DB failure"))
+
+    // Simulated org state: one stale open WA ticket exists, but it's from a
+    // different phone (777...) and was created 5 min ago (within 1h window).
+    const STALE_PHONE = "777999999999"
+    const TEST_PHONE = "994501234567"
+    const staleTicket = {
+      ticketNumber: "DV-OLD-001",
+      createdAt: new Date(Date.now() - 5 * 60 * 1000),
+    }
+    vi.mocked(prisma.ticket.findFirst).mockImplementation(async (args: any) => {
+      const where = args?.where
+      // Reopen lookup (closed/resolved) — always null
+      if (!where?.status?.in?.includes("open")) return null
+      // Guard query (open/in_progress) — simulate Prisma's path/equals filter
+      const sourceMetaFilter = where.sourceMeta
+      if (sourceMetaFilter?.path?.[0] === "phone") {
+        // Post-fix: scoped by phone. Stale ticket matches only if phones equal.
+        return sourceMetaFilter.equals === STALE_PHONE ? (staleTicket as any) : null
+      }
+      // Pre-fix: no phone scope → stale ticket leaks through.
+      return staleTicket as any
+    })
+
     mockAnthropicCreate.mockResolvedValueOnce({
       content: [{ type: "text", text: "Понял, открываю тикет. [CREATE_TICKET]" }],
       usage: { input_tokens: 10, output_tokens: 20 },
     })
 
-    const res = await POST_WA(makeWaPayload())
+    const res = await POST_WA(makeWaPayload(TEST_PHONE))
     expect(res.status).toBe(200)
 
     const guardCall = findGuardCall()
     expect(guardCall, "guard must still run when contactId failed to resolve").toBeDefined()
     const where = (guardCall![0] as any).where
 
-    // The whole point of the fix: guard scope is unaffected by contactId
-    // resolution. sourceMeta.phone carries the identity, not contact rows.
-    expect(where.sourceMeta).toEqual({ path: ["phone"], equals: "994501234567" })
+    // Shape assertions (catch any future revert at the where-clause level)
+    expect(where.sourceMeta).toEqual({ path: ["phone"], equals: TEST_PHONE })
     expect(where).not.toHaveProperty("contactId")
 
-    // Guard returned null → ticket created despite no contactId. This is the
-    // behaviour that was broken pre-fix (a stale unrelated ticket suppressed
-    // creation entirely).
+    // Behaviour assertion: with the fix, the stale OTHER-PHONE ticket does
+    // not match → ticket.create was reached. Pre-fix this would have been
+    // silently blocked (the original bug).
     expect(prisma.ticket.create).toHaveBeenCalled()
   })
 })
