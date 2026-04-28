@@ -800,9 +800,21 @@ async function handleAiAutoReply(
     // Handle escalation — create ticket from WhatsApp chat
     // Guard 1: need at least 2 messages in session (1 user + 1 AI reply) — allows first-turn ticket on explicit request
     const messageCount = await prisma.aiChatMessage.count({ where: { sessionId: session.id } })
-    // Guard 2: don't create duplicate tickets in same session
+    // Guard 2: don't create a second ticket for the same WhatsApp number within
+    // 1 hour of the previous one. Scope by `sourceMeta.phone` (the canonical WA
+    // identifier we always have) — NOT by `contactId`, because the inbound
+    // contact auto-create earlier in this handler swallows errors in a
+    // try/catch and may leave `contactId` undefined. Prisma drops
+    // `field: undefined` from the where clause entirely, which used to make
+    // the guard match ANY open WA ticket in the org and silently block
+    // legitimate new tickets.
     const existingTicket = await prisma.ticket.findFirst({
-      where: { organizationId, tags: { has: "whatsapp" }, contactId: contactId || undefined, status: { in: ["open", "in_progress"] } },
+      where: {
+        organizationId,
+        tags: { has: "whatsapp" },
+        sourceMeta: { path: ["phone"], equals: waPhone },
+        status: { in: ["open", "in_progress"] },
+      },
       orderBy: { createdAt: "desc" },
       select: { ticketNumber: true, createdAt: true },
     })
