@@ -7,6 +7,12 @@ vi.hoisted(() => {
   process.env.WHATSAPP_VERIFY_TOKEN = "wa-test-token"
 })
 
+// Single hoisted mock fn so tests can override Anthropic's reply per-case
+// (e.g. to inject `[CREATE_TICKET]` markers) without re-mocking the module.
+const { mockAnthropicCreate } = vi.hoisted(() => ({
+  mockAnthropicCreate: vi.fn(),
+}))
+
 /* ─── Mocks ──────────────────────────────────────────────────────────── */
 
 vi.mock("@/lib/prisma", () => ({
@@ -20,7 +26,7 @@ vi.mock("@/lib/prisma", () => ({
     },
     channelConfig: { findFirst: vi.fn() },
     channelMessage: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-    contact: { findFirst: vi.fn(), updateMany: vi.fn() },
+    contact: { findFirst: vi.fn(), create: vi.fn(), updateMany: vi.fn() },
     ticket: { findFirst: vi.fn(), update: vi.fn(), create: vi.fn(), count: vi.fn() },
     ticketComment: { create: vi.fn() },
     aiAgentConfig: { findFirst: vi.fn() },
@@ -48,16 +54,17 @@ vi.mock("@/lib/sanitize", () => ({
   sanitizeForPrompt: vi.fn((s: string) => s),
 }))
 
-vi.mock("@anthropic-ai/sdk", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    messages: {
-      create: vi.fn().mockResolvedValue({
-        content: [{ type: "text", text: "AI reply" }],
-        usage: { input_tokens: 10, output_tokens: 20 },
-      }),
-    },
-  })),
-}))
+// Explicit class makes the constructor contract obvious — the WA route does
+// `new Anthropic(...)`, and an explicit class avoids relying on vi.fn's
+// reify-as-constructor quirk under different vitest/transform versions.
+// `mockAnthropicCreate` is hoisted so individual tests can call
+// `.mockResolvedValueOnce(...)` to inject markers like `[CREATE_TICKET]`.
+vi.mock("@anthropic-ai/sdk", () => {
+  class MockAnthropic {
+    messages = { create: mockAnthropicCreate }
+  }
+  return { default: MockAnthropic }
+})
 
 vi.mock("crypto", async (importOriginal) => {
   const actual = await importOriginal() as any
@@ -89,6 +96,12 @@ function makeParams(id: string) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Default Anthropic reply — tests that need markers override via
+  // `mockAnthropicCreate.mockResolvedValueOnce(...)`.
+  mockAnthropicCreate.mockResolvedValue({
+    content: [{ type: "text", text: "AI reply" }],
+    usage: { input_tokens: 10, output_tokens: 20 },
+  })
 })
 
 /* ─── WEBHOOK MANAGEMENT: GET /manage ─────────────────────────────────── */
@@ -420,5 +433,132 @@ describe("POST /api/v1/webhooks/whatsapp", () => {
       }),
     )
     expect(res.status).toBe(200)
+  })
+
+  // Regression coverage for 54d035af: the duplicate-ticket guard in
+  // handleAiAutoReply must filter by `sourceMeta.phone` (the canonical WA
+  // identifier), not by `contactId`. The previous implementation used
+  // `contactId: contactId || undefined`, and Prisma drops `undefined` fields
+  // from the where clause silently — so when contact auto-create swallowed
+  // an error, the guard matched ANY open WA ticket in the org and silently
+  // blocked legitimate ticket creation. Two tests below: the first asserts
+  // the where shape on the happy path; the second drives the actual bug
+  // trigger (contact.create rejects → contactId stays undefined).
+  function setupHappyPathMocks() {
+    vi.mocked(prisma.channelConfig.findFirst).mockResolvedValue({ id: "cfg1", organizationId: "org1" } as any)
+    vi.mocked(prisma.channelMessage.findFirst).mockResolvedValue(null as any)
+    vi.mocked(prisma.contact.findFirst).mockResolvedValue(null as any)
+    vi.mocked(prisma.channelMessage.create).mockResolvedValue({ id: "msg1" } as any)
+    vi.mocked(prisma.contact.updateMany).mockResolvedValue({ count: 1 } as any)
+    vi.mocked(prisma.ticket.findFirst).mockResolvedValue(null as any)
+    vi.mocked(prisma.aiAgentConfig.findFirst).mockResolvedValue({
+      isActive: true,
+      model: "claude-haiku-4-5-20251001",
+      temperature: 0.7,
+      maxTokens: 256,
+    } as any)
+    vi.mocked(prisma.aiChatSession.findFirst).mockResolvedValue(null as any)
+    vi.mocked(prisma.aiChatSession.create).mockResolvedValue({ id: "sess1" } as any)
+    vi.mocked(prisma.aiChatMessage.create).mockResolvedValue({ id: "aim1" } as any)
+    vi.mocked(prisma.aiChatMessage.findMany).mockResolvedValue([] as any)
+    vi.mocked(prisma.aiChatMessage.count).mockResolvedValue(2 as any)
+    vi.mocked(prisma.aiChatSession.update).mockResolvedValue({} as any)
+    vi.mocked(prisma.kbArticle.findMany).mockResolvedValue([] as any)
+    vi.mocked(prisma.ticket.count).mockResolvedValue(0 as any)
+    vi.mocked(prisma.ticket.create).mockResolvedValue({ id: "tkt1", ticketNumber: "DV-0001" } as any)
+    vi.mocked(prisma.ticketComment.create).mockResolvedValue({} as any)
+  }
+
+  function makeWaPayload(waPhone = "994501234567", body = "Открой тикет пожалуйста") {
+    return makeRequest("/api/v1/webhooks/whatsapp", {
+      method: "POST",
+      body: JSON.stringify({
+        entry: [{ changes: [{ value: {
+          metadata: { phone_number_id: "WA_PHONE_NUM_ID" },
+          contacts: [{ wa_id: waPhone, profile: { name: "Test User" } }],
+          messages: [{
+            id: "wamid.xxx",
+            from: waPhone,
+            timestamp: "1714000000",
+            type: "text",
+            text: { body },
+          }],
+        } }] }],
+      }),
+    })
+  }
+
+  function findGuardCall() {
+    // Discriminate guard's findFirst (status: open|in_progress) from
+    // tryReopenTicket's findFirst (status: closed|resolved).
+    return vi.mocked(prisma.ticket.findFirst).mock.calls.find((call: any[]) => {
+      const status = (call[0] as any)?.where?.status
+      return Array.isArray(status?.in) && status.in.includes("open") && status.in.includes("in_progress")
+    })
+  }
+
+  it("scopes duplicate-ticket guard by sourceMeta.phone, not contactId (happy path)", async () => {
+    delete process.env.WHATSAPP_APP_SECRET
+    process.env.ANTHROPIC_API_KEY = "test-key"
+
+    setupHappyPathMocks()
+    // Contact auto-create succeeds → contactId set
+    vi.mocked(prisma.contact.create).mockResolvedValue({ id: "contact1" } as any)
+    // AI explicitly asks for a ticket via marker — keyword-independent trigger,
+    // robust against future changes to the keyword regexes.
+    mockAnthropicCreate.mockResolvedValueOnce({
+      content: [{ type: "text", text: "Понял, открываю тикет. [CREATE_TICKET]" }],
+      usage: { input_tokens: 10, output_tokens: 20 },
+    })
+
+    const res = await POST_WA(makeWaPayload())
+    expect(res.status).toBe(200)
+
+    const guardCall = findGuardCall()
+    expect(guardCall, "expected the duplicate-ticket guard to run").toBeDefined()
+    const where = (guardCall![0] as any).where
+
+    expect(where.sourceMeta).toEqual({ path: ["phone"], equals: "994501234567" })
+    expect(where).not.toHaveProperty("contactId")
+    expect(where.organizationId).toBe("org1")
+    expect(where.tags).toEqual({ has: "whatsapp" })
+
+    expect(prisma.ticket.create).toHaveBeenCalled()
+  })
+
+  it("guard works even when contact.create rejects (the actual bug trigger)", async () => {
+    // This is the path that surfaced the original bug: the inbound contact
+    // auto-create at the top of `handleAiAutoReply`'s caller catches errors
+    // in a try/catch and only logs them, leaving `contactId` as undefined.
+    // Pre-fix: the guard's `contactId: undefined` was silently dropped by
+    // Prisma → matched any org-wide WA ticket → silently blocked. Post-fix:
+    // guard scopes by `sourceMeta.phone`, which is unaffected by contactId.
+    delete process.env.WHATSAPP_APP_SECRET
+    process.env.ANTHROPIC_API_KEY = "test-key"
+
+    setupHappyPathMocks()
+    // Simulate the failure mode that triggers the bug
+    vi.mocked(prisma.contact.create).mockRejectedValue(new Error("simulated DB failure"))
+    mockAnthropicCreate.mockResolvedValueOnce({
+      content: [{ type: "text", text: "Понял, открываю тикет. [CREATE_TICKET]" }],
+      usage: { input_tokens: 10, output_tokens: 20 },
+    })
+
+    const res = await POST_WA(makeWaPayload())
+    expect(res.status).toBe(200)
+
+    const guardCall = findGuardCall()
+    expect(guardCall, "guard must still run when contactId failed to resolve").toBeDefined()
+    const where = (guardCall![0] as any).where
+
+    // The whole point of the fix: guard scope is unaffected by contactId
+    // resolution. sourceMeta.phone carries the identity, not contact rows.
+    expect(where.sourceMeta).toEqual({ path: ["phone"], equals: "994501234567" })
+    expect(where).not.toHaveProperty("contactId")
+
+    // Guard returned null → ticket created despite no contactId. This is the
+    // behaviour that was broken pre-fix (a stale unrelated ticket suppressed
+    // creation entirely).
+    expect(prisma.ticket.create).toHaveBeenCalled()
   })
 })
