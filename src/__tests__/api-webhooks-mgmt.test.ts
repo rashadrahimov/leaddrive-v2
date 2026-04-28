@@ -551,10 +551,16 @@ describe("POST /api/v1/webhooks/whatsapp", () => {
     // different phone (777...) and was created 5 min ago (within 1h window).
     const STALE_PHONE = "777999999999"
     const TEST_PHONE = "994501234567"
+    expect(STALE_PHONE).not.toBe(TEST_PHONE) // guard against accidental refactor
+
     const staleTicket = {
       ticketNumber: "DV-OLD-001",
       createdAt: new Date(Date.now() - 5 * 60 * 1000),
     }
+    // Single-tenant simulator by design: the mock keys only on
+    // `sourceMeta.path === ["phone"]` and ignores organizationId/tags. If a
+    // future test introduces a multi-tenant case, write a separate mock — this
+    // one would leak the stale ticket across orgs.
     vi.mocked(prisma.ticket.findFirst).mockImplementation(async (args: any) => {
       const where = args?.where
       // Reopen lookup (closed/resolved) — always null
