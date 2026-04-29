@@ -159,7 +159,10 @@ export function hasModule(org: OrgModuleContext, moduleId: ModuleId): boolean {
       }
       return false
     }
-    // Legacy fallback: JWT issued before token.modules was populated
+    // Legacy fallback: JWT issued before token.modules was populated. This
+    // branch is transient — auth.ts always materialises token.modules now, so
+    // any active session reaches this path only until its next token refresh
+    // (NextAuth maxAge default 30 days, but rotation typically every minutes).
     if (BASE_PLAN_MODULES.includes(moduleId)) return true
     if (org.addons) {
       for (const addon of org.addons) {
@@ -176,7 +179,9 @@ export function hasModule(org: OrgModuleContext, moduleId: ModuleId): boolean {
   }
 
   if (org.addons?.includes(moduleId)) return true
-  if (org.modules?.[moduleId]) return true
+  // Strict `=== true` — keeps semantics consistent with the new-tier branch
+  // above so an explicit `false` in `org.modules` is not treated as enabled.
+  if (org.modules?.[moduleId] === true) return true
   return false
 }
 

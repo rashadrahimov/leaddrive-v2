@@ -263,7 +263,7 @@ describe("hasModule", () => {
     it("explicit false in modules is treated as not-enabled (=== true check)", () => {
       // hasModule uses `=== true`, so `false` and missing are equivalent.
       // Pins this behaviour so a future revert to truthy-check doesn't slip in.
-      const org = { plan: "enterprise" as string, modules: { deals: false as any, leads: true } }
+      const org = { plan: "enterprise" as string, modules: { deals: false, leads: true } }
       expect(hasModule(org, "deals")).toBe(false)
       expect(hasModule(org, "leads")).toBe(true)
     })
