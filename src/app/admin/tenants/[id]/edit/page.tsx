@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Loader2, Save, Check, Handshake, Mail, MessageSquare, Ticket, Wallet, BarChart3, FolderKanban, MapPin, Settings, Zap, Upload, X, Sparkles } from "lucide-react"
 import Link from "next/link"
-import { MODULE_REGISTRY, type ModuleId } from "@/lib/modules"
+import { MODULE_REGISTRY, type ModuleId, ADDON_MODULES } from "@/lib/modules"
 
 // Complete sidebar sections — every page the user can see, grouped exactly like sidebar
 // Each section maps to a moduleId that controls its visibility
@@ -178,6 +178,7 @@ export default function TenantEditPage() {
     primaryColor: "#6C63FF",
     logo: "",
     features: [] as string[],
+    addons: [] as string[],
     orgLanguage: "",
     aiDailyBudgetUsd: "",
   })
@@ -201,6 +202,7 @@ export default function TenantEditPage() {
             primaryColor: branding.primaryColor || "#6C63FF",
             logo: branding.logo || "",
             features: Array.isArray(featuresRaw) ? featuresRaw : [],
+            addons: Array.isArray(t.addons) ? t.addons : [],
             orgLanguage: settings.language || settings.locale || "",
             aiDailyBudgetUsd: settings.aiDailyBudgetUsd != null ? String(settings.aiDailyBudgetUsd) : "",
           })
@@ -216,6 +218,15 @@ export default function TenantEditPage() {
       features: prev.features.includes(id)
         ? prev.features.filter((f) => f !== id)
         : [...prev.features, id],
+    }))
+  }
+
+  function toggleAddon(id: string) {
+    setForm((prev) => ({
+      ...prev,
+      addons: prev.addons.includes(id)
+        ? prev.addons.filter((a) => a !== id)
+        : [...prev.addons, id],
     }))
   }
 
@@ -275,6 +286,7 @@ export default function TenantEditPage() {
           maxContacts: form.maxContacts,
           branding: { primaryColor: form.primaryColor, logo: form.logo || undefined },
           features: form.features,
+          addons: form.addons,
           settings: settingsPatch,
         }),
       })
@@ -606,6 +618,85 @@ export default function TenantEditPage() {
                 >
                   {form.features.includes("complaints_register") ? "on" : "off"}
                 </button>
+              </div>
+            </div>
+
+            {/* Addons — separate from module toggles because addons unlock
+                groups of modules (e.g. `finance` → invoices+budgeting+
+                profitability) and are billed separately. The admin needs to
+                see and edit them explicitly: until this section existed, an
+                admin could turn off "Invoices" via module toggles but the
+                page kept rendering because the `finance` addon still granted
+                the module via hasModule's addon path. With this UI, admin can
+                drop the addon and the modules go with it. */}
+            <div className="mt-5 pt-5 border-t border-border/60 space-y-2">
+              <h4 className="text-sm font-semibold">Addons</h4>
+              <p className="text-[11px] text-muted-foreground">
+                Paid add-on packages. Each unlocks one or more modules above
+                — disabling an addon also hides every module it grants
+                (unless the module is independently in Features).
+              </p>
+              <div className="space-y-2">
+                {(() => {
+                  // Display metadata only — the actual list of addons is
+                  // driven off `Object.keys(ADDON_MODULES)` so a future entry
+                  // there auto-appears here. Billing-only addons (no module
+                  // grants) live in BILLING_ONLY_ADDONS — they still need a
+                  // toggle so admins can record what the customer paid for,
+                  // but render with a "no module impact" note.
+                  const ADDON_META: Record<string, { name: string; note: string }> = {
+                    ai:       { name: "Da Vinci AI",       note: "AI assistant + scoring + suggestions." },
+                    channels: { name: "Channels",          note: "Omni-channel inbox (FB, IG, Telegram, etc.)." },
+                    finance:  { name: "Finance Suite",     note: "Invoices + Budgeting + Profitability." },
+                    mtm:      { name: "Field Teams (MTM)", note: "Routes, visits, geofence — for field/merchandising teams." },
+                    voip:     { name: "VoIP / Telephony",  note: "Billing tag for telephony tier. The voip module itself unlocks via Features list, not via this addon." },
+                  }
+                  const BILLING_ONLY_ADDONS = ["voip"] as const
+                  // Union of module-granting addon ids and billing-only ids,
+                  // dedup'd. Stable sort to keep UI deterministic.
+                  const addonIds = Array.from(new Set([
+                    ...Object.keys(ADDON_MODULES),
+                    ...BILLING_ONLY_ADDONS,
+                  ])).sort()
+                  return addonIds.map((id) => {
+                    const meta = ADDON_META[id] || { name: id, note: "" }
+                    const isActive = form.addons.includes(id)
+                    const grantedModules = ADDON_MODULES[id] || []
+                    const isBillingOnly = grantedModules.length === 0
+                    return (
+                      <div key={id} className="flex items-center justify-between py-2 px-3 rounded-md border border-border/40 bg-muted/20">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium">{meta.name}</div>
+                          <div className="text-[11px] text-muted-foreground">{meta.note}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">
+                            <span className="opacity-60">Modules: </span>
+                            {isBillingOnly ? (
+                              <code className="px-1 py-px rounded bg-muted/60 opacity-70">(no module impact)</code>
+                            ) : (
+                              grantedModules.map((m, i) => (
+                                <span key={m}>
+                                  {i > 0 ? ", " : ""}
+                                  <code className="px-1 py-px rounded bg-muted/60">{m}</code>
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleAddon(id)}
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ml-3 flex-shrink-0 ${
+                            isActive
+                              ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                              : "bg-transparent text-muted-foreground border border-border hover:bg-muted"
+                          }`}
+                        >
+                          {isActive ? "on" : "off"}
+                        </button>
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             </div>
 
