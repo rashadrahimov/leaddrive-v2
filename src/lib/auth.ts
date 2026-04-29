@@ -203,14 +203,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.organizationName = dbUser.organization?.name || ""
           token.plan = dbUser.organization?.plan || "starter"
           token.addons = dbUser.organization?.addons || []
-          // Convert features array to modules Record for hasModule() compatibility
+          // Convert features array to modules Record for hasModule() compatibility.
+          // ALWAYS set token.modules — even from an empty array — so the new
+          // authoritative-modules branch in `hasModule` can distinguish
+          // "admin saved features=[]" (Clear All in admin UI → org.modules={})
+          // from "JWT predates the column" (org.modules=undefined). Without
+          // this, Clear All in /admin/tenants/<id>/edit would silently re-
+          // enable every base module via the untouched-tenant fallback.
           const features = dbUser.organization?.features
           const featuresArr = typeof features === "string" ? JSON.parse(features || "[]") : (features || [])
-          if (Array.isArray(featuresArr) && featuresArr.length > 0) {
-            const modules: Record<string, boolean> = {}
+          const modules: Record<string, boolean> = {}
+          if (Array.isArray(featuresArr)) {
             for (const f of featuresArr) modules[f] = true
-            token.modules = modules
           }
+          token.modules = modules
         }
         // Propagate 2FA flags from authorize return
         if ((user as any).needs2fa) token.needs2fa = true
@@ -226,8 +232,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (updateData.needsSetup2fa === false) token.needsSetup2fa = undefined
         if (updateData.name) token.name = updateData.name
       }
-      // Periodically refresh name from DB (every token rotation)
-      // Also backfills organizationSlug for JWTs issued before the field existed.
+      // Periodically refresh name + org module state from DB (every token
+      // rotation). Also backfills organizationSlug for JWTs issued before the
+      // field existed, AND re-materialises `token.modules` from
+      // `Organization.features` so an admin's toggle in /admin/tenants/<id>/edit
+      // takes effect on the next token rotation rather than waiting for the
+      // user to sign out + back in.
       if (!user && token.email) {
         try {
           const freshUser = await prisma.user.findFirst({
@@ -236,7 +246,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               name: true,
               role: true,
               organizationId: true,
-              organization: { select: { slug: true } },
+              organization: {
+                select: { slug: true, plan: true, addons: true, features: true },
+              },
             },
           })
           if (freshUser) {
@@ -244,6 +256,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = freshUser.role
             if (freshUser.organizationId) token.organizationId = freshUser.organizationId
             if (freshUser.organization?.slug) token.organizationSlug = freshUser.organization.slug
+            if (freshUser.organization?.plan) token.plan = freshUser.organization.plan
+            if (freshUser.organization?.addons) token.addons = freshUser.organization.addons
+            // Re-materialise modules from features array — same logic as initial
+            // sign-in. Always set (even when empty) so Clear All survives a
+            // refresh.
+            const freshFeatures = freshUser.organization?.features
+            const freshFeaturesArr = typeof freshFeatures === "string"
+              ? JSON.parse(freshFeatures || "[]")
+              : (freshFeatures || [])
+            const freshModules: Record<string, boolean> = {}
+            if (Array.isArray(freshFeaturesArr)) {
+              for (const f of freshFeaturesArr) freshModules[f] = true
+            }
+            token.modules = freshModules
           }
         } catch {
           // Non-critical — keep existing token values

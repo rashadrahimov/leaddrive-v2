@@ -131,16 +131,41 @@ interface OrgModuleContext {
 export function hasModule(org: OrgModuleContext, moduleId: ModuleId): boolean {
   if (MODULE_REGISTRY[moduleId]?.alwaysOn) return true
 
-  // New tier-based plans: base modules + addon-unlocked modules
+  // New tier-based plans: when present, `org.modules` is authoritative source-
+  // of-truth. The auth callback materialises `Organization.features` (a JSON
+  // string array) into `token.modules` ALWAYS — even from an empty array. So:
+  //   - `org.modules === undefined` → JWT predates the column → use plan
+  //     defaults (legacy compatibility).
+  //   - `org.modules === {}` → admin clicked "Clear All" or saved features=[]
+  //     → authoritative-empty: only alwaysOn modules + addons survive.
+  //   - `org.modules` non-empty → only listed modules + addons enabled.
+  //
+  // Before this semantic existed, `BASE_PLAN_MODULES.includes(moduleId)` ran
+  // first and short-circuited every base module to `true`, making admin
+  // toggles for Deals/Leads/Tasks/Contracts/etc. completely decorative on
+  // any new-tier plan (incl. `enterprise`). The one-shot backfill in
+  // `scripts/backfill-base-modules.mjs` ensures every existing tenant's
+  // features array contains the base modules before this code ships, so the
+  // semantic change doesn't accidentally hide pages from tenants who hadn't
+  // intentionally configured anything.
   if (isNewTier(org.plan)) {
+    if (org.modules !== undefined) {
+      // Authoritative — listed modules + addon-granted modules only
+      if (org.modules[moduleId] === true) return true
+      if (org.addons) {
+        for (const addon of org.addons) {
+          if (ADDON_MODULES[addon]?.includes(moduleId)) return true
+        }
+      }
+      return false
+    }
+    // Legacy fallback: JWT issued before token.modules was populated
     if (BASE_PLAN_MODULES.includes(moduleId)) return true
-    // Check if any of the org's addons unlock this module
     if (org.addons) {
       for (const addon of org.addons) {
         if (ADDON_MODULES[addon]?.includes(moduleId)) return true
       }
     }
-    if (org.modules?.[moduleId]) return true
     return false
   }
 

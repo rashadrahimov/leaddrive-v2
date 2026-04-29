@@ -132,6 +132,37 @@ elif [ -f "$PF_SCRIPT_ROOT" ]; then
   fi
 fi
 
+# ── Step 3d: One-shot backfill — inject BASE_PLAN_MODULES per tenant ─────
+# Companion to Step 3c. The new authoritative-modules branch in `hasModule()`
+# (src/lib/modules.ts) makes Organization.features the source-of-truth for
+# which sidebar pages a new-tier tenant sees. Before this semantic shipped,
+# BASE_PLAN_MODULES (deals/leads/tasks/etc.) were short-circuited to enabled
+# regardless of features — so most tenants' features arrays are sparse and
+# don't include them. Without this backfill, those tenants would lose every
+# base module from their sidebar after the new code restarts.
+#
+# Same sentinel-once-per-server pattern as Step 3c. Independent sentinel so
+# this can run on servers that already passed Step 3c. Idempotent (Set-merge);
+# admin's pre-existing OFF intent on plan-default features survives.
+BM_SENTINEL="$APP_DIR/.backfill-base-modules-v1-done"
+BM_SCRIPT_STANDALONE="$APP_DIR/.next/standalone/scripts/backfill-base-modules.mjs"
+BM_SCRIPT_ROOT="$APP_DIR/scripts/backfill-base-modules.mjs"
+if [ -f "$BM_SENTINEL" ]; then
+  log "base-modules backfill: sentinel present, skipping"
+elif [ -f "$BM_SCRIPT_STANDALONE" ]; then
+  if node "$BM_SCRIPT_STANDALONE" --execute 2>&1; then
+    touch "$BM_SENTINEL" && log "base-modules backfill: done, sentinel set"
+  else
+    log "WARNING: base-modules backfill returned non-zero (non-fatal); sentinel NOT set, will retry next deploy"
+  fi
+elif [ -f "$BM_SCRIPT_ROOT" ]; then
+  if node "$BM_SCRIPT_ROOT" --execute 2>&1; then
+    touch "$BM_SENTINEL" && log "base-modules backfill: done, sentinel set"
+  else
+    log "WARNING: base-modules backfill returned non-zero (non-fatal); sentinel NOT set, will retry next deploy"
+  fi
+fi
+
 # ── Step 4: Copy ecosystem config ──────────────────────────
 log "Updating PM2 config..."
 cp "$APP_DIR/.next/standalone/ecosystem.config.cjs" "$APP_DIR/ecosystem.config.cjs" 2>/dev/null || true

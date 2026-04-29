@@ -200,6 +200,75 @@ describe("hasModule", () => {
     expect(hasModule({ plan: "tier-5", modules: { mtm: true } }, "mtm")).toBe(true)
   })
 
+  // Authoritative-modules semantic: when an admin has saved any features in
+  // /admin/tenants/<id>/edit, `Organization.features` (materialised into
+  // `org.modules`) becomes source-of-truth for new-tier plans. Anything not
+  // explicitly true is OFF, even base modules like "deals". Tenants whose
+  // features array is empty (untouched) still fall back to plan defaults.
+  describe("hasModule — authoritative org.modules for new-tier plans", () => {
+    it("explicit modules object disables base modules not listed", () => {
+      // Admin saved features=[whatsapp,ai] only — even base "deals" must be off
+      const org = { plan: "enterprise" as string, modules: { whatsapp: true, ai: true } }
+      expect(hasModule(org, "deals")).toBe(false)
+      expect(hasModule(org, "leads")).toBe(false)
+      expect(hasModule(org, "tasks")).toBe(false)
+    })
+
+    it("explicit modules respects what IS listed", () => {
+      const org = { plan: "enterprise" as string, modules: { deals: true, leads: true } }
+      expect(hasModule(org, "deals")).toBe(true)
+      expect(hasModule(org, "leads")).toBe(true)
+      expect(hasModule(org, "tasks")).toBe(false)
+    })
+
+    it("alwaysOn modules (sms-otp, core) survive even with restrictive modules", () => {
+      const org = { plan: "enterprise" as string, modules: { whatsapp: true } }
+      expect(hasModule(org, "core")).toBe(true)       // alwaysOn
+      expect(hasModule(org, "sms-otp")).toBe(true)    // alwaysOn
+    })
+
+    it("addons still grant modules even when features array is restrictive", () => {
+      const org = { plan: "enterprise" as string, modules: { whatsapp: true }, addons: ["ai", "mtm"] }
+      // ai unlocked via addon despite not being in modules
+      expect(hasModule(org, "ai")).toBe(true)
+      expect(hasModule(org, "mtm")).toBe(true)
+      // base module still hidden because not in modules and not in any addon
+      expect(hasModule(org, "deals")).toBe(false)
+    })
+
+    it("empty modules object is authoritative-empty (Clear All saved)", () => {
+      // Admin clicked "Clear All" in /admin/tenants/<id>/edit — features=[],
+      // org.modules={}. Only alwaysOn + addon-granted modules survive.
+      const org = { plan: "enterprise" as string, modules: {} }
+      expect(hasModule(org, "core")).toBe(true)     // alwaysOn
+      expect(hasModule(org, "sms-otp")).toBe(true)  // alwaysOn
+      expect(hasModule(org, "deals")).toBe(false)   // explicitly cleared
+      expect(hasModule(org, "tasks")).toBe(false)
+    })
+
+    it("Clear All survives even if addons are populated — only addon modules", () => {
+      const org = { plan: "enterprise" as string, modules: {}, addons: ["ai"] }
+      expect(hasModule(org, "ai")).toBe(true)       // via addon
+      expect(hasModule(org, "deals")).toBe(false)   // not in modules, not in addons
+    })
+
+    it("missing modules object falls back to plan defaults (legacy JWT)", () => {
+      // No `modules` key at all — JWT predates the column or hasn't been
+      // refreshed since the backfill ran. Apply BASE_PLAN_MODULES defaults.
+      const org = { plan: "tier-25" as string }
+      expect(hasModule(org, "deals")).toBe(true)
+      expect(hasModule(org, "ai")).toBe(false)
+    })
+
+    it("explicit false in modules is treated as not-enabled (=== true check)", () => {
+      // hasModule uses `=== true`, so `false` and missing are equivalent.
+      // Pins this behaviour so a future revert to truthy-check doesn't slip in.
+      const org = { plan: "enterprise" as string, modules: { deals: false as any, leads: true } }
+      expect(hasModule(org, "deals")).toBe(false)
+      expect(hasModule(org, "leads")).toBe(true)
+    })
+  })
+
   // Legacy plans
   it("starter plan includes core, deals, leads, tasks only", () => {
     expect(hasModule({ plan: "starter" }, "deals")).toBe(true)
